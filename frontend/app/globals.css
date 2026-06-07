@@ -1,0 +1,143 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #F4F1EA;
+    color: #1C2E2C;
+    font-family: var(--font-inter), sans-serif;
+    overflow-x: hidden;
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F4F1EA;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #E5E0D8;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #0F766E;
+}
+
+/* Custom utilities */
+@layer utilities {
+  .glass-panel {
+    background: rgba(253, 251, 247, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(229, 224, 216, 0.8);
+  }
+
+  .glass-card {
+    background: #FDFBF7;
+    border: 1px solid rgba(229, 224, 216, 0.9);
+    box-shadow: 0 1px 3px rgba(28, 46, 44, 0.04);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass-card:hover {
+    background: #FDFBF7;
+    border-color: rgba(15, 118, 110, 0.35);
+    box-shadow: 0 4px 15px rgba(15, 118, 110, 0.08);
+  }
+
+  .glow-cyan {
+    box-shadow: 0 0 15px rgba(20, 184, 166, 0.15);
+  }
+
+  .glow-blue {
+    box-shadow: 0 0 15px rgba(15, 118, 110, 0.15);
+  }
+
+  .text-glow {
+    text-shadow: 0 0 8px rgba(15, 118, 110, 0.3);
+  }
+
+  .text-glow-cyan {
+    text-shadow: 0 0 8px rgba(20, 184, 166, 0.3);
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, #1C2E2C 30%, #6B7678 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .gradient-primary {
+    background: linear-gradient(135deg, #0F766E 0%, #14B8A6 100%);
+  }
+
+  .radial-bg {
+    background: radial-gradient(circle at 50% -20%, rgba(15, 118, 110, 0.06) 0%, transparent 60%);
+  }
+
+  .radial-bg-cyan {
+    background: radial-gradient(circle at 50% -20%, rgba(20, 184, 166, 0.06) 0%, transparent 60%);
+  }
+}
+
+/* Page animations */
+.page-transition {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Shimmer Animation Utilities */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.shimmer-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-wrapper::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.05) 20%,
+    rgba(255, 255, 255, 0.12) 60%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: shimmer 1.5s infinite;
+  content: '';
+}
+
+.dark .shimmer-wrapper::after {
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.03) 20%,
+    rgba(255, 255, 255, 0.07) 60%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
