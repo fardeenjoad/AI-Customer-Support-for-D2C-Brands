@@ -131,7 +131,7 @@ export default function MarketingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-text-primary overflow-x-hidden selection:bg-primary/30 selection:text-text-primary">
+    <div className="min-h-screen bg-background text-text-primary overflow-x-hidden selection:bg-primary/30 selection:text-text-primary">
       {/* Animated gradient mesh background */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-20%] w-[80%] h-[60%] rounded-full bg-primary/10 blur-[150px] animate-pulse" style={{ animationDuration: "15s" }} />
@@ -269,7 +269,7 @@ export default function MarketingPage() {
           className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold font-heading text-text-primary tracking-tight leading-[1.08] max-w-4xl"
         >
           Automate D2C Support with{" "}
-          <span className="gradient-primary bg-clip-text text-transparent drop-shadow-sm">
+          <span className="bg-gradient-to-br from-primary to-accent bg-clip-text text-transparent drop-shadow-sm">
             Neural Sentiment Intelligence
           </span>
         </motion.h1>
@@ -328,7 +328,7 @@ export default function MarketingPage() {
           </div>
 
           {/* Screenshot/Representation */}
-          <div className="aspect-[1.6] w-full rounded-b-xl overflow-hidden relative bg-[#0a0a0f] flex items-center justify-center p-6 text-left border-t border-border/40 select-none">
+          <div className="aspect-[1.6] w-full rounded-b-xl overflow-hidden relative bg-background flex items-center justify-center p-6 text-left border-t border-border/40 select-none">
             {/* Visual background graphs */}
             <div className="grid grid-cols-3 gap-6 w-full h-full relative z-10 text-xs">
               <div className="border border-border/80 bg-surface/60 rounded-xl p-5 flex flex-col justify-between h-full">
@@ -599,7 +599,7 @@ export default function MarketingPage() {
       </section>
 
       {/* 6. TESTIMONIALS */}
-      <section className="py-24 px-6 overflow-hidden relative z-10 select-none bg-[#08080c]">
+      <section className="py-24 px-6 overflow-hidden relative z-10 select-none bg-background">
         <div className="max-w-7xl mx-auto text-center space-y-3 mb-16">
           <h2 className="text-3xl sm:text-4xl font-extrabold font-heading text-text-primary tracking-tight">
             Trusted by fast-growing D2C founders.

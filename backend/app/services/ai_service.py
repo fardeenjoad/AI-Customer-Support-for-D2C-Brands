@@ -89,6 +89,8 @@ class AIService:
     ) -> str:
         """
         Generates a customer-facing support reply using Bedrock or Groq.
+        Builds a conversation transcript from full message history so the AI
+        can distinguish customer, agent, and AI messages by role.
         """
         brand_name = brand_context.get("brand_name", "EcoStyle")
         tone = brand_context.get("tone", "professional")
@@ -96,38 +98,44 @@ class AIService:
         custom_greeting = brand_context.get("custom_greeting", "Hello! How can I help you today?")
 
         faq_str = "\n".join([f"Q: {faq.get('question')}\nA: {faq.get('answer')}" for faq in faqs])
+
+        # Build a labelled conversation transcript from full history
+        conversation_lines = []
+        if message_history:
+            for msg in message_history:
+                sender_label = msg.get("sender", "customer").capitalize()
+                conversation_lines.append(f"[{sender_label}] {msg.get('content')}")
+        conversation_str = "\n".join(conversation_lines) if conversation_lines else "No prior conversation."
+
         system_prompt = (
             f"You are the customer support chatbot representing the D2C brand '{brand_name}'.\n"
-            f"Adopt this brand tone strictly: {tone} (e.g., if tone is 'casual', use friendly, relaxed, or conversational language; if 'formal', use professional, respectful, and structured language).\n\n"
-            f"If this is the beginning of the conversation (or if the customer is greeting you), you MUST start your response by greeting them using the brand's custom greeting message: '{custom_greeting}'\n\n"
+            f"Adopt this brand tone strictly: {tone}.\n\n"
+            "Below is the full conversation thread so far. Each message is prefixed with "
+            "[Customer], [Agent], or [AI] to show who said it:\n"
+            f"{conversation_str}\n\n"
+            f"If this is the beginning of the conversation (or if the customer is greeting you), "
+            f"you MUST start your response by greeting them using the brand's custom greeting message: "
+            f"'{custom_greeting}'\n\n"
             "Here is the brand's knowledge FAQ repository:\n"
             f"{faq_str}\n\n"
-            "Answer the customer's query politely, adhering strictly to the brand tone and using the provided FAQ details."
+            "Answer the customer's latest query politely, adhering strictly to the brand tone and "
+            "using the provided FAQ details. If an agent has already replied in this thread, "
+            "do NOT respond — the agent is handling it."
         )
 
         # 1. Try AWS Bedrock
         if self.bedrock_active:
             try:
-                # Map message history format to lists
-                formatted_history = []
-                if message_history:
-                    for msg in message_history[-5:]:
-                        formatted_history.append({
-                            "sender": msg.get("sender"),
-                            "content": msg.get("content")
-                        })
-                return await self._invoke_bedrock_llama(system_prompt, customer_message, formatted_history, temperature=0.2)
+                return await self._invoke_bedrock_llama(system_prompt, customer_message, temperature=0.2)
             except Exception as e:
                 print(f"[AI SERVICE ERROR] AWS Bedrock generate_reply failed: {e}. Trying Groq fallback.")
 
         # 2. Try Groq
         if self.client:
-            messages = [{"role": "system", "content": system_prompt}]
-            if message_history:
-                for msg in message_history[-5:]:
-                    role = "assistant" if msg.get("sender") == "ai" else "user"
-                    messages.append({"role": role, "content": msg.get("content")})
-            messages.append({"role": "user", "content": customer_message})
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"[Customer] {customer_message}"}
+            ]
 
             def _call_groq():
                 completion = self.client.chat.completions.create(

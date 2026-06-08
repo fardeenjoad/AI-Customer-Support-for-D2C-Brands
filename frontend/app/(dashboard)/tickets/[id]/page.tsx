@@ -79,48 +79,46 @@ function PremiumChatBubble({
 }) {
   const { sender, content, created_at, timestamp } = message;
   const timeToFormat = created_at || timestamp;
-  const isCustomer = sender === "customer";
-  const isAI = sender === "ai";
-  const isAgent = sender === "agent";
+  const senderType = sender?.toLowerCase() || "";
+  const isCustomer = senderType === "customer";
+  const isAI = senderType === "ai";
+  const isOnRight = !isCustomer;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 8, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
-      className={cn("flex w-full items-end space-x-2.5 my-3", {
-        "justify-start": isCustomer || isAI,
-        "justify-end flex-row-reverse space-x-reverse": isAgent,
-      })}
+      className={cn(
+        "flex w-full items-end space-x-2.5 my-3",
+        isOnRight && "justify-end"
+      )}
     >
-      {/* Avatar */}
-      <div
-        className={cn(
-          "w-8 h-8 rounded-full flex items-center justify-center border shrink-0 text-xs shadow-sm",
-          {
-            "bg-surface border-border text-text-muted": isCustomer,
-            "bg-accent/10 border-accent/30 text-accent shadow-glow-cyan": isAI,
-            "gradient-primary text-white border-0 shadow-glow": isAgent,
-          }
-        )}
-      >
-        {isCustomer && <User className="h-3.5 w-3.5" />}
-        {isAI && <Bot className="h-3.5 w-3.5" />}
-        {isAgent && <UserCog className="h-3.5 w-3.5" />}
-      </div>
+      {/* Avatar — only for non-customer (AI / agent) */}
+      {!isCustomer && (
+        <div
+          className={cn(
+            "w-8 h-8 rounded-full flex items-center justify-center border shrink-0 text-xs shadow-sm",
+            isAI && "bg-accent/10 border-accent/30 text-accent shadow-glow-cyan",
+            !isAI && "gradient-primary text-white border-0 shadow-glow"
+          )}
+        >
+          {isAI ? <Bot className="h-3.5 w-3.5" /> : <UserCog className="h-3.5 w-3.5" />}
+        </div>
+      )}
 
       {/* Message Content */}
       <div
-        className={cn("flex flex-col max-w-[75%] space-y-1", {
-          "items-start": isCustomer || isAI,
-          "items-end": isAgent,
-        })}
+        className={cn(
+          "flex flex-col max-w-[75%] space-y-1",
+          isOnRight && "items-end"
+        )}
       >
         {/* Metadata */}
         <div
           className={cn(
             "flex items-center space-x-1.5 text-[10px] text-text-muted px-1",
-            { "flex-row-reverse space-x-reverse": isAgent }
+            isOnRight && "justify-end"
           )}
         >
           <span className="font-semibold uppercase tracking-wider">
@@ -128,7 +126,6 @@ function PremiumChatBubble({
           </span>
           <span>·</span>
           <span>{formatRelativeTime(timeToFormat || "")}</span>
-          {/* Sentiment indicator on customer msgs */}
           {isCustomer && ticketSentiment && (
             <>
               <span>·</span>
@@ -143,19 +140,15 @@ function PremiumChatBubble({
         <div
           className={cn(
             "px-4 py-3 rounded-2xl border text-sm leading-relaxed break-words whitespace-pre-wrap transition-all",
-            {
-              "bg-surface/80 border-border text-text-primary rounded-bl-sm": isCustomer,
-              "bg-gradient-to-br from-accent/10 to-accent/5 border-accent/25 text-text-primary rounded-bl-sm":
-                isAI,
-              "bg-gradient-to-br from-primary/15 to-primary/5 border-primary/25 text-text-primary rounded-br-sm":
-                isAgent,
-            }
+            isCustomer && "bg-primary text-white rounded-bl-sm",
+            isAI && "bg-surface border-border text-text-primary rounded-br-sm",
+            !isCustomer && !isAI && "bg-gradient-to-br from-primary/15 to-primary/5 border-primary/25 text-text-primary rounded-br-sm"
           )}
         >
           {isAI && (
-            <div className="flex items-center space-x-1.5 text-[10px] text-accent font-bold uppercase tracking-wider mb-1.5 opacity-70">
+            <div className="flex items-center space-x-1.5 text-[10px] text-accent font-bold uppercase tracking-wider mb-1.5">
               <Sparkles className="h-3 w-3" />
-              <span>AI Response</span>
+              <span>AI Support Assistant</span>
             </div>
           )}
           {content}

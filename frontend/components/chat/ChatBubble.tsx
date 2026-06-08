@@ -17,8 +17,8 @@ export function ChatBubble({ message }: ChatBubbleProps) {
   return (
     <div
       className={cn("flex w-full items-start space-x-3 my-4 animate-fadeIn", {
-        "justify-start": isCustomer,
-        "justify-end flex-row-reverse space-x-reverse": !isCustomer,
+        "justify-end flex-row-reverse space-x-reverse": isCustomer,
+        "justify-start": !isCustomer,
       })}
     >
       {/* Sender Avatar */}
@@ -42,8 +42,8 @@ export function ChatBubble({ message }: ChatBubbleProps) {
         {/* Name and time metadata */}
         <div
           className={cn("flex items-center space-x-2 text-[10px] text-text-muted", {
-            "justify-start": isCustomer,
-            "justify-end": !isCustomer,
+            "justify-end": isCustomer,
+            "justify-start": !isCustomer,
           })}
         >
           <span className="font-semibold uppercase tracking-wider">

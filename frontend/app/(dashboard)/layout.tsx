@@ -17,10 +17,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { isAuthenticated, user } = useAuthStore();
   const { theme } = useUiStore();
   const [mounted, setMounted] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
 
-  // Synchronize authentication and theme configurations
   useEffect(() => {
-    setMounted(true);
+    if (useAuthStore.persist.hasHydrated()) {
+      setHydrated(true);
+    } else {
+      const unsub = useAuthStore.persist.onFinishHydration(() => {
+        setHydrated(true);
+      });
+      return unsub;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) {
+      setMounted(true);
+      return;
+    }
     
     // Add theme class to document element on mount
     const root = window.document.documentElement;
@@ -35,9 +49,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     } else if (user?.role === "customer") {
       router.replace("/portal");
     }
-  }, [isAuthenticated, user, router, theme]);
+  }, [isAuthenticated, user, router, theme, mounted]);
 
-  if (!mounted || !isAuthenticated || user?.role === "customer") {
+  if (!mounted || !hydrated || !isAuthenticated || user?.role === "customer") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />

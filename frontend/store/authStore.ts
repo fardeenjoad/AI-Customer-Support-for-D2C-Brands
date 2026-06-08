@@ -40,6 +40,7 @@ export const useAuthStore = create<AuthState>()(
     {
       name: "resolveiq-auth",
       storage: createJSONStorage(() => localStorage),
+
     }
   )
 );

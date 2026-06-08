@@ -9,10 +9,28 @@ from app.services.sentiment_service import SentimentService
 from app.services.email_service import EmailService
 from app.models.schemas import ChatMessageSend, ChatMessageResponse, MessageResponse, ResponseEnvelope, TokenData
 from app.core.dependencies import get_current_user
-from typing import List
+from typing import List, Optional
 from app.core.limiter import limiter
 
 router = APIRouter(prefix="/chat", tags=["AI Chatbot"])
+
+
+def _should_trigger_ai(history: List[dict]) -> bool:
+    """
+    Smart AI trigger gating.
+    Only trigger AI response when:
+      1. The last message in the thread is from the customer.
+      2. No agent has ever replied in this ticket thread.
+    """
+    if not history:
+        return True
+    last_msg = history[-1]
+    if last_msg.get("sender") != "customer":
+        return False
+    for msg in history:
+        if msg.get("sender") == "agent":
+            return False
+    return True
 
 
 def get_email_service(
@@ -161,25 +179,41 @@ async def chat_with_bot(
                 message="Ticket escalated to human queue."
             )
 
-        # 7. Generate brand-toned response using Groq
-        reply = await ai_service.generate_reply(
-            customer_message=payload.message,
-            brand_context=brand,
-            message_history=history[:-1]
-        )
+        # 7. Smart AI trigger gating — only respond if last message is from
+        #    customer AND no agent has replied in this thread
+        if _should_trigger_ai(history):
+            reply = await ai_service.generate_reply(
+                customer_message=payload.message,
+                brand_context=brand,
+                message_history=history[:-1]
+            )
 
-        # Save AI reply
-        await message_repo.create_message({
-            "ticket_id": ticket_id,
-            "sender": "ai",
-            "content": reply
-        })
+            # Save AI reply
+            await message_repo.create_message({
+                "ticket_id": ticket_id,
+                "sender": "ai",
+                "content": reply
+            })
+        else:
+            reply = None
 
         # Update general metadata
         await ticket_repo.update_ticket(ticket_id, {
             "sentiment": sentiment,
             "updated_at": datetime.now(timezone.utc).isoformat()
         })
+
+        if reply is None:
+            return ResponseEnvelope[ChatMessageResponse](
+                success=True,
+                data=ChatMessageResponse(
+                    reply="",
+                    ticket_id=ticket_id,
+                    status=ticket.get("status", "open"),
+                    escalated=False
+                ),
+                message="Message recorded. Agent is handling the conversation."
+            )
 
         return ResponseEnvelope[ChatMessageResponse](
             success=True,

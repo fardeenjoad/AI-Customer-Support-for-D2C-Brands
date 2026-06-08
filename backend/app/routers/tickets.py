@@ -21,6 +21,24 @@ from datetime import datetime, timezone
 from app.core.limiter import limiter
 
 
+def _should_trigger_ai(history: List[dict]) -> bool:
+    """
+    Smart AI trigger gating.
+    Only trigger AI response when:
+      1. The last message in the thread is from the customer.
+      2. No agent has ever replied in this ticket thread.
+    """
+    if not history:
+        return True
+    last_msg = history[-1]
+    if last_msg.get("sender") != "customer":
+        return False
+    for msg in history:
+        if msg.get("sender") == "agent":
+            return False
+    return True
+
+
 router = APIRouter(prefix="/tickets", tags=["Tickets"])
 
 def get_email_service(
@@ -220,18 +238,20 @@ async def portal_create_ticket(
                         "updated_at": datetime.now(timezone.utc).isoformat()
                     })
                 else:
-                    # Generate AI reply using brand context
+                    # Smart AI trigger gating — only respond if last message is
+                    # from customer AND no agent has replied in this thread
                     history = await message_repo.list_messages_by_ticket(ticket_id)
-                    reply = await ai_service.generate_reply(
-                        customer_message=payload.initial_message,
-                        brand_context=brand,
-                        message_history=history[:-1] if len(history) > 1 else []
-                    )
-                    await message_repo.create_message({
-                        "ticket_id": ticket_id,
-                        "sender": "ai",
-                        "content": reply
-                    })
+                    if _should_trigger_ai(history):
+                        reply = await ai_service.generate_reply(
+                            customer_message=payload.initial_message,
+                            brand_context=brand,
+                            message_history=history[:-1] if len(history) > 1 else []
+                        )
+                        await message_repo.create_message({
+                            "ticket_id": ticket_id,
+                            "sender": "ai",
+                            "content": reply
+                        })
                     await ticket_repo.update_ticket(ticket_id, {
                         "sentiment": sentiment,
                         "updated_at": datetime.now(timezone.utc).isoformat()
@@ -332,18 +352,20 @@ async def portal_add_reply(
                         "updated_at": datetime.now(timezone.utc).isoformat()
                     })
                 else:
-                    # Generate AI reply using brand context + conversation history
+                    # Smart AI trigger gating — only respond if last message is
+                    # from customer AND no agent has replied in this thread
                     history = await message_repo.list_messages_by_ticket(ticket_id)
-                    reply = await ai_service.generate_reply(
-                        customer_message=payload.content,
-                        brand_context=brand,
-                        message_history=history[:-1] if len(history) > 1 else []
-                    )
-                    await message_repo.create_message({
-                        "ticket_id": ticket_id,
-                        "sender": "ai",
-                        "content": reply
-                    })
+                    if _should_trigger_ai(history):
+                        reply = await ai_service.generate_reply(
+                            customer_message=payload.content,
+                            brand_context=brand,
+                            message_history=history[:-1] if len(history) > 1 else []
+                        )
+                        await message_repo.create_message({
+                            "ticket_id": ticket_id,
+                            "sender": "ai",
+                            "content": reply
+                        })
                     await ticket_repo.update_ticket(ticket_id, {
                         "sentiment": sentiment,
                         "updated_at": datetime.now(timezone.utc).isoformat()
@@ -727,9 +749,10 @@ async def add_ticket_reply(
                 )
 
         # 3. Create agent reply message in database
+        sender_type = "agent"  # admins/agents both map to "agent" sender
         message_data = {
             "ticket_id": ticket_id,
-            "sender": "agent",
+            "sender": sender_type,
             "content": payload.content
         }
         created_msg = await message_repo.create_message(message_data)

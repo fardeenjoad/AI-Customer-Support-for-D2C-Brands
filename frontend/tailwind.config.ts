@@ -15,7 +15,7 @@ const config: Config = {
       },
       colors: {
         background: "#F4F1EA",
-        sidebar: "#EAE4D5",
+        sidebar: "#E2DCC8",
         surface: "#FDFBF7",
         border: "#E5E0D8",
         primary: {
@@ -59,13 +59,13 @@ const config: Config = {
           "100%": { transform: "scale(1)", opacity: "1" },
         },
         pulseGlow: {
-          "0%, 100%": { opacity: "0.5", filter: "drop-shadow(0 0 4px rgba(59, 130, 246, 0.4))" },
-          "50%": { opacity: "1", filter: "drop-shadow(0 0 12px rgba(6, 182, 212, 0.8))" },
+          "0%, 100%": { opacity: "0.5", filter: "drop-shadow(0 0 4px rgba(15, 118, 110, 0.4))" },
+          "50%": { opacity: "1", filter: "drop-shadow(0 0 12px rgba(20, 184, 166, 0.8))" },
         },
       },
       boxShadow: {
-        glow: "0 0 15px rgba(59, 130, 246, 0.15)",
-        "glow-cyan": "0 0 15px rgba(6, 182, 212, 0.2)",
+        glow: "0 0 15px rgba(15, 118, 110, 0.15)",
+        "glow-cyan": "0 0 15px rgba(20, 184, 166, 0.2)",
         "glow-success": "0 0 15px rgba(16, 185, 129, 0.2)",
       },
     },
