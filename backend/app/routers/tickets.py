@@ -1,3 +1,5 @@
+import secrets
+
 from fastapi import APIRouter, Depends, HTTPException, status, Request, UploadFile, File
 from app.repositories.ticket_repo import TicketRepository
 from app.repositories.message_repo import MessageRepository
@@ -8,6 +10,7 @@ from app.services.s3_service import S3Service
 from app.services.ai_service import AIService
 from app.services.sentiment_service import SentimentService
 from app.db.supabase import get_db, execute_async
+from app.core.config import settings
 from app.models.schemas import (
     TicketCreate, TicketUpdate, TicketResponse, MessageResponse, 
     ResponseEnvelope, TokenData,
@@ -47,6 +50,38 @@ def get_email_service(
 ) -> EmailService:
     return EmailService(user_repo, brand_repo)
 
+def _validate_attachment(filename: Optional[str], content: bytes, content_type: str) -> str:
+    """
+    Validates upload metadata and returns a safe display filename.
+    Storage names are generated inside S3Service.
+    """
+    display_name = (filename or "attachment").split("/")[-1].split("\\")[-1]
+    if not display_name:
+        display_name = "attachment"
+
+    if len(content) > settings.MAX_UPLOAD_BYTES:
+        max_mb = settings.MAX_UPLOAD_BYTES / (1024 * 1024)
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"Attachment exceeds the {max_mb:.0f} MB size limit."
+        )
+
+    allowed_types = settings.allowed_upload_content_types_set
+    if content_type.lower() not in allowed_types:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Attachment file type is not allowed."
+        )
+
+    return display_name
+
+def _ensure_passwordless_portal_enabled() -> None:
+    if not settings.PASSWORDLESS_PORTAL_ENABLED:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Customer portal endpoint is not enabled."
+        )
+
 # ────────────────────────────────────────────────────────────────
 #  Passwordless Customer Portal Endpoints
 # ────────────────────────────────────────────────────────────────
@@ -63,6 +98,7 @@ async def portal_lookup_tickets(
     """
     Public lookup to retrieve all tickets for a customer email.
     """
+    _ensure_passwordless_portal_enabled()
     try:
         user = await user_repo.get_user_by_email(email)
         if not user:
@@ -109,6 +145,7 @@ async def portal_get_ticket_details(
     """
     Retrieves details and messages for a specific ticket, verified by customer email.
     """
+    _ensure_passwordless_portal_enabled()
     try:
         user = await user_repo.get_user_by_email(email)
         if not user:
@@ -157,12 +194,13 @@ async def portal_create_ticket(
     """
     Creates a user dynamically if not registered, and opens a new support ticket.
     """
+    _ensure_passwordless_portal_enabled()
     try:
         # 1. Retrieve or auto-create customer user
         user = await user_repo.get_user_by_email(payload.email)
         if not user:
             # Auto-register under the provided brand
-            dummy_pwd = await get_password_hash("passwordless_default_hash_value")
+            dummy_pwd = await get_password_hash(secrets.token_urlsafe(32))
             user_data = {
                 "email": payload.email,
                 "password_hash": dummy_pwd,
@@ -290,6 +328,7 @@ async def portal_add_reply(
     Submits a customer reply to the ticket thread, verified by email.
     Automatically generates an AI reply based on the customer's message.
     """
+    _ensure_passwordless_portal_enabled()
     try:
         user = await user_repo.get_user_by_email(payload.email)
         if not user:
@@ -399,6 +438,7 @@ async def portal_submit_feedback(
     """
     Submits customer satisfaction rating & comment on a resolved ticket, verified by email.
     """
+    _ensure_passwordless_portal_enabled()
     try:
         user = await user_repo.get_user_by_email(payload.email)
         if not user:
@@ -876,7 +916,11 @@ async def upload_ticket_attachment(
 
         # 2. Read file content and metadata
         content = await file.read()
-        filename = file.filename
+        filename = _validate_attachment(
+            filename=file.filename,
+            content=content,
+            content_type=file.content_type or "application/octet-stream"
+        )
         content_type = file.content_type or "application/octet-stream"
 
         # 3. Upload file via S3Service
@@ -905,4 +949,3 @@ async def upload_ticket_attachment(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Attachment upload error: {str(e)}"
         )
-

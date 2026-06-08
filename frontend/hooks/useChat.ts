@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import { API_ROUTES } from "@/lib/constants";
+import { getApiErrorMessage } from "@/lib/apiError";
 import { toast } from "sonner";
 import { Message } from "./useTickets";
 
@@ -54,8 +55,7 @@ export function useChat() {
       }
     },
     onError: (error: any) => {
-      const msg = error.response?.data?.detail || "Failed to send message.";
-      toast.error(msg);
+      toast.error(getApiErrorMessage(error, "Failed to send message."));
     },
   });
 

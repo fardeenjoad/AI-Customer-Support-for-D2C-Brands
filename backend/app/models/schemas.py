@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from typing import List, Dict, Any, Optional, Generic, TypeVar
 from datetime import datetime
 
@@ -45,8 +45,7 @@ class UserResponse(BaseModel):
     brand_id: Optional[str] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # FAQ Schema
 class FAQItem(BaseModel):
@@ -58,9 +57,9 @@ class FAQItem(BaseModel):
 class BrandCreate(BaseModel):
     """Payload to create a new D2C Brand configuration."""
     brand_name: str
-    faqs: List[FAQItem] = []
+    faqs: List[FAQItem] = Field(default_factory=list)
     tone: str = "professional"
-    email_config: Dict[str, Any] = {}
+    email_config: Dict[str, Any] = Field(default_factory=dict)
     custom_greeting: str = "Hello! How can I help you today?"
 
 class BrandUpdate(BaseModel):
@@ -80,8 +79,7 @@ class BrandResponse(BaseModel):
     email_config: Dict[str, Any]
     custom_greeting: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Ticket Schemas
 class TicketCreate(BaseModel):
@@ -117,8 +115,7 @@ class TicketResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Message Schemas
 class MessageCreate(BaseModel):
@@ -134,8 +131,7 @@ class MessageResponse(BaseModel):
     content: str
     timestamp: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Chat Schemas
 class ChatMessageSend(BaseModel):
@@ -183,4 +179,3 @@ class PortalFeedbackCreate(BaseModel):
     email: EmailStr
     rating: int = Field(..., ge=1, le=5)
     comment: Optional[str] = None
-

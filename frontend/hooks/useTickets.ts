@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import { API_ROUTES } from "@/lib/constants";
+import { getApiErrorMessage } from "@/lib/apiError";
 import { toast } from "sonner";
 
 export interface Ticket {
@@ -93,8 +94,7 @@ export function useTickets() {
       toast.success("Ticket opened successfully!");
     },
     onError: (error: any) => {
-      const msg = error.response?.data?.detail || "Failed to create ticket.";
-      toast.error(msg);
+      toast.error(getApiErrorMessage(error, "Failed to create ticket."));
     },
   });
 
@@ -112,8 +112,7 @@ export function useTickets() {
       toast.success("Ticket details updated!");
     },
     onError: (error: any) => {
-      const msg = error.response?.data?.detail || "Failed to update ticket.";
-      toast.error(msg);
+      toast.error(getApiErrorMessage(error, "Failed to update ticket."));
     },
   });
 
@@ -128,8 +127,7 @@ export function useTickets() {
       toast.success("Ticket archived successfully.");
     },
     onError: (error: any) => {
-      const msg = error.response?.data?.detail || "Failed to delete ticket.";
-      toast.error(msg);
+      toast.error(getApiErrorMessage(error, "Failed to delete ticket."));
     },
   });
 
@@ -150,8 +148,7 @@ export function useTickets() {
       toast.success("Attachment uploaded successfully!");
     },
     onError: (error: any) => {
-      const msg = error.response?.data?.detail || "Attachment upload failed.";
-      toast.error(msg);
+      toast.error(getApiErrorMessage(error, "Attachment upload failed."));
     },
   });
 
@@ -166,8 +163,7 @@ export function useTickets() {
       queryClient.invalidateQueries({ queryKey: ["tickets"] });
     },
     onError: (error: any) => {
-      const msg = error.response?.data?.detail || "Failed to send reply.";
-      toast.error(msg);
+      toast.error(getApiErrorMessage(error, "Failed to send reply."));
     },
   });
 

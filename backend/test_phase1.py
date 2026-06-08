@@ -65,7 +65,7 @@ def test_global_exception_handler():
     body = response.json()
     assert body["success"] is False
     assert body["data"] is None
-    assert "Triggered mock value error" in body["message"]
+    assert body["message"] == "Internal server error."
 
 if __name__ == "__main__":
     import sys

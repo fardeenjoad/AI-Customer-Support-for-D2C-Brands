@@ -17,6 +17,7 @@ os.environ["AWS_S3_BUCKET_NAME"] = "resolveiq-attachments"
 import pytest
 import io
 import json
+from urllib.parse import unquote, urlparse
 from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 
@@ -112,7 +113,13 @@ async def test_s3_service_fallback():
     url = await s3_service.upload_file(file_bytes, "test.txt", "text/plain")
     
     # URL should be a local file path
-    assert "http://localhost:8000/static/uploads/test.txt" in url
+    assert url.startswith("http://localhost:8000/static/uploads/")
+    assert url.endswith("-test.txt")
+
+    uploaded_name = os.path.basename(unquote(urlparse(url).path))
+    uploaded_path = os.path.join("static", "uploads", uploaded_name)
+    if os.path.exists(uploaded_path):
+        os.remove(uploaded_path)
     
     # Restore
     settings.AWS_S3_BUCKET_NAME = orig_bucket
@@ -135,7 +142,8 @@ async def test_s3_service_upload(mock_boto):
     file_bytes = b"hello s3"
     url = await s3_service.upload_file(file_bytes, "hello.txt", "text/plain")
     
-    assert "https://my-actual-aws-bucket.s3.us-east-1.amazonaws.com/hello.txt" in url
+    assert url.startswith("https://my-actual-aws-bucket.s3.us-east-1.amazonaws.com/")
+    assert url.endswith("-hello.txt")
     mock_s3.put_object.assert_called_once()
     
     settings.AWS_S3_BUCKET_NAME = orig_bucket

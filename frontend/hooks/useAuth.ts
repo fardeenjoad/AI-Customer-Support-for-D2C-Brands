@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios";
+import { getApiErrorMessage } from "@/lib/apiError";
 import { useAuthStore, User } from "@/store/authStore";
 import { API_ROUTES } from "@/lib/constants";
 import { toast } from "sonner";
@@ -69,8 +70,7 @@ export function useAuth() {
       }
     },
     onError: (error: any) => {
-      const msg = error.response?.data?.detail || "Invalid email or password.";
-      toast.error(msg);
+      toast.error(getApiErrorMessage(error, "Invalid email or password."));
     },
   });
 
@@ -85,8 +85,7 @@ export function useAuth() {
       router.push("/login");
     },
     onError: (error: any) => {
-      const msg = error.response?.data?.detail || "Registration failed.";
-      toast.error(msg);
+      toast.error(getApiErrorMessage(error, "Registration failed."));
     },
   });
 

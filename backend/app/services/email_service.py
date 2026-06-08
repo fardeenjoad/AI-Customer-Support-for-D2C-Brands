@@ -261,7 +261,7 @@ class EmailService:
         headline = "Support Issue Resolved"
         email_subject = f"[{brand_name}] Support Ticket Resolved - #{ticket_id}"
 
-        feedback_url = f"http://localhost:8000/tickets/{ticket_id}/feedback"
+        feedback_url = f"{settings.FRONTEND_BASE_URL.rstrip('/')}/portal?ticket_id={ticket_id}"
 
         body = (
             f"Hi {customer_name},\n\n"
@@ -299,7 +299,7 @@ class EmailService:
         headline = "New Ticket Assigned"
         email_subject = f"[ResolveIQ] Support Ticket Assigned - #{ticket_id}"
 
-        management_url = f"http://localhost:8000/admin/tickets/{ticket_id}"
+        management_url = f"{settings.FRONTEND_BASE_URL.rstrip('/')}/tickets/{ticket_id}"
 
         body = (
             f"Hi Support Team Member,\n\n"
@@ -332,7 +332,7 @@ class EmailService:
         subject_text = ticket.get("subject", "Support Ticket")
         headline = "Overdue Ticket Warning"
         email_subject = f"[ResolveIQ STALE ALERT] Overdue Ticket - #{ticket_id}"
-        management_url = f"http://localhost:8000/admin/tickets/{ticket_id}"
+        management_url = f"{settings.FRONTEND_BASE_URL.rstrip('/')}/tickets/{ticket_id}"
 
         body = (
             f"Hi Support Team Member,\n\n"

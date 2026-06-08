@@ -1,18 +1,25 @@
+import logging
+import os
+import time
+
 from fastapi import FastAPI, Request, status
+from fastapi.exceptions import HTTPException
+from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from app.routers import auth, chat, tickets, admin
 from app.models.schemas import ResponseEnvelope
+from app.core.config import settings
 from app.core.limiter import limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
-import logging
-import time
 
 # Configure basic logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("ResolveIQ")
+
+CORS_ALLOWED_ORIGINS = settings.cors_allowed_origins_list
 
 app = FastAPI(
     title="ResolveIQ Support Platform",
@@ -27,8 +34,8 @@ app.add_middleware(SlowAPIMiddleware)
 # CORS middleware config
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=CORS_ALLOWED_ORIGINS,
+    allow_credentials="*" not in CORS_ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -40,12 +47,8 @@ app.include_router(chat.router)
 app.include_router(tickets.router)
 app.include_router(admin.router)
 
-import os
-from fastapi.staticfiles import StaticFiles
 os.makedirs(os.path.join("static", "uploads"), exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
-from fastapi.exceptions import HTTPException
 
 # Log requests middleware
 @app.middleware("http")
@@ -65,15 +68,33 @@ async def log_requests(request: Request, call_next):
         )
         raise e
 
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    if settings.is_production:
+        response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+    return response
+
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
     """
     Catches FastAPI HTTPExceptions and maps them to standard JSON envelopes.
     """
+    if exc.status_code >= 500:
+        logger.error(
+            "Internal HTTP exception at %s %s: %s",
+            request.method,
+            request.url.path,
+            exc.detail,
+        )
+
     envelope = ResponseEnvelope(
         success=False,
         data=None,
-        message=exc.detail
+        message="Internal server error." if exc.status_code >= 500 else exc.detail
     )
     return JSONResponse(
         status_code=exc.status_code,
@@ -89,7 +110,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     envelope = ResponseEnvelope(
         success=False,
         data=None,
-        message=f"Validation error: {exc.errors()}"
+        message="Validation error."
     )
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -116,11 +137,16 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
     """
     Catches all unhandled exceptions globally and formats a standardized JSON envelope.
     """
-    logger.error(f"Global exception caught: {str(exc)}", exc_info=True)
+    logger.error(
+        "Unhandled exception at %s %s",
+        request.method,
+        request.url.path,
+        exc_info=True,
+    )
     envelope = ResponseEnvelope(
         success=False,
         data=None,
-        message=f"An unexpected error occurred: {str(exc)}"
+        message="Internal server error."
     )
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

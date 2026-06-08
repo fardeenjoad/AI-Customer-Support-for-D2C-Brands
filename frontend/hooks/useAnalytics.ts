@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import { API_ROUTES } from "@/lib/constants";
+import { getApiErrorMessage } from "@/lib/apiError";
 import { toast } from "sonner";
 import { Ticket } from "./useTickets";
 
@@ -106,8 +107,7 @@ export function useAnalytics() {
       toast.success("Brand registered successfully!");
     },
     onError: (error: any) => {
-      const msg = error.response?.data?.detail || "Failed to create brand.";
-      toast.error(msg);
+      toast.error(getApiErrorMessage(error, "Failed to create brand."));
     },
   });
 
@@ -123,8 +123,7 @@ export function useAnalytics() {
       toast.success("Brand updated successfully!");
     },
     onError: (error: any) => {
-      const msg = error.response?.data?.detail || "Failed to update brand.";
-      toast.error(msg);
+      toast.error(getApiErrorMessage(error, "Failed to update brand."));
     },
   });
 
@@ -139,8 +138,7 @@ export function useAnalytics() {
       toast.success("Brand deleted successfully.");
     },
     onError: (error: any) => {
-      const msg = error.response?.data?.detail || "Failed to delete brand.";
-      toast.error(msg);
+      toast.error(getApiErrorMessage(error, "Failed to delete brand."));
     },
   });
 
@@ -158,8 +156,7 @@ export function useAnalytics() {
       toast.success("Agent assigned successfully!");
     },
     onError: (error: any) => {
-      const msg = error.response?.data?.detail || "Failed to assign agent.";
-      toast.error(msg);
+      toast.error(getApiErrorMessage(error, "Failed to assign agent."));
     },
   });
 

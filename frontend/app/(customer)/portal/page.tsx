@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/authStore";
 import api from "@/lib/axios";
+import { getApiErrorMessage } from "@/lib/apiError";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -171,7 +172,7 @@ function CustomerPortalContent() {
       setActiveTicketId(newTicket.id);
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to create ticket.");
+      toast.error(getApiErrorMessage(err, "Failed to create ticket."));
     },
   });
 
@@ -190,7 +191,7 @@ function CustomerPortalContent() {
       queryClient.invalidateQueries({ queryKey: ["portal-lookup", searchEmail] });
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to submit message.");
+      toast.error(getApiErrorMessage(err, "Failed to submit message."));
     },
   });
 
@@ -209,7 +210,7 @@ function CustomerPortalContent() {
       refetchDetails();
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to submit feedback.");
+      toast.error(getApiErrorMessage(err, "Failed to submit feedback."));
     },
   });
 

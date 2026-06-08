@@ -113,7 +113,18 @@ RESEND_API_KEY=re_your_resend_api_key
 JWT_SECRET=your_jwt_secret_key_change_me_in_production
 JWT_ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=1440
+ENVIRONMENT=development
+FRONTEND_BASE_URL=http://localhost:3000
+BACKEND_BASE_URL=http://localhost:8000
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+MAX_UPLOAD_BYTES=5242880
+ALLOWED_UPLOAD_CONTENT_TYPES=image/png,image/jpeg,image/webp,application/pdf,text/plain
+PASSWORDLESS_PORTAL_ENABLED=true
 ```
+
+For production, set `ENVIRONMENT=production` and replace all localhost/placeholder values with deployed URLs and real provider credentials. Startup intentionally fails in production if:
+- `JWT_SECRET`, Supabase, CORS, frontend/backend base URLs, email, AI, or S3 attachment storage are not configured.
+- `PASSWORDLESS_PORTAL_ENABLED=true`. The current customer portal uses email-only ticket lookup and must be disabled or replaced with OTP/magic-link verification before public launch.
 
 ### 3. Install Dependencies
 Create a virtual environment and install dependencies:
@@ -212,6 +223,7 @@ All API responses strictly adhere to the following standard JSON envelope format
    ```bash
    uvicorn app.main:app --host 0.0.0.0 --port $PORT
    ```
+   Required production variables include `ENVIRONMENT=production`, `FRONTEND_BASE_URL`, `BACKEND_BASE_URL`, `CORS_ALLOWED_ORIGINS`, `JWT_SECRET`, Supabase credentials, an email provider, an AI provider, AWS S3 credentials, and `PASSWORDLESS_PORTAL_ENABLED=false` unless a verified portal auth flow has been implemented.
 4. **Deploy**: Railway builds the container and makes the service live under an automated public URL.
 
 ### Option B: Deployment on Render
@@ -221,4 +233,5 @@ All API responses strictly adhere to the following standard JSON envelope format
    - **Build Command**: `pip install -r requirements.txt`
    - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 4. **Environment Variables**: Add your environment variables under the "Environment" settings tab.
+   Required production variables include `ENVIRONMENT=production`, `FRONTEND_BASE_URL`, `BACKEND_BASE_URL`, `CORS_ALLOWED_ORIGINS`, `JWT_SECRET`, Supabase credentials, an email provider, an AI provider, AWS S3 credentials, and `PASSWORDLESS_PORTAL_ENABLED=false` unless a verified portal auth flow has been implemented.
 5. **Deploy**: Click **Create Web Service** to deploy.

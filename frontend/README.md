@@ -21,7 +21,7 @@ ResolveIQ is a premium, high-performance customer support orchestration platform
 2. **Workstation Overview Dashboard**: High-level support statistics (Total Tickets, Open Tickets, SLA Times), animated number counters, interactive area charts (tickets over 30d), sentiment breakdown donut charts, and tickets by priority list.
 3. **Tickets Queue Workspace**: Sortable ticket tracking list with debounced filtering, bulk action assignment/status updates/deletion, and slide-in ticket creation.
 4. **Interactive Chat Detail Panel**: Split-screen (60/40) live support workspace with inline priority/agent assignment controls, message sentiment meters, typing indicator animations, quick AI suggested replies, and file attachment uploads.
-5. **Passwordless Customer Portal**: Public hub allowing customers to search for their active support sessions using just their email. Supports reading, replying, and rating resolved tickets with a 1-5 star feedback form.
+5. **Customer Portal**: Public support hub for reading, replying, and rating resolved tickets. The current development flow uses email lookup; production should use OTP or magic-link verification before exposing ticket history.
 6. **Embeddable Chat Widget**: Client-facing floating button widget customizable for any web store. Includes bot auto-response and immediate ticket creation triggers.
 
 ---
@@ -41,6 +41,7 @@ Inside `.env.local`:
 NEXT_PUBLIC_API_URL=http://localhost:8000
 NEXT_PUBLIC_APP_NAME=ResolveIQ
 ```
+`NEXT_PUBLIC_API_URL` is required for production builds and must point to the deployed FastAPI backend.
 
 ### 3. Installation
 Install all required package dependencies:
@@ -88,3 +89,5 @@ The easiest way to deploy the ResolveIQ Frontend is using Vercel:
    - `NEXT_PUBLIC_API_URL`: `https://your-resolveiq-backend-url.com`
    - `NEXT_PUBLIC_APP_NAME`: `ResolveIQ`
 5. Click **Deploy**. Vercel will build and launch your edge-optimized global distribution!
+
+Before public launch, make sure the backend is deployed with explicit CORS origins and the customer portal has OTP/magic-link verification if ticket lookup is enabled.
