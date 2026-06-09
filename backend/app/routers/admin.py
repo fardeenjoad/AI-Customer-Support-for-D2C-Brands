@@ -135,14 +135,14 @@ async def get_admin_tickets(
 async def assign_ticket(
     request: Request,
     payload: AssignTicketRequest,
-    current_user: TokenData = Depends(require_admin),
+    current_user: TokenData = Depends(require_admin_or_agent),
     ticket_repo: TicketRepository = Depends(),
     user_repo: UserRepository = Depends(),
     email_service: EmailService = Depends(get_email_service)
 ) -> ResponseEnvelope[TicketResponse]:
     """
     Assigns a ticket to a support agent and dispatches an assignment email alert.
-    Guarded by Admin role validation.
+    Accessible to admins and agents.
     """
     try:
         # 1. Retrieve ticket
@@ -153,6 +153,24 @@ async def assign_ticket(
                 detail="Ticket not found."
             )
 
+        db = get_db()
+        ticket_brand_id = ticket.get("brand_id")
+
+        # 1.5. Scoping check if the caller is an agent
+        if current_user.role == "agent":
+            caller_brands = await execute_async(
+                lambda: db.table("agent_brands")
+                          .select("brand_id")
+                          .eq("agent_id", current_user.user_id)
+                          .eq("brand_id", ticket_brand_id)
+                          .execute()
+            )
+            if not caller_brands.data:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="You are not authorized to assign tickets from this brand."
+                )
+
         # 2. Retrieve agent user details
         agent = await user_repo.get_user_by_id(payload.agent_id)
         if not agent or agent.get("role") != "agent":
@@ -162,8 +180,6 @@ async def assign_ticket(
             )
 
         # 3. Verify agent has access to the ticket's brand
-        db = get_db()
-        ticket_brand_id = ticket.get("brand_id")
         agent_brands = await execute_async(
             lambda: db.table("agent_brands")
                       .select("brand_id")
@@ -306,15 +322,22 @@ async def get_admin_alerts(
     request: Request,
     page: int = 1,
     limit: int = 10,
-    current_user: TokenData = Depends(require_admin),
+    current_user: TokenData = Depends(require_admin_or_agent),
     ticket_repo: TicketRepository = Depends()
 ) -> ResponseEnvelope[List[TicketResponse]]:
     """
-    Lists unresolved tickets older than 24 hours.
-    Access restricted to Admin role.
+    Lists unresolved tickets older than 24 hours, scoped to the caller's role.
     """
     try:
-        all_tickets = await ticket_repo.list_tickets()
+        allowed_brand_ids = None
+        if current_user.role == "agent":
+            db = get_db()
+            agent_brands = await execute_async(
+                lambda: db.table("agent_brands").select("brand_id").eq("agent_id", current_user.user_id).execute()
+            )
+            allowed_brand_ids = [row.get("brand_id") for row in agent_brands.data] if agent_brands.data else []
+
+        all_tickets = await ticket_repo.list_tickets(allowed_brand_ids=allowed_brand_ids)
         now_time = datetime.now(timezone.utc)
         alert_tickets = []
 
@@ -340,7 +363,36 @@ async def get_admin_alerts(
             detail=f"Alert ticket retrieval error: {str(e)}"
         )
 
+@router.get("/agents", response_model=ResponseEnvelope[List[Dict[str, Any]]])
+@limiter.limit("20/minute")
+async def list_agents(
+    request: Request,
+    current_user: TokenData = Depends(require_admin_or_agent),
+    user_repo: UserRepository = Depends()
+) -> ResponseEnvelope[List[Dict[str, Any]]]:
+    """
+    Lists all support agents.
+    Accessible to admins and agents.
+    """
+    try:
+        db = get_db()
+        response = await execute_async(
+            lambda: db.table("users").select("id", "email", "full_name", "role").eq("role", "agent").execute()
+        )
+        agents = response.data if response.data else []
+        return ResponseEnvelope[List[Dict[str, Any]]](
+            success=True,
+            data=agents,
+            message="Agents list retrieved successfully."
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Agent list lookup failed: {str(e)}"
+        )
+
 # ----------------- Brand CRUD Administration Endpoints -----------------
+
 
 @router.post("/brands", response_model=ResponseEnvelope[BrandResponse], status_code=status.HTTP_201_CREATED)
 @limiter.limit("10/minute")

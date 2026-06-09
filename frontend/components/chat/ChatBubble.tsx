@@ -1,6 +1,6 @@
 import { Message } from "@/hooks/useTickets";
 import { cn, formatRelativeTime } from "@/lib/utils";
-import { Bot, User, UserCog } from "lucide-react";
+import { Bot, User, UserCog, Paperclip } from "lucide-react";
 
 interface ChatBubbleProps {
   message: Message;
@@ -61,7 +61,51 @@ export function ChatBubble({ message }: ChatBubbleProps) {
             "bg-primary/10 border-primary/30 text-text-primary rounded-tr-none text-glow": isAgent,
           })}
         >
-          {content}
+          {(() => {
+            const match = content.match(/^\[Attachment:\s*(.*?)\s*\((.*?)\)\](?:\n\n([\s\S]*))?$/);
+            if (match) {
+              const filename = match[1];
+              const url = match[2];
+              const caption = match[3];
+              const isImage = /\.(jpg|jpeg|png|webp|gif|svg)($|\?)/i.test(filename) || /\.(jpg|jpeg|png|webp|gif|svg)($|\?)/i.test(url);
+              return (
+                <div className="flex flex-col space-y-1.5">
+                  {isImage ? (
+                    <div className="flex flex-col space-y-1.5 mt-1 max-w-xs sm:max-w-sm rounded-lg overflow-hidden border border-black/10 bg-black/5">
+                      <a href={url} target="_blank" rel="noopener noreferrer" className="block relative aspect-video bg-black/20">
+                        <img
+                          src={url}
+                          alt={filename}
+                          className="w-full h-full object-cover hover:scale-[1.02] transition-transform duration-200 cursor-zoom-in"
+                        />
+                      </a>
+                      <div className="flex items-center justify-between px-2.5 py-1.5 text-[10px] border-t border-black/10 text-text-muted">
+                        <span className="truncate max-w-[150px] font-semibold">{filename}</span>
+                        <a href={url} target="_blank" rel="noopener noreferrer" className="hover:underline flex items-center space-x-0.5 font-bold">
+                          <Paperclip className="h-3 w-3 shrink-0" />
+                          <span>View full</span>
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={cn(
+                        "flex items-center space-x-2 font-semibold border rounded-lg p-2 hover:underline text-xs bg-black/5 border-black/10 text-primary"
+                      )}
+                    >
+                      <Paperclip className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate max-w-[150px]">{filename}</span>
+                    </a>
+                  )}
+                  {caption && <div className="text-xs pt-0.5 leading-relaxed text-text-primary">{caption}</div>}
+                </div>
+              );
+            }
+            return content;
+          })()}
         </div>
       </div>
     </div>

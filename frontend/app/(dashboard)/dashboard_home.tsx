@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { useAuth } from "@/hooks/useAuth";
+import AgentDashboardHome from "@/components/dashboard/AgentDashboardHome";
+
 import { useTickets, Ticket } from "@/hooks/useTickets";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
@@ -194,7 +197,7 @@ const fadeUp = {
 //  MAIN COMPONENT
 // ────────────────────────────────────────────────────────────────
 
-export default function DashboardHome() {
+export function AdminDashboardHome() {
   const { useGetAnalytics, useGetAlerts } = useAnalytics();
   const { useListTickets } = useTickets();
 
@@ -795,3 +798,14 @@ export default function DashboardHome() {
     </motion.div>
   );
 }
+
+export default function DashboardHome() {
+  const { user } = useAuth();
+
+  if (user?.role === "agent") {
+    return <AgentDashboardHome />;
+  }
+
+  return <AdminDashboardHome />;
+}
+

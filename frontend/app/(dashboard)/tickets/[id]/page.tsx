@@ -44,6 +44,7 @@ import {
   Smile,
   Meh,
   Frown,
+  Paperclip,
 } from "lucide-react";
 
 // ────────────────────────────────────────────────────────────────
@@ -151,7 +152,55 @@ function PremiumChatBubble({
               <span>AI Support Assistant</span>
             </div>
           )}
-          {content}
+          {(() => {
+            const match = content.match(/^\[Attachment:\s*(.*?)\s*\((.*?)\)\](?:\n\n([\s\S]*))?$/);
+            if (match) {
+              const filename = match[1];
+              const url = match[2];
+              const caption = match[3];
+              const isImage = /\.(jpg|jpeg|png|webp|gif|svg)($|\?)/i.test(filename) || /\.(jpg|jpeg|png|webp|gif|svg)($|\?)/i.test(url);
+              return (
+                <div className="flex flex-col space-y-1.5">
+                  {isImage ? (
+                    <div className="flex flex-col space-y-1.5 mt-1 max-w-xs sm:max-w-sm rounded-lg overflow-hidden border border-black/10 bg-black/5">
+                      <a href={url} target="_blank" rel="noopener noreferrer" className="block relative aspect-video bg-black/20">
+                        <img
+                          src={url}
+                          alt={filename}
+                          className="w-full h-full object-cover hover:scale-[1.02] transition-transform duration-200 cursor-zoom-in"
+                        />
+                      </a>
+                      <div className={cn(
+                        "flex items-center justify-between px-2.5 py-1.5 text-[10px] border-t border-black/10",
+                        isCustomer ? "text-white/80" : "text-text-muted"
+                      )}>
+                        <span className="truncate max-w-[150px] font-semibold">{filename}</span>
+                        <a href={url} target="_blank" rel="noopener noreferrer" className="hover:underline flex items-center space-x-0.5 font-bold">
+                          <Paperclip className="h-3 w-3 shrink-0" />
+                          <span>View full</span>
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={cn(
+                        "flex items-center space-x-2 font-semibold border rounded-lg p-2.5 hover:underline text-xs bg-black/10 border-black/20",
+                        isCustomer ? "text-white" : "text-primary"
+                      )}
+                    >
+                      <Paperclip className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate max-w-[150px]">{filename}</span>
+                    </a>
+                  )}
+                  {caption && <div className="text-xs pt-0.5 leading-relaxed">{caption}</div>}
+                </div>
+              );
+            }
+            return content;
+          })()}
         </div>
       </div>
     </motion.div>
@@ -245,7 +294,9 @@ export default function TicketDetailPage() {
     uploadAttachment,
     sendAgentReply,
   } = useTickets();
-  const { assignAgent, isAssigning } = useAnalytics();
+  const { assignAgent, isAssigning, useListAgents } = useAnalytics();
+  const { data: agentsRes } = useListAgents();
+  const agents = agentsRes?.data || [];
   const { addNotification } = useNotificationStore();
 
   const { data: detailRes, isLoading, refetch, isRefetching } =
@@ -813,17 +864,22 @@ export default function TicketDetailPage() {
                   className="flex flex-col space-y-2 mt-1 bg-background p-3 border border-border rounded-lg overflow-hidden"
                 >
                   <label className="text-[9px] text-text-muted font-bold tracking-wider uppercase">
-                    Agent UUID
+                    Select Agent
                   </label>
                   <div className="flex space-x-2">
-                    <input
-                      type="text"
+                    <select
                       required
-                      placeholder="Paste agent ID"
                       value={agentInputId}
                       onChange={(e) => setAgentInputId(e.target.value)}
-                      className="flex-1 bg-surface border border-border rounded-lg px-2.5 py-1.5 text-xs font-mono text-text-primary placeholder-text-muted focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                    />
+                      className="flex-1 bg-surface border border-border rounded-lg px-2.5 py-1.5 text-xs text-text-primary focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                    >
+                      <option value="" disabled>-- Choose Agent --</option>
+                      {agents.map((agent) => (
+                        <option key={agent.id} value={agent.id}>
+                          {agent.full_name || agent.email.split("@")[0]} ({agent.email})
+                        </option>
+                      ))}
+                    </select>
                     <Button
                       type="submit"
                       variant="primary"

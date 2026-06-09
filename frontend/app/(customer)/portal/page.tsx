@@ -32,6 +32,9 @@ import {
   Check,
   ChevronRight,
   RefreshCw,
+  Paperclip,
+  X,
+  FileCheck,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -108,9 +111,11 @@ function CustomerPortalContent() {
 
   // Reply state
   const [replyText, setReplyText] = useState("");
+  const [portalFile, setPortalFile] = useState<File | null>(null);
 
   // Refs
   const messageEndRef = useRef<HTMLDivElement>(null);
+  const portalFileInputRef = useRef<HTMLInputElement>(null);
 
   // ────────────────────────────────────────────────────────────────
   //  React Query APIs
@@ -195,6 +200,37 @@ function CustomerPortalContent() {
     },
   });
 
+  // Portal Upload Attachment
+  const uploadAttachmentMutation = useMutation({
+    mutationFn: async ({ file, caption }: { file: File; caption?: string }) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("email", searchEmail);
+      if (caption) {
+        formData.append("caption", caption);
+      }
+      const res = await api.post(`/tickets/portal/${activeTicketId}/attachments`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      return res.data?.data;
+    },
+    onSuccess: () => {
+      setPortalFile(null);
+      setReplyText("");
+      if (portalFileInputRef.current) {
+        portalFileInputRef.current.value = "";
+      }
+      toast.success("Attachment uploaded successfully!");
+      refetchDetails();
+      queryClient.invalidateQueries({ queryKey: ["portal-lookup", searchEmail] });
+    },
+    onError: (err: any) => {
+      toast.error(getApiErrorMessage(err, "Attachment upload failed."));
+    },
+  });
+
   // 5. Submit Rating / Feedback
   const submitFeedbackMutation = useMutation({
     mutationFn: async (payload: { rating: number; comment: string }) => {
@@ -259,10 +295,30 @@ function CustomerPortalContent() {
   };
 
   // Submit Reply Message
-  const handleSendReply = (e: React.FormEvent) => {
+  const handleSendReply = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!replyText.trim()) return;
-    sendReplyMutation.mutate(replyText.trim());
+    const content = replyText.trim();
+    const file = portalFile;
+    if (!content && !file) return;
+
+    // Clear inputs immediately for instant UI feedback
+    setReplyText("");
+    setPortalFile(null);
+    if (portalFileInputRef.current) {
+      portalFileInputRef.current.value = "";
+    }
+
+    try {
+      if (file) {
+        // Send file and message caption together (WhatsApp style)
+        await uploadAttachmentMutation.mutateAsync({ file, caption: content || undefined });
+      } else {
+        // Regular text reply
+        await sendReplyMutation.mutateAsync(content);
+      }
+    } catch (error) {
+      console.error("Failed to submit message/file", error);
+    }
   };
 
   // Determine portal brand configuration name
@@ -770,7 +826,55 @@ function CustomerPortalContent() {
                                         <span>AI Support Assistant</span>
                                       </span>
                                     )}
-                                    {msg.content}
+                                    {(() => {
+                                      const match = msg.content.match(/^\[Attachment:\s*(.*?)\s*\((.*?)\)\](?:\n\n([\s\S]*))?$/);
+                                      if (match) {
+                                        const filename = match[1];
+                                        const url = match[2];
+                                        const caption = match[3];
+                                        const isImage = /\.(jpg|jpeg|png|webp|gif|svg)($|\?)/i.test(filename) || /\.(jpg|jpeg|png|webp|gif|svg)($|\?)/i.test(url);
+                                        return (
+                                          <div className="flex flex-col space-y-1.5">
+                                            {isImage ? (
+                                              <div className="flex flex-col space-y-1.5 mt-1 max-w-xs sm:max-w-sm rounded-lg overflow-hidden border border-black/10 bg-black/5">
+                                                <a href={url} target="_blank" rel="noopener noreferrer" className="block relative aspect-video bg-black/20">
+                                                  <img
+                                                    src={url}
+                                                    alt={filename}
+                                                    className="w-full h-full object-cover hover:scale-[1.02] transition-transform duration-200 cursor-zoom-in"
+                                                  />
+                                                </a>
+                                                <div className={cn(
+                                                  "flex items-center justify-between px-2.5 py-1.5 text-[10px] border-t border-black/10",
+                                                  isCustomer ? "text-white/80" : "text-text-muted"
+                                                )}>
+                                                  <span className="truncate max-w-[150px] font-semibold">{filename}</span>
+                                                  <a href={url} target="_blank" rel="noopener noreferrer" className="hover:underline flex items-center space-x-0.5 font-bold">
+                                                    <Paperclip className="h-3 w-3 shrink-0" />
+                                                    <span>View full</span>
+                                                  </a>
+                                                </div>
+                                              </div>
+                                            ) : (
+                                              <a
+                                                href={url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className={cn(
+                                                  "flex items-center space-x-2 font-semibold bg-primary/10 border border-primary/20 rounded-lg p-2.5 max-w-sm mt-1 hover:underline",
+                                                  isCustomer ? "text-white" : "text-primary"
+                                                )}
+                                              >
+                                                <Paperclip className="h-4 w-4 shrink-0" />
+                                                <span className="truncate max-w-[180px]">{filename}</span>
+                                              </a>
+                                            )}
+                                            {caption && <div className="text-xs pt-0.5 leading-relaxed">{caption}</div>}
+                                          </div>
+                                        );
+                                      }
+                                      return msg.content;
+                                    })()}
                                   </div>
                                   <span
                                     className={cn(
@@ -790,44 +894,86 @@ function CustomerPortalContent() {
 
                       {/* Reply Textbox Input */}
                       {activeTicket?.status !== "resolved" ? (
-                        <form
-                          onSubmit={handleSendReply}
-                          className={cn(
-                            "p-4 border-t flex items-center space-x-3 shrink-0",
-                            isDarkMode
-                              ? "border-slate-800/80 bg-[#12141c]/50"
-                              : "border-border bg-surface"
+                        <div className="flex flex-col border-t border-border bg-surface/50 backdrop-blur-md shrink-0">
+                          {/* File preview */}
+                          {portalFile && (
+                            <div className="flex items-center justify-between bg-surface/50 border border-border/85 rounded-lg p-2.5 m-3 max-w-sm animate-fadeIn text-xs text-text-primary">
+                              <div className="flex items-center space-x-2">
+                                <FileCheck className="h-4 w-4 text-accent animate-pulse" />
+                                <span className="font-semibold truncate max-w-[200px]">{portalFile.name}</span>
+                                <span className="text-[10px] text-text-muted">({(portalFile.size / 1024).toFixed(1)} KB)</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPortalFile(null);
+                                  if (portalFileInputRef.current) portalFileInputRef.current.value = "";
+                                }}
+                                className="p-1 rounded-md text-text-muted hover:text-danger hover:bg-danger/10 transition-colors"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
                           )}
-                        >
-                          <input
-                            type="text"
-                            placeholder="Add a reply to this ticket..."
-                            value={replyText}
-                            onChange={(e) => setReplyText(e.target.value)}
-                            disabled={sendReplyMutation.isPending}
-                            className={cn(
-                              "flex-grow h-10 rounded-xl border px-3 text-xs transition-all focus:outline-none focus:ring-2 focus:ring-primary/20",
-                              isDarkMode
-                                ? "bg-[#1d1f2d] border-slate-800 text-white focus:border-primary"
-                                : "bg-background border-border text-text-primary focus:border-primary"
-                            )}
-                          />
-                          <Button
-                            type="submit"
-                            variant="primary"
-                            disabled={!replyText.trim() || sendReplyMutation.isPending}
-                            className="h-10 px-4 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs flex items-center space-x-1 shadow-md shadow-primary/10"
+
+                          <form
+                            onSubmit={handleSendReply}
+                            className="p-4 flex items-center space-x-3"
                           >
-                            {sendReplyMutation.isPending ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <>
-                                <Send className="h-3.5 w-3.5" />
-                                <span className="hidden sm:inline">Send</span>
-                              </>
-                            )}
-                          </Button>
-                        </form>
+                            <input
+                              type="file"
+                              ref={portalFileInputRef}
+                              onChange={(e) => {
+                                if (e.target.files && e.target.files.length > 0) {
+                                  setPortalFile(e.target.files[0]);
+                                }
+                              }}
+                              className="hidden"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => portalFileInputRef.current?.click()}
+                              disabled={sendReplyMutation.isPending || uploadAttachmentMutation.isPending}
+                              className="p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-background/50 transition-colors"
+                              title="Attach file"
+                            >
+                              {uploadAttachmentMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin text-accent" />
+                              ) : (
+                                <Paperclip className="h-4.5 w-4.5" />
+                              )}
+                            </button>
+
+                            <input
+                              type="text"
+                              placeholder="Add a reply to this ticket..."
+                              value={replyText}
+                              onChange={(e) => setReplyText(e.target.value)}
+                              disabled={sendReplyMutation.isPending || uploadAttachmentMutation.isPending}
+                              className={cn(
+                                "flex-grow h-10 rounded-xl border px-3 text-xs transition-all focus:outline-none focus:ring-2 focus:ring-primary/20",
+                                isDarkMode
+                                  ? "bg-[#1d1f2d] border-slate-800 text-white focus:border-primary"
+                                  : "bg-background border-border text-text-primary focus:border-primary"
+                              )}
+                            />
+                            <Button
+                              type="submit"
+                              variant="primary"
+                              disabled={(!replyText.trim() && !portalFile) || sendReplyMutation.isPending || uploadAttachmentMutation.isPending}
+                              className="h-10 px-4 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs flex items-center space-x-1 shadow-md shadow-primary/10"
+                            >
+                              {sendReplyMutation.isPending || uploadAttachmentMutation.isPending ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <>
+                                  <Send className="h-3.5 w-3.5" />
+                                  <span className="hidden sm:inline">Send</span>
+                                </>
+                              )}
+                            </Button>
+                          </form>
+                        </div>
                       ) : (
                         /* Informational Locked Banner when Resolved */
                         <div

@@ -1,6 +1,6 @@
 import secrets
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, Request, UploadFile, File, Form
 from app.repositories.ticket_repo import TicketRepository
 from app.repositories.message_repo import MessageRepository
 from app.repositories.user_repo import UserRepository
@@ -878,6 +878,7 @@ async def upload_ticket_attachment(
     request: Request,
     ticket_id: str,
     file: UploadFile = File(...),
+    caption: Optional[str] = Form(None),
     current_user: TokenData = Depends(get_current_user),
     ticket_repo: TicketRepository = Depends(),
     message_repo: MessageRepository = Depends(),
@@ -930,12 +931,156 @@ async def upload_ticket_attachment(
         sender_role = current_user.role
         db_sender = "agent" if sender_role in ["admin", "agent"] else "customer"
         
+        message_content = f"[Attachment: {filename} ({file_url})]"
+        if caption:
+            message_content += f"\n\n{caption}"
+            
         message_data = {
             "ticket_id": ticket_id,
             "sender": db_sender,
-            "content": f"[Attachment: {filename} ({file_url})]"
+            "content": message_content
         }
         await message_repo.create_message(message_data)
+
+        return ResponseEnvelope[dict](
+            success=True,
+            data={"filename": filename, "url": file_url},
+            message="Attachment uploaded successfully."
+        )
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Attachment upload error: {str(e)}"
+        )
+
+@router.post("/portal/{ticket_id}/attachments", response_model=ResponseEnvelope[dict])
+@limiter.limit("5/minute")
+async def portal_upload_ticket_attachment(
+    request: Request,
+    ticket_id: str,
+    email: str = Form(...),
+    file: UploadFile = File(...),
+    caption: Optional[str] = Form(None),
+    ticket_repo: TicketRepository = Depends(),
+    message_repo: MessageRepository = Depends(),
+    user_repo: UserRepository = Depends(),
+    brand_repo: BrandRepository = Depends(),
+    ai_service: AIService = Depends(),
+    sentiment_service: SentimentService = Depends(),
+    s3_service: S3Service = Depends()
+) -> ResponseEnvelope[dict]:
+    """
+    Uploads an attachment file for a ticket in the portal context (verified by email).
+    """
+    _ensure_passwordless_portal_enabled()
+    try:
+        # 1. Retrieve user by email
+        user = await user_repo.get_user_by_email(email)
+        if not user:
+            raise HTTPException(status_code=404, detail="Customer profile not found.")
+
+        # 2. Fetch ticket and check permissions
+        ticket = await ticket_repo.get_ticket_by_id(ticket_id)
+        if not ticket:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Ticket not found."
+            )
+            
+        if ticket.get("customer_id") != user["id"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied."
+            )
+
+        # 3. Read file content and metadata
+        content = await file.read()
+        filename = _validate_attachment(
+            filename=file.filename,
+            content=content,
+            content_type=file.content_type or "application/octet-stream"
+        )
+        content_type = file.content_type or "application/octet-stream"
+
+        # 4. Upload file via S3Service
+        file_url = await s3_service.upload_file(content, filename, content_type)
+
+        # 5. Insert message to log attachment upload
+        message_content = f"[Attachment: {filename} ({file_url})]"
+        if caption:
+            message_content += f"\n\n{caption}"
+            
+        message_data = {
+            "ticket_id": ticket_id,
+            "sender": "customer",
+            "content": message_content
+        }
+        await message_repo.create_message(message_data)
+
+        # 6. Update ticket's last updated timestamp
+        await ticket_repo.update_ticket(ticket_id, {
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        })
+
+        # 7. AI Auto-Reply if caption was provided
+        if caption:
+            try:
+                brand_id = ticket.get("brand_id")
+                brand = await brand_repo.get_brand_by_id(brand_id) if brand_id else None
+                if brand:
+                    # Sentiment & Intent analysis
+                    sentiment = await sentiment_service.analyze_sentiment(caption)
+                    intent = await ai_service.detect_intent(caption)
+
+                    # Priority rules
+                    current_priority = ticket.get("priority", "low")
+                    new_priority = current_priority
+                    if sentiment == "negative" or intent == "refund":
+                        new_priority = "high"
+                    if sentiment == "negative" and intent == "refund":
+                        new_priority = "urgent"
+
+                    # Check if escalation is needed
+                    should_escalate = sentiment == "negative" or intent in ["complaint", "refund"]
+
+                    if should_escalate:
+                        escalation_reply = (
+                            "I have escalated your ticket to our customer support representatives. "
+                            "An agent has been alerted and will respond shortly."
+                        )
+                        await message_repo.create_message({
+                            "ticket_id": ticket_id,
+                            "sender": "ai",
+                            "content": escalation_reply
+                        })
+                        await ticket_repo.update_ticket(ticket_id, {
+                            "priority": new_priority,
+                            "sentiment": sentiment,
+                            "status": "open",
+                            "updated_at": datetime.now(timezone.utc).isoformat()
+                        })
+                    else:
+                        history = await message_repo.list_messages_by_ticket(ticket_id)
+                        if _should_trigger_ai(history):
+                            reply = await ai_service.generate_reply(
+                                customer_message=caption,
+                                brand_context=brand,
+                                message_history=history[:-1] if len(history) > 1 else []
+                            )
+                            await message_repo.create_message({
+                                "ticket_id": ticket_id,
+                                "sender": "ai",
+                                "content": reply
+                            })
+                            await ticket_repo.update_ticket(ticket_id, {
+                                "sentiment": sentiment,
+                                "updated_at": datetime.now(timezone.utc).isoformat()
+                            })
+            except Exception:
+                # AI replies are best-effort
+                pass
 
         return ResponseEnvelope[dict](
             success=True,

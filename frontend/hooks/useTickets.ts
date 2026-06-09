@@ -132,10 +132,13 @@ export function useTickets() {
   });
 
   // Upload attachment
-  const uploadAttachmentMutation = useMutation<ApiResponse<{ filename: string; url: string }>, Error, { ticketId: string; file: File }>({
-    mutationFn: async ({ ticketId, file }) => {
+  const uploadAttachmentMutation = useMutation<ApiResponse<{ filename: string; url: string }>, Error, { ticketId: string; file: File; caption?: string }>({
+    mutationFn: async ({ ticketId, file, caption }) => {
       const formData = new FormData();
       formData.append("file", file);
+      if (caption) {
+        formData.append("caption", caption);
+      }
       const response = await api.post(API_ROUTES.tickets.attachments(ticketId), formData, {
         headers: {
           "Content-Type": "multipart/form-data",

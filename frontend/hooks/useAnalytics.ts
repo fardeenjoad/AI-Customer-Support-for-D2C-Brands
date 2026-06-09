@@ -84,6 +84,18 @@ export function useAnalytics() {
     });
   };
 
+  // Fetch all support agents list
+  const useListAgents = () => {
+    return useQuery<ApiResponse<{ id: string; email: string; full_name?: string }[]>, Error>({
+      queryKey: ["admin-agents"],
+      queryFn: async () => {
+        const response = await api.get("/admin/agents");
+        return response.data;
+      },
+    });
+  };
+
+
   // Fetch details for a single brand
   const useBrandDetail = (brandId: string) => {
     return useQuery<ApiResponse<Brand>, Error>({
@@ -164,6 +176,7 @@ export function useAnalytics() {
     useGetAnalytics,
     useGetAlerts,
     useBrands,
+    useListAgents,
     useBrandDetail,
     createBrand: createBrandMutation.mutateAsync,
     isCreatingBrand: createBrandMutation.isPending,
