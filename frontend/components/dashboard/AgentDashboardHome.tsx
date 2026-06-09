@@ -280,7 +280,7 @@ export default function AgentDashboardHome() {
             </h2>
           </div>
           <p className="text-xs text-text-muted">
-            Welcome to your Agent Console. Let's resolve some issues and deliver outstanding support.
+            Welcome to your Agent Console. Let&apos;s resolve some issues and deliver outstanding support.
           </p>
         </div>
 
@@ -450,7 +450,7 @@ export default function AgentDashboardHome() {
                       <div className="space-y-1">
                         <h4 className="text-sm font-bold text-text-primary">Inbox Zero Achieved!</h4>
                         <p className="text-xs text-text-muted max-w-sm">
-                          You don't have any pending tickets assigned to you. Review the unassigned inbox to take new chats.
+                          You don&apos;t have any pending tickets assigned to you. Review the unassigned inbox to take new chats.
                         </p>
                       </div>
                     </motion.div>

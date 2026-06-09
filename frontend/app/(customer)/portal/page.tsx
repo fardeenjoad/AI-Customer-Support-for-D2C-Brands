@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect, useRef, useMemo, Suspense } from "react";
@@ -838,6 +839,7 @@ function CustomerPortalContent() {
                                             {isImage ? (
                                               <div className="flex flex-col space-y-1.5 mt-1 max-w-xs sm:max-w-sm rounded-lg overflow-hidden border border-black/10 bg-black/5">
                                                 <a href={url} target="_blank" rel="noopener noreferrer" className="block relative aspect-video bg-black/20">
+                                                  {/* eslint-disable-next-line @next/next/no-img-element */}
                                                   <img
                                                     src={url}
                                                     alt={filename}
