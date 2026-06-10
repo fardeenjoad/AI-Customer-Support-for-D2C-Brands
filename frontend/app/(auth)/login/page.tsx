@@ -1,13 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as zod from "zod";
+import { LifeBuoy, KeyRound, Mail, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Terminal, KeyRound, Mail } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 const loginSchema = zod.object({
   email: zod.string().min(1, "Email is required").email("Invalid email address"),
@@ -17,7 +20,13 @@ const loginSchema = zod.object({
 type LoginFormData = zod.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const { login, isLoggingIn } = useAuth();
+  const router = useRouter();
+  const { login, isLoggingIn, isRedirecting } = useAuth();
+
+  useEffect(() => {
+    router.prefetch("/dashboard");
+    router.prefetch("/portal");
+  }, [router]);
 
   const {
     register,
@@ -35,90 +44,101 @@ export default function LoginPage() {
     login(data);
   };
 
-  return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 radial-bg relative">
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-
-      <div className="flex items-center space-x-2.5 mb-8 select-none">
-        <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shadow-glow">
-          <Terminal className="h-5 w-5 text-glow" />
-        </div>
-        <span className="font-bold text-text-primary text-base font-heading tracking-wider">
-          RESOLVE<span className="text-accent">IQ</span>
-        </span>
+  if (isRedirecting) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 p-6">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <p className="text-xs font-medium text-text-muted">Opening your workspace...</p>
       </div>
+    );
+  }
 
-      <Card className="w-full max-w-md animate-scaleUp z-10">
-        <CardHeader className="text-center">
-          <CardTitle className="text-xl font-bold font-heading">
-            Welcome Back
-          </CardTitle>
-          <CardDescription>
-            Enter your credentials to access the ResolveIQ workstation
-          </CardDescription>
-        </CardHeader>
-        
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4 text-left">
-            <div className="space-y-1.5">
-              <label className="text-[10px] text-text-muted font-bold tracking-wider uppercase pl-0.5">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3.5 h-4 w-4 text-text-muted" />
-                <input
+  return (
+    <div className="min-h-screen bg-background p-6">
+      <div className="mx-auto grid min-h-[calc(100vh-3rem)] max-w-6xl grid-cols-1 items-center gap-8 lg:grid-cols-[1fr_440px]">
+        <section className="hidden lg:block">
+          <Link href="/" className="inline-flex items-center space-x-2.5 mb-10">
+            <div className="w-9 h-9 rounded-lg bg-primary text-white flex items-center justify-center shadow-sm">
+              <LifeBuoy className="h-5 w-5" />
+            </div>
+            <span className="font-extrabold text-text-primary text-base tracking-wide">
+              RESOLVE<span className="text-primary">IQ</span>
+            </span>
+          </Link>
+
+          <div className="max-w-xl">
+            <div className="inline-flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-primary mb-5">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Secure agent workspace
+            </div>
+            <h1 className="text-4xl font-extrabold tracking-tight text-text-primary">
+              Sign in to manage queues, conversations, and escalations.
+            </h1>
+            <p className="mt-4 text-sm leading-relaxed text-text-muted">
+              ResolveIQ gives support teams a clean command center for AI-assisted replies, sentiment routing, and customer follow-up.
+            </p>
+          </div>
+        </section>
+
+        <div className="w-full">
+          <div className="lg:hidden flex items-center justify-center space-x-2.5 mb-8">
+            <div className="w-9 h-9 rounded-lg bg-primary text-white flex items-center justify-center shadow-sm">
+              <LifeBuoy className="h-5 w-5" />
+            </div>
+            <span className="font-extrabold text-text-primary text-base tracking-wide">
+              RESOLVE<span className="text-primary">IQ</span>
+            </span>
+          </div>
+
+          <Card className="w-full animate-scaleUp">
+            <CardHeader>
+              <CardTitle className="text-xl font-bold">Welcome back</CardTitle>
+              <CardDescription>
+                Enter your credentials to access the ResolveIQ workspace.
+              </CardDescription>
+            </CardHeader>
+
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <CardContent className="space-y-4 text-left">
+                <Input
                   type="email"
+                  label="Email Address"
                   placeholder="name@brand.com"
-                  className="flex h-10 w-full rounded-lg border border-border bg-surface pl-10 pr-3 py-2 text-sm text-text-primary placeholder-text-muted transition-all duration-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50"
+                  icon={<Mail />}
+                  error={errors.email?.message}
                   {...register("email")}
                 />
-              </div>
-              {errors.email && (
-                <span className="text-xs text-danger font-medium pl-0.5">
-                  {errors.email.message}
-                </span>
-              )}
-            </div>
 
-            <div className="space-y-1.5">
-              <label className="text-[10px] text-text-muted font-bold tracking-wider uppercase pl-0.5">
-                Password
-              </label>
-              <div className="relative">
-                <KeyRound className="absolute left-3 top-3.5 h-4 w-4 text-text-muted" />
-                <input
+                <Input
                   type="password"
-                  placeholder="••••••••"
-                  className="flex h-10 w-full rounded-lg border border-border bg-surface pl-10 pr-3 py-2 text-sm text-text-primary placeholder-text-muted transition-all duration-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50"
+                  label="Password"
+                  placeholder="Enter password"
+                  icon={<KeyRound />}
+                  error={errors.password?.message}
                   {...register("password")}
                 />
-              </div>
-              {errors.password && (
-                <span className="text-xs text-danger font-medium pl-0.5">
-                  {errors.password.message}
-                </span>
-              )}
-            </div>
-          </CardContent>
+              </CardContent>
 
-          <CardFooter className="flex flex-col space-y-4">
-            <Button
-              type="submit"
-              variant="primary"
-              className="w-full h-10 font-medium"
-              isLoading={isLoggingIn}
-            >
-              Sign In
-            </Button>
-            <div className="text-xs text-text-muted text-center">
-              Don&apos;t have an account?{" "}
-              <Link href="/register" className="text-primary hover:text-accent font-semibold transition-colors">
-                Create Account
-              </Link>
-            </div>
-          </CardFooter>
-        </form>
-      </Card>
+              <CardFooter className="flex flex-col space-y-4">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="w-full h-10"
+                  isLoading={isLoggingIn}
+                >
+                  Sign In
+                </Button>
+                <div className="text-xs text-text-muted text-center">
+                  Don&apos;t have an account?{" "}
+                  <Link href="/register" className="text-primary hover:underline font-semibold transition-colors">
+                    Create Account
+                  </Link>
+                </div>
+              </CardFooter>
+            </form>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

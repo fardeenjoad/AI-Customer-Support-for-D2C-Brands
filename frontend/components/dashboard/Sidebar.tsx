@@ -12,14 +12,12 @@ import {
   Ticket,
   MessageSquare,
   BarChart3,
-  Building2,
   Settings,
   LogOut,
-  Terminal,
+  LifeBuoy,
   ChevronLeft,
   ChevronRight,
   HelpCircle,
-  Zap,
   BookOpen,
 } from "lucide-react";
 
@@ -93,7 +91,7 @@ export default function Sidebar() {
                   "flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition-all duration-200 group relative",
                   isActive
                     ? "bg-primary/10 text-primary border-l-[3px] border-primary"
-                    : "text-text-muted hover:text-text-primary hover:bg-surface/50"
+                    : "text-text-muted hover:text-text-primary hover:bg-surface-light"
                 )}
                 title={isSidebarCollapsed ? item.label : undefined}
               >
@@ -102,7 +100,7 @@ export default function Sidebar() {
                     className={cn(
                       "h-4.5 w-4.5 transition-all shrink-0",
                       isActive 
-                        ? "text-primary text-glow-cyan" 
+                        ? "text-primary" 
                         : "text-text-muted group-hover:text-text-primary group-hover:scale-105"
                     )}
                   />
@@ -135,13 +133,12 @@ export default function Sidebar() {
       {/* Brand Header */}
       <div className="h-16 border-b border-border flex items-center px-4 justify-between">
         <div className="flex items-center space-x-2.5 overflow-hidden">
-          <div className="w-8.5 h-8.5 rounded-lg bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shadow-glow shrink-0">
-            <Terminal className="h-4 w-4 text-glow" />
+          <div className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shadow-sm shrink-0">
+            <LifeBuoy className="h-4 w-4" />
           </div>
           {!isSidebarCollapsed && (
-            <span className="font-extrabold text-text-primary text-sm font-heading tracking-wider flex items-center whitespace-nowrap">
-              RESOLVE<span className="text-accent">IQ</span>
-              <Zap className="h-3 w-3 text-accent ml-1 fill-accent" />
+            <span className="font-extrabold text-text-primary text-sm font-heading tracking-wide flex items-center whitespace-nowrap">
+              RESOLVE<span className="text-primary">IQ</span>
             </span>
           )}
         </div>
@@ -166,9 +163,9 @@ export default function Sidebar() {
       </nav>
 
       {/* Profile and Logout Section */}
-      <div className="p-3 border-t border-border bg-surface-dark bg-opacity-40">
+      <div className="p-3 border-t border-border bg-surface-light">
         <div className={cn(
-          "flex items-center justify-between p-2 rounded-lg bg-surface/50 border border-border/50",
+          "flex items-center justify-between p-2 rounded-lg bg-white border border-border",
           isSidebarCollapsed ? "flex-col space-y-3 p-1" : "flex-row"
         )}>
           <div className="flex items-center space-x-2.5 overflow-hidden w-full">

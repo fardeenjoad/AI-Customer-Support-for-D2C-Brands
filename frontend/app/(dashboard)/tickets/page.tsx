@@ -1,87 +1,88 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { useTickets } from "@/hooks/useTickets";
-import { useAnalytics } from "@/hooks/useAnalytics";
-import TicketTable from "@/components/tickets/TicketTable";
-import { TicketFilters } from "@/components/tickets/TicketFilters";
-import { CreateTicketPanel } from "@/components/tickets/CreateTicketPanel";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import {
   ChevronLeft,
   ChevronRight,
-  RefreshCw,
-  Plus,
   Download,
-  Ticket,
+  Plus,
+  RefreshCw,
+  Ticket as TicketIcon,
 } from "lucide-react";
+import { useTickets } from "@/hooks/useTickets";
+import TicketTable from "@/components/tickets/TicketTable";
+import { TicketFilters } from "@/components/tickets/TicketFilters";
+import { CreateTicketPanel } from "@/components/tickets/CreateTicketPanel";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
-// ── Fade-up animation ──
 const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
+  hidden: { opacity: 0, y: 10 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] },
+    transition: { duration: 0.25, ease: "easeOut" },
   },
 };
 
 const stagger = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.08 } },
+  visible: { transition: { staggerChildren: 0.05 } },
 };
 
 export default function TicketsPage() {
-  // ── Filters ──
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState("all");
   const [priority, setPriority] = useState("all");
   const [brand, setBrand] = useState("all");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-
-  // ── Create panel ──
   const [showCreatePanel, setShowCreatePanel] = useState(false);
-
-  // ── Bulk selection ──
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // ── Debounced search ──
+  const { useListTickets, updateTicket, deleteTicket } = useTickets();
+  const { data: ticketsRes, isLoading, refetch, isRefetching } = useListTickets({
+    page,
+    limit: 10,
+    status_filter: status,
+    priority_filter: priority,
+    brand_filter: brand,
+  });
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
       setPage(1);
-    }, 350);
+    }, 250);
     return () => clearTimeout(timer);
   }, [search]);
 
-  // ── Data hooks ──
-  const { useListTickets, updateTicket, deleteTicket } = useTickets();
-  const { data: ticketsRes, isLoading, refetch, isRefetching } =
-    useListTickets({
-      page,
-      limit: 10,
-      status_filter: status,
-      priority_filter: priority,
-      brand_filter: brand,
-    });
+  const ticketsList = useMemo(() => ticketsRes?.data ?? [], [ticketsRes?.data]);
 
-  const ticketsList = ticketsRes?.data || [];
-
-  // Client-side search filter
-  const filteredTickets = ticketsList.filter((ticket) => {
-    if (!debouncedSearch) return true;
+  const filteredTickets = useMemo(() => {
+    if (!debouncedSearch.trim()) return ticketsList;
     const term = debouncedSearch.toLowerCase();
-    return (
-      ticket.subject?.toLowerCase().includes(term) ||
-      ticket.id?.toLowerCase().includes(term)
-    );
-  });
+    return ticketsList.filter((ticket) => {
+      return (
+        ticket.subject?.toLowerCase().includes(term) ||
+        ticket.id?.toLowerCase().includes(term) ||
+        ticket.customer_id?.toLowerCase().includes(term)
+      );
+    });
+  }, [debouncedSearch, ticketsList]);
 
-  // ── Reset ──
+  const counts = useMemo(() => {
+    return {
+      all: ticketsList.length,
+      open: ticketsList.filter((ticket) => ticket.status === "open").length,
+      pending: ticketsList.filter((ticket) => ticket.status === "in_progress").length,
+      resolved: ticketsList.filter((ticket) => ticket.status === "resolved").length,
+      escalated: ticketsList.filter((ticket) => ticket.priority === "urgent").length,
+    };
+  }, [ticketsList]);
+
   const handleResetFilters = () => {
     setStatus("all");
     setPriority("all");
@@ -92,58 +93,35 @@ export default function TicketsPage() {
     setSelectedIds(new Set());
   };
 
-  // ── Bulk Actions ──
   const handleBulkStatusChange = async (ids: string[], newStatus: string) => {
-    try {
-      await Promise.all(
-        ids.map((id) => updateTicket({ ticketId: id, status: newStatus }))
-      );
-      setSelectedIds(new Set());
-      toast.success(
-        `${ids.length} ticket${ids.length > 1 ? "s" : ""} updated to ${newStatus.replace("_", " ")}`
-      );
-    } catch {
-      // handled in hook
-    }
+    await Promise.all(ids.map((id) => updateTicket({ ticketId: id, status: newStatus })));
+    setSelectedIds(new Set());
+    toast.success(`${ids.length} ticket${ids.length === 1 ? "" : "s"} updated.`);
   };
 
   const handleBulkDelete = async (ids: string[]) => {
-    try {
-      await Promise.all(ids.map((id) => deleteTicket(id)));
-      setSelectedIds(new Set());
-      toast.success(
-        `${ids.length} ticket${ids.length > 1 ? "s" : ""} archived`
-      );
-    } catch {
-      // handled in hook
-    }
+    await Promise.all(ids.map((id) => deleteTicket(id)));
+    setSelectedIds(new Set());
+    toast.success(`${ids.length} ticket${ids.length === 1 ? "" : "s"} archived.`);
   };
 
-  // ── CSV Export ──
   const handleExportCSV = () => {
     if (filteredTickets.length === 0) {
       toast.error("No tickets to export.");
       return;
     }
-    const headers = [
-      "ID",
-      "Subject",
-      "Status",
-      "Priority",
-      "Sentiment",
-      "Agent",
-      "Created",
-    ];
-    const rows = filteredTickets.map((t) => [
-      t.id,
-      `"${(t.subject || "").replace(/"/g, '""')}"`,
-      t.status,
-      t.priority,
-      t.sentiment,
-      t.assigned_agent_id || "Unassigned",
-      t.created_at,
+
+    const headers = ["ID", "Subject", "Status", "Priority", "Sentiment", "Agent", "Created"];
+    const rows = filteredTickets.map((ticket) => [
+      ticket.id,
+      `"${(ticket.subject || "").replace(/"/g, '""')}"`,
+      ticket.status,
+      ticket.priority,
+      ticket.sentiment,
+      ticket.assigned_agent_id || "Unassigned",
+      ticket.created_at,
     ]);
-    const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const csv = [headers.join(","), ...rows.map((row) => row.join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -151,113 +129,104 @@ export default function TicketsPage() {
     link.download = `resolveiq-tickets-${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
     URL.revokeObjectURL(url);
-    toast.success("CSV exported successfully!");
+    toast.success("CSV exported.");
   };
-
-  // ── Derived counts ──
-  const openCount = ticketsList.filter((t) => t.status === "open").length;
-  const inProgressCount = ticketsList.filter(
-    (t) => t.status === "in_progress"
-  ).length;
 
   return (
     <motion.div
-      className="space-y-6 text-left pb-6"
+      className="space-y-6 pb-6 text-left"
       variants={stagger}
       initial="hidden"
       animate="visible"
     >
-      {/* ── Header ── */}
       <motion.div
         variants={fadeUp}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+        className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"
       >
-        <div className="flex flex-col space-y-1">
-          <div className="flex items-center space-x-3">
-            <div className="h-8 w-1 rounded-full gradient-primary" />
-            <h2 className="text-2xl font-bold font-heading text-text-primary tracking-tight">
-              Support Queue
-            </h2>
+        <div>
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white">
+              <TicketIcon className="h-4 w-4" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-text-primary">
+                Tickets
+              </h1>
+              <p className="text-xs text-text-muted">
+                Search, filter, bulk update, and resolve customer support threads.
+              </p>
+            </div>
           </div>
-          <div className="flex items-center space-x-3 pl-[1.4rem]">
-            <p className="text-xs text-text-muted">
-              Manage, filter, and resolve customer support tickets.
-            </p>
-            {!isLoading && (
-              <div className="flex items-center space-x-2">
-                <Badge variant="info" className="text-[10px]">
-                  {openCount} open
-                </Badge>
-                <Badge variant="warning" className="text-[10px]">
-                  {inProgressCount} in progress
-                </Badge>
-              </div>
-            )}
-          </div>
+          {!isLoading && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Badge variant="warning">{counts.open} open</Badge>
+              <Badge variant="default">{counts.pending} pending</Badge>
+              <Badge variant="success">{counts.resolved} resolved</Badge>
+              <Badge variant="danger">{counts.escalated} escalated</Badge>
+            </div>
+          )}
         </div>
-        <div className="flex items-center space-x-2.5">
+
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="secondary"
             size="sm"
             onClick={() => refetch()}
-            className="h-9 px-3 flex items-center space-x-1.5"
+            className="h-9"
             disabled={isLoading || isRefetching}
           >
-            <RefreshCw
-              className={`h-3.5 w-3.5 ${isRefetching ? "animate-spin" : ""}`}
-            />
-            <span className="text-xs max-sm:hidden">Refresh</span>
+            <RefreshCw className={`h-3.5 w-3.5 ${isRefetching ? "animate-spin" : ""}`} />
+            Refresh
           </Button>
           <Button
             variant="secondary"
             size="sm"
             onClick={handleExportCSV}
-            className="h-9 px-3 flex items-center space-x-1.5"
+            className="h-9"
             disabled={isLoading}
           >
             <Download className="h-3.5 w-3.5" />
-            <span className="text-xs max-sm:hidden">Export</span>
+            Export
           </Button>
           <Button
             variant="primary"
             size="sm"
             onClick={() => setShowCreatePanel(true)}
-            className="h-9 px-4 flex items-center space-x-1.5 shadow-glow"
+            className="h-9"
           >
             <Plus className="h-4 w-4" />
-            <span className="text-xs font-semibold">Create Ticket</span>
+            Create ticket
           </Button>
         </div>
       </motion.div>
 
-      {/* ── Filters ── */}
       <motion.div variants={fadeUp}>
         <TicketFilters
           status={status}
           priority={priority}
           brand={brand}
           search={search}
-          onStatusChange={(val) => {
-            setStatus(val);
+          onStatusChange={(value) => {
+            setStatus(value);
             setPage(1);
             setSelectedIds(new Set());
           }}
-          onPriorityChange={(val) => {
-            setPriority(val);
+          onPriorityChange={(value) => {
+            setPriority(value);
             setPage(1);
             setSelectedIds(new Set());
           }}
-          onBrandChange={(val) => {
-            setBrand(val);
+          onBrandChange={(value) => {
+            setBrand(value);
             setPage(1);
             setSelectedIds(new Set());
           }}
           onSearchChange={setSearch}
           onReset={handleResetFilters}
+          statusCounts={counts}
         />
       </motion.div>
 
-      {/* ── Table ── */}
       <motion.div variants={fadeUp}>
         <TicketTable
           tickets={filteredTickets}
@@ -269,79 +238,50 @@ export default function TicketsPage() {
         />
       </motion.div>
 
-      {/* ── Pagination ── */}
       <motion.div
         variants={fadeUp}
-        className="flex items-center justify-between border-t border-border/40 pt-4"
+        className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between"
       >
-        <div className="flex items-center space-x-2">
-          <Ticket className="h-3.5 w-3.5 text-text-muted" />
-          <span className="text-xs text-text-muted">
-            Page <span className="text-text-primary font-bold">{page}</span>
-            {" · "}
-            <span className="text-text-primary font-semibold">
-              {filteredTickets.length}
-            </span>{" "}
+        <div className="flex items-center gap-2 text-xs text-text-muted">
+          <TicketIcon className="h-3.5 w-3.5" />
+          <span>
+            Page <span className="font-semibold text-text-primary">{page}</span> -{" "}
+            <span className="font-semibold text-text-primary">{filteredTickets.length}</span>{" "}
             results
           </span>
         </div>
-        <div className="flex space-x-2">
+        <div className="flex gap-2">
           <Button
             type="button"
             variant="secondary"
             size="sm"
             onClick={() => {
-              setPage((p) => Math.max(p - 1, 1));
+              setPage((value) => Math.max(value - 1, 1));
               setSelectedIds(new Set());
             }}
             disabled={page === 1 || isLoading}
-            className="h-8 px-3 flex items-center space-x-1"
+            className="h-8"
           >
             <ChevronLeft className="h-4 w-4" />
-            <span className="text-[11px] max-sm:hidden">Previous</span>
+            Previous
           </Button>
-
-          {/* Page Indicators */}
-          <div className="hidden sm:flex items-center space-x-1">
-            {Array.from(
-              { length: Math.min(5, Math.max(page + 1, 3)) },
-              (_, i) => i + 1
-            ).map((p) => (
-              <button
-                key={p}
-                onClick={() => {
-                  setPage(p);
-                  setSelectedIds(new Set());
-                }}
-                className={`h-8 w-8 rounded-md text-xs font-semibold transition-all ${
-                  p === page
-                    ? "gradient-primary text-text-primary shadow-glow"
-                    : "bg-surface border border-border text-text-muted hover:text-text-primary hover:border-primary/40"
-                }`}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
-
           <Button
             type="button"
             variant="secondary"
             size="sm"
             onClick={() => {
-              setPage((p) => p + 1);
+              setPage((value) => value + 1);
               setSelectedIds(new Set());
             }}
             disabled={ticketsList.length < 10 || isLoading}
-            className="h-8 px-3 flex items-center space-x-1"
+            className="h-8"
           >
-            <span className="text-[11px] max-sm:hidden">Next</span>
+            Next
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
       </motion.div>
 
-      {/* ── Create Ticket Panel ── */}
       <CreateTicketPanel
         isOpen={showCreatePanel}
         onClose={() => setShowCreatePanel(false)}

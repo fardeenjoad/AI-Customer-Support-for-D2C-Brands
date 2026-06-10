@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
-import { User, Shield, Building, Moon, Info } from "lucide-react";
+import { User, Shield, Building, Sun, Info } from "lucide-react";
 import { toast } from "sonner";
 
 export default function SettingsPage() {
@@ -74,7 +74,7 @@ export default function SettingsPage() {
                 <div className="flex flex-col space-y-1.5">
                   <label className="text-[10px] text-text-muted font-bold tracking-wider uppercase pl-0.5">Brand Scope</label>
                   <div className="flex items-center space-x-2 bg-surface/50 border border-border p-2.5 rounded-lg">
-                    <Building className="h-4 w-4 text-accent" />
+                    <Building className="h-4 w-4 text-primary" />
                     <span className="text-xs text-text-primary font-mono">{user.brand_id}</span>
                   </div>
                 </div>
@@ -126,13 +126,13 @@ export default function SettingsPage() {
               <div className="flex flex-col space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2 text-xs text-text-primary">
-                    <Moon className="h-4.5 w-4.5 text-accent" />
-                    <span className="font-semibold">Dark Theme</span>
+                    <Sun className="h-4.5 w-4.5 text-primary" />
+                    <span className="font-semibold">Light Theme</span>
                   </div>
                   <Badge variant="default">Always On</Badge>
                 </div>
                 <p className="text-[10px] text-text-muted leading-relaxed">
-                  ResolveIQ operates strictly in Dark Mode First to protect agents&apos; eyes during long workstation queues.
+                  ResolveIQ operates strictly in Light Mode to ensure a crisp, simple, and professional workspace environment.
                 </p>
               </div>
 

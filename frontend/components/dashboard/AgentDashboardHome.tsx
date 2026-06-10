@@ -8,11 +8,13 @@ import { StatCard } from "@/components/dashboard/StatCard";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   getPriorityColor,
   getStatusColor,
   formatRelativeTime,
   truncateText,
+  cn,
 } from "@/lib/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -212,7 +214,7 @@ export default function AgentDashboardHome() {
       counts[bName] = (counts[bName] || 0) + 1;
     });
 
-    const colors = ["#0F766E", "#14B8A6", "#f59e0b", "#ef4444", "#6B7678"];
+    const colors = ["#0F766E", "#0d645e", "#14958c", "#4db5ad", "#99d9d4"];
     return Object.entries(counts).map(([name, value], i) => ({
       name,
       value,
@@ -227,10 +229,10 @@ export default function AgentDashboardHome() {
       if (counts[t.priority] !== undefined) counts[t.priority]++;
     });
     return [
-      { name: "Urgent", count: counts.urgent, fill: "#ef4444" },
-      { name: "High", count: counts.high, fill: "#f97316" },
-      { name: "Medium", count: counts.medium, fill: "#f59e0b" },
-      { name: "Low", count: counts.low, fill: "#14B8A6" },
+      { name: "Urgent", count: counts.urgent, fill: "#0F766E" },
+      { name: "High", count: counts.high, fill: "#14958c" },
+      { name: "Medium", count: counts.medium, fill: "#4db5ad" },
+      { name: "Low", count: counts.low, fill: "#99d9d4" },
     ];
   }, [assignedTickets]);
 
@@ -274,7 +276,7 @@ export default function AgentDashboardHome() {
 
         <div className="space-y-1.5 z-10">
           <div className="flex items-center space-x-2">
-            <Sparkles className="h-5 w-5 text-accent animate-pulse" />
+            <Sparkles className="h-5 w-5 text-primary animate-pulse" />
             <h2 className="text-2xl font-bold font-heading text-text-primary tracking-tight">
               {greeting}, {user?.email.split("@")[0]}!
             </h2>
@@ -392,189 +394,201 @@ export default function AgentDashboardHome() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* LEFT TWO COLUMNS: Tickets Queue Workspace */}
         <div className="lg:col-span-2 space-y-5">
-          <Card className="relative overflow-hidden min-h-[450px] flex flex-col">
-            <div className="flex items-center justify-between border-b border-border/80 px-6 py-4">
-              <div className="flex space-x-4">
-                <button
-                  onClick={() => setActiveTab("assigned")}
-                  className={`text-xs font-bold uppercase tracking-wider pb-2 border-b-2 transition-all duration-200 ${
-                    activeTab === "assigned"
-                      ? "border-primary text-primary"
-                      : "border-transparent text-text-muted hover:text-text-primary"
-                  }`}
-                >
-                  My Active Queue ({stats.totalAssigned})
-                </button>
-                <button
-                  onClick={() => setActiveTab("unassigned")}
-                  className={`text-xs font-bold uppercase tracking-wider pb-2 border-b-2 transition-all duration-200 ${
-                    activeTab === "unassigned"
-                      ? "border-primary text-primary"
-                      : "border-transparent text-text-muted hover:text-text-primary"
-                  }`}
-                >
-                  Unassigned Inbox ({stats.totalUnassigned})
-                </button>
-              </div>
+          <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as "assigned" | "unassigned")} className="w-full flex flex-col flex-1">
+            <Card className="relative overflow-hidden min-h-[450px] flex flex-col">
+              <div className="flex items-center justify-between border-b border-border/80 px-6 py-4">
+                <TabsList className="bg-transparent border-0 p-0 space-x-4">
+                  <TabsTrigger
+                    value="assigned"
+                    className={cn(
+                      "text-xs font-bold uppercase tracking-wider pb-2 rounded-none border-b-2 px-0 bg-transparent shadow-none",
+                      activeTab === "assigned"
+                        ? "border-primary text-primary"
+                        : "border-transparent text-text-muted hover:text-text-primary"
+                    )}
+                  >
+                    My Active Queue ({stats.totalAssigned})
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="unassigned"
+                    className={cn(
+                      "text-xs font-bold uppercase tracking-wider pb-2 rounded-none border-b-2 px-0 bg-transparent shadow-none",
+                      activeTab === "unassigned"
+                        ? "border-primary text-primary"
+                        : "border-transparent text-text-muted hover:text-text-primary"
+                    )}
+                  >
+                    Unassigned Inbox ({stats.totalUnassigned})
+                  </TabsTrigger>
+                </TabsList>
 
-              <div className="flex items-center space-x-2">
-                <Button
-                  onClick={() => refetch()}
-                  variant="outline"
-                  size="sm"
-                  className="h-8 px-2.5 text-[10px] font-bold uppercase tracking-wider flex items-center space-x-1"
-                >
-                  <Clock className="h-3.5 w-3.5" />
-                  <span>Refresh</span>
-                </Button>
-              </div>
-            </div>
-
-            <div className="flex-1 p-6 overflow-y-auto max-h-[500px] scrollbar-thin">
-              {isLoadingTickets ? (
-                <div className="flex flex-col items-center justify-center py-20 space-y-4">
-                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                  <p className="text-xs text-text-muted">Fetching workstation backlog...</p>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    onClick={() => refetch()}
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-2.5 text-[10px] font-bold uppercase tracking-wider flex items-center space-x-1"
+                  >
+                    <Clock className="h-3.5 w-3.5" />
+                    <span>Refresh</span>
+                  </Button>
                 </div>
-              ) : activeTab === "assigned" ? (
-                <AnimatePresence mode="popLayout">
-                  {assignedTickets.length === 0 ? (
-                    <motion.div
-                      className="flex flex-col items-center justify-center py-16 text-center space-y-4"
-                      initial={{ scale: 0.95, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                    >
-                      <div className="w-14 h-14 rounded-full bg-success/10 text-success flex items-center justify-center border border-success/20">
-                        <CheckCircle2 className="h-6 w-6" />
-                      </div>
-                      <div className="space-y-1">
-                        <h4 className="text-sm font-bold text-text-primary">Inbox Zero Achieved!</h4>
-                        <p className="text-xs text-text-muted max-w-sm">
-                          You don&apos;t have any pending tickets assigned to you. Review the unassigned inbox to take new chats.
-                        </p>
-                      </div>
-                    </motion.div>
-                  ) : (
-                    <div className="space-y-3">
-                      {assignedTickets.map((ticket, idx) => (
-                        <motion.div
-                          key={ticket.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: idx * 0.04, duration: 0.3 }}
-                          className="p-4 rounded-xl border border-border/60 hover:border-primary/30 bg-surface/30 hover:bg-surface/60 transition-all group flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                        >
-                          <div className="space-y-2 min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <Badge className="bg-primary/10 text-primary border border-primary/20">
-                                {brandMap[ticket.brand_id] || "D2C Brand"}
-                              </Badge>
-                              <Badge className={getPriorityColor(ticket.priority)}>
-                                {ticket.priority}
-                              </Badge>
-                              <Badge className={getStatusColor(ticket.status)}>
-                                {ticket.status.replace("_", " ")}
-                              </Badge>
+              </div>
+
+              <div className="flex-1 p-6 overflow-y-auto max-h-[500px] scrollbar-thin">
+                {isLoadingTickets ? (
+                  <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                    <p className="text-xs text-text-muted">Fetching workstation backlog...</p>
+                  </div>
+                ) : (
+                  <>
+                    <TabsContent value="assigned" className="mt-0">
+                      <AnimatePresence mode="popLayout">
+                        {assignedTickets.length === 0 ? (
+                          <motion.div
+                            className="flex flex-col items-center justify-center py-16 text-center space-y-4"
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                          >
+                            <div className="w-14 h-14 rounded-full bg-primary/5 text-primary flex items-center justify-center border border-primary/20">
+                              <CheckCircle2 className="h-6 w-6" />
                             </div>
-                            <div>
-                              <h4 className="text-sm font-bold text-text-primary group-hover:text-primary transition-colors truncate max-w-md">
-                                {ticket.subject}
-                              </h4>
-                              <p className="text-[10px] text-text-muted mt-1 flex items-center space-x-1.5">
-                                <span>Updated {formatRelativeTime(ticket.updated_at)}</span>
-                                <span>•</span>
-                                <span className="capitalize">Sentiment: {ticket.sentiment || "Neutral"}</span>
+                            <div className="space-y-1">
+                              <h4 className="text-sm font-bold text-text-primary">Inbox Zero Achieved!</h4>
+                              <p className="text-xs text-text-muted max-w-sm">
+                                You don&apos;t have any pending tickets assigned to you. Review the unassigned inbox to take new chats.
                               </p>
                             </div>
-                          </div>
-
-                          <div className="shrink-0 flex items-center justify-end sm:justify-start">
-                            <Link href={`/tickets/${ticket.id}`} passHref>
-                              <Button
-                                size="sm"
-                                className="h-9 px-4 text-xs font-semibold gap-1.5 gradient-primary hover:shadow-glow"
+                          </motion.div>
+                        ) : (
+                          <div className="space-y-3">
+                            {assignedTickets.map((ticket, idx) => (
+                              <motion.div
+                                key={ticket.id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: idx * 0.04, duration: 0.3 }}
+                                className="p-4 rounded-xl border border-border/60 hover:border-primary/30 bg-surface/30 hover:bg-surface/60 transition-all group flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                               >
-                                <span>Resume Chat</span>
-                                <ArrowRight className="h-3.5 w-3.5" />
-                              </Button>
-                            </Link>
+                                <div className="space-y-2 min-w-0 flex-1">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <Badge className="bg-primary/5 text-primary border border-primary/20">
+                                      {brandMap[ticket.brand_id] || "D2C Brand"}
+                                    </Badge>
+                                    <Badge className={getPriorityColor(ticket.priority)}>
+                                      {ticket.priority}
+                                    </Badge>
+                                    <Badge className={getStatusColor(ticket.status)}>
+                                      {ticket.status.replace("_", " ")}
+                                    </Badge>
+                                  </div>
+                                  <div>
+                                    <h4 className="text-sm font-bold text-text-primary group-hover:text-primary transition-colors truncate max-w-md">
+                                      {ticket.subject}
+                                    </h4>
+                                    <p className="text-[10px] text-text-muted mt-1 flex items-center space-x-1.5">
+                                      <span>Updated {formatRelativeTime(ticket.updated_at)}</span>
+                                      <span>•</span>
+                                      <span className="capitalize">Sentiment: {ticket.sentiment || "Neutral"}</span>
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="shrink-0 flex items-center justify-end sm:justify-start">
+                                  <Link href={`/tickets/${ticket.id}`} passHref>
+                                    <Button
+                                      size="sm"
+                                      variant="primary"
+                                      className="h-9 px-4 text-xs font-semibold gap-1.5 hover:shadow-glow"
+                                    >
+                                      <span>Resume Chat</span>
+                                      <ArrowRight className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </Link>
+                                </div>
+                              </motion.div>
+                            ))}
                           </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  )}
-                </AnimatePresence>
-              ) : (
-                <AnimatePresence mode="popLayout">
-                  {unassignedTickets.length === 0 ? (
-                    <motion.div
-                      className="flex flex-col items-center justify-center py-16 text-center space-y-4"
-                      initial={{ scale: 0.95, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                    >
-                      <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
-                        <CheckCircle2 className="h-6 w-6 text-glow" />
-                      </div>
-                      <div className="space-y-1">
-                        <h4 className="text-sm font-bold text-text-primary">All Queues Clear</h4>
-                        <p className="text-xs text-text-muted max-w-sm">
-                          There are no unassigned customer support requests currently waiting for your brands.
-                        </p>
-                      </div>
-                    </motion.div>
-                  ) : (
-                    <div className="space-y-3">
-                      {unassignedTickets.map((ticket, idx) => (
-                        <motion.div
-                          key={ticket.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: idx * 0.04, duration: 0.3 }}
-                          className="p-4 rounded-xl border border-border/60 hover:border-accent/30 bg-surface/30 hover:bg-surface/60 transition-all group flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                        >
-                          <div className="space-y-2 min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <Badge className="bg-primary/10 text-primary border border-primary/20">
-                                {brandMap[ticket.brand_id] || "D2C Brand"}
-                              </Badge>
-                              <Badge className={getPriorityColor(ticket.priority)}>
-                                {ticket.priority}
-                              </Badge>
-                              <Badge className={getStatusColor(ticket.status)}>
-                                Unassigned
-                              </Badge>
+                        )}
+                      </AnimatePresence>
+                    </TabsContent>
+
+                    <TabsContent value="unassigned" className="mt-0">
+                      <AnimatePresence mode="popLayout">
+                        {unassignedTickets.length === 0 ? (
+                          <motion.div
+                            className="flex flex-col items-center justify-center py-16 text-center space-y-4"
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                          >
+                            <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
+                              <CheckCircle2 className="h-6 w-6 text-glow" />
                             </div>
-                            <div>
-                              <h4 className="text-sm font-bold text-text-primary group-hover:text-accent transition-colors truncate max-w-md">
-                                {ticket.subject}
-                              </h4>
-                              <p className="text-[10px] text-text-muted mt-1 flex items-center space-x-1.5">
-                                <span>Opened {formatRelativeTime(ticket.created_at)}</span>
-                                <span>•</span>
-                                <span className="capitalize">Sentiment: {ticket.sentiment || "Neutral"}</span>
+                            <div className="space-y-1">
+                              <h4 className="text-sm font-bold text-text-primary">All Queues Clear</h4>
+                              <p className="text-xs text-text-muted max-w-sm">
+                                There are no unassigned customer support requests currently waiting for your brands.
                               </p>
                             </div>
-                          </div>
+                          </motion.div>
+                        ) : (
+                          <div className="space-y-3">
+                            {unassignedTickets.map((ticket, idx) => (
+                              <motion.div
+                                key={ticket.id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: idx * 0.04, duration: 0.3 }}
+                                className="p-4 rounded-xl border border-border/60 hover:border-primary/30 bg-surface/30 hover:bg-surface/60 transition-all group flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                              >
+                                <div className="space-y-2 min-w-0 flex-1">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <Badge className="bg-primary/5 text-primary border border-primary/20">
+                                      {brandMap[ticket.brand_id] || "D2C Brand"}
+                                    </Badge>
+                                    <Badge className={getPriorityColor(ticket.priority)}>
+                                      {ticket.priority}
+                                    </Badge>
+                                    <Badge className={getStatusColor(ticket.status)}>
+                                      Unassigned
+                                    </Badge>
+                                  </div>
+                                  <div>
+                                    <h4 className="text-sm font-bold text-text-primary group-hover:text-primary transition-colors truncate max-w-md">
+                                      {ticket.subject}
+                                    </h4>
+                                    <p className="text-[10px] text-text-muted mt-1 flex items-center space-x-1.5">
+                                      <span>Opened {formatRelativeTime(ticket.created_at)}</span>
+                                      <span>•</span>
+                                      <span className="capitalize">Sentiment: {ticket.sentiment || "Neutral"}</span>
+                                    </p>
+                                  </div>
+                                </div>
 
-                          <div className="shrink-0 flex items-center justify-end sm:justify-start">
-                            <Button
-                              onClick={() => handleClaimTicket(ticket.id)}
-                              disabled={isUpdating}
-                              size="sm"
-                              className="h-9 px-4 text-xs font-semibold gap-1.5 bg-accent hover:bg-accent/90 border border-accent/20 text-white"
-                            >
-                              <span>Claim & Chat</span>
-                              <UserPlus className="h-3.5 w-3.5" />
-                            </Button>
+                                <div className="shrink-0 flex items-center justify-end sm:justify-start">
+                                  <Button
+                                    onClick={() => handleClaimTicket(ticket.id)}
+                                    disabled={isUpdating}
+                                    size="sm"
+                                    variant="primary"
+                                    className="h-9 px-4 text-xs font-semibold gap-1.5 hover:shadow-glow"
+                                  >
+                                    <span>Claim & Chat</span>
+                                    <UserPlus className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              </motion.div>
+                            ))}
                           </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  )}
-                </AnimatePresence>
-              )}
-            </div>
-          </Card>
+                        )}
+                      </AnimatePresence>
+                    </TabsContent>
+                  </>
+                )}
+              </div>
+            </Card>
+          </Tabs>
         </div>
 
         {/* RIGHT COLUMN: Performance charts, Agent Agenda, Checklist */}
@@ -623,8 +637,8 @@ export default function AgentDashboardHome() {
                   <AreaChart data={weeklyResolvedData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                     <defs>
                       <linearGradient id="resolvedGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#14B8A6" stopOpacity={0.2} />
-                        <stop offset="100%" stopColor="#14B8A6" stopOpacity={0} />
+                        <stop offset="0%" stopColor="#0F766E" stopOpacity={0.2} />
+                        <stop offset="100%" stopColor="#0F766E" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#E5E0D8" vertical={false} />
@@ -634,11 +648,11 @@ export default function AgentDashboardHome() {
                     <Area
                       type="monotone"
                       dataKey="resolved"
-                      stroke="#14B8A6"
+                      stroke="#0F766E"
                       strokeWidth={2}
                       fillOpacity={1}
                       fill="url(#resolvedGradient)"
-                      dot={{ r: 3, fill: "#14B8A6" }}
+                      dot={{ r: 3, fill: "#0F766E" }}
                     />
                   </AreaChart>
                 </ResponsiveContainer>

@@ -5,6 +5,7 @@ import { useAuthStore, User } from "@/store/authStore";
 import { API_ROUTES } from "@/lib/constants";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -21,6 +22,7 @@ export function useAuth() {
   const queryClient = useQueryClient();
   const router = useRouter();
   const { login: setLoginStore, logout: setLogoutStore, user } = useAuthStore();
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Fetch active user profile
   const useMe = (enabled = false) => {
@@ -39,6 +41,9 @@ export function useAuth() {
     mutationFn: async (credentials) => {
       const response = await api.post(API_ROUTES.auth.login, credentials);
       return response.data;
+    },
+    onMutate: () => {
+      setIsRedirecting(false);
     },
     onSuccess: async (res) => {
       const token = res.data.access_token;
@@ -59,17 +64,18 @@ export function useAuth() {
         toast.success("Welcome back to ResolveIQ!");
 
         // Redirect based on role
-        if (meUser.role === "customer") {
-          router.push("/portal");
-        } else {
-          router.push("/dashboard");
-        }
+        const destination = meUser.role === "customer" ? "/portal" : "/dashboard";
+        setIsRedirecting(true);
+        router.prefetch(destination);
+        router.replace(destination);
       } catch (err: any) {
         localStorage.removeItem("resolveiq-auth");
+        setIsRedirecting(false);
         toast.error("Failed to retrieve user profile after login.");
       }
     },
     onError: (error: any) => {
+      setIsRedirecting(false);
       toast.error(getApiErrorMessage(error, "Invalid email or password."));
     },
   });
@@ -100,7 +106,8 @@ export function useAuth() {
   return {
     useMe,
     login: loginMutation.mutate,
-    isLoggingIn: loginMutation.isPending,
+    isLoggingIn: loginMutation.isPending || isRedirecting,
+    isRedirecting,
     register: registerMutation.mutate,
     isRegistering: registerMutation.isPending,
     logout,

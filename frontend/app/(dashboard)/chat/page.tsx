@@ -12,16 +12,22 @@ import { Inbox, MessageSquarePlus } from "lucide-react";
 export default function LiveChatPage() {
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   
-  const { useListTickets, useTicketDetails, updateTicket, isUpdating, uploadAttachment } = useTickets();
+  const { useListTickets, useTicketDetails, updateTicket, isUpdating, uploadAttachment, sendAgentReply } = useTickets();
   
-  const { data: ticketsRes, isLoading: isLoadingList, refetch: refetchList } = useListTickets({
-    limit: 100,
-    status_filter: "open",
-  });
+  const { data: ticketsRes, isLoading: isLoadingList, refetch: refetchList } = useListTickets(
+    {
+      limit: 100,
+      status_filter: "open",
+    },
+    { refetchInterval: 3000 }
+  );
   
   const activeTickets = ticketsRes?.data || [];
 
-  const { data: detailRes, isLoading: isLoadingDetails, refetch: refetchDetails } = useTicketDetails(selectedTicketId || "");
+  const { data: detailRes, isLoading: isLoadingDetails, refetch: refetchDetails } = useTicketDetails(
+    selectedTicketId || "",
+    { refetchInterval: 3000 }
+  );
   const selectedTicket = detailRes?.data?.ticket;
   const dbMessages = detailRes?.data?.messages;
 
@@ -37,16 +43,11 @@ export default function LiveChatPage() {
 
   const handleSendMessage = async (content: string) => {
     if (!selectedTicketId) return;
-
-    const newAgentMsg: Message = {
-      id: `msg_mock_${Date.now()}`,
-      ticket_id: selectedTicketId,
-      sender: "agent",
-      content,
-      created_at: new Date().toISOString(),
-    };
-    
-    setMessages((prev) => [...prev, newAgentMsg]);
+    try {
+      await sendAgentReply({ ticketId: selectedTicketId, content });
+    } catch (error) {
+      console.error("Failed to send agent reply", error);
+    }
   };
 
   const handleUploadFile = async (file: File) => {

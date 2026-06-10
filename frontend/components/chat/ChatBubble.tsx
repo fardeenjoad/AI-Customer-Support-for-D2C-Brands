@@ -18,8 +18,8 @@ export function ChatBubble({ message }: ChatBubbleProps) {
   return (
     <div
       className={cn("flex w-full items-start space-x-3 my-4 animate-fadeIn", {
-        "justify-end flex-row-reverse space-x-reverse": isCustomer,
-        "justify-start": !isCustomer,
+        "flex-row-reverse space-x-reverse justify-start": isAgent,
+        "justify-start": !isAgent,
       })}
     >
       {/* Sender Avatar */}
@@ -43,8 +43,8 @@ export function ChatBubble({ message }: ChatBubbleProps) {
         {/* Name and time metadata */}
         <div
           className={cn("flex items-center space-x-2 text-[10px] text-text-muted", {
-            "justify-end": isCustomer,
-            "justify-start": !isCustomer,
+            "justify-end": isAgent,
+            "justify-start": !isAgent,
           })}
         >
           <span className="font-semibold uppercase tracking-wider">
@@ -58,7 +58,7 @@ export function ChatBubble({ message }: ChatBubbleProps) {
         <div
           className={cn("px-4 py-2.5 rounded-2xl border text-sm leading-relaxed shadow-sm break-words whitespace-pre-wrap", {
             "bg-surface border-border text-text-primary rounded-tl-none": isCustomer,
-            "bg-accent/10 border-accent/30 text-text-primary rounded-tr-none text-glow-cyan": isAI,
+            "bg-accent/10 border-accent/30 text-text-primary rounded-tl-none text-glow-cyan": isAI,
             "bg-primary/10 border-primary/30 text-text-primary rounded-tr-none text-glow": isAgent,
           })}
         >

@@ -1,8 +1,20 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
+import { motion } from "framer-motion";
+import {
+  ArrowDown,
+  ArrowRight,
+  ArrowUp,
+  ArrowUpDown,
+  Inbox,
+  MoreHorizontal,
+  RefreshCw,
+  Trash2,
+  UserCheck,
+} from "lucide-react";
 import api from "@/lib/axios";
 import { Ticket } from "@/hooks/useTickets";
 import {
@@ -16,33 +28,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  getPriorityColor,
-  getStatusColor,
-  getSentimentColor,
+  cn,
   formatDate,
+  getPriorityColor,
+  getSentimentColor,
+  getStatusColor,
   truncateText,
 } from "@/lib/utils";
-import {
-  ArrowRight,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  UserCheck,
-  Inbox,
-  Trash2,
-  RefreshCw,
-  MoreHorizontal,
-} from "lucide-react";
-import { motion } from "framer-motion";
 
-// ── Sentiment Emoji Map ──
-const SENTIMENT_EMOJI: Record<string, string> = {
-  positive: "😊",
-  neutral: "😐",
-  negative: "😡",
-};
-
-// ── Sort Types ──
 type SortField = "subject" | "status" | "priority" | "sentiment" | "created_at";
 type SortDirection = "asc" | "desc";
 
@@ -59,7 +52,12 @@ const SENTIMENT_ORDER: Record<string, number> = {
   negative: 2,
 };
 
-// ── Props ──
+const SENTIMENT_DOT_COLOR: Record<string, string> = {
+  positive: "bg-emerald-500",
+  neutral: "bg-slate-400",
+  negative: "bg-red-500",
+};
+
 interface TicketTableProps {
   tickets: Ticket[];
   isLoading?: boolean;
@@ -70,39 +68,36 @@ interface TicketTableProps {
   onBulkStatusChange?: (ids: string[], status: string) => void;
 }
 
-// ── Skeleton ──
+function statusLabel(status: string) {
+  if (status === "in_progress") return "pending";
+  return status?.replace("_", " ") || "open";
+}
+
+function priorityLabel(priority: string) {
+  if (priority === "urgent") return "escalated";
+  return priority || "low";
+}
+
 function TableSkeleton() {
   return (
-    <div className="border border-border/60 rounded-xl overflow-hidden bg-surface/20">
+    <div className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
       <div className="animate-pulse">
-        {/* Header */}
-        <div className="flex items-center px-4 py-3.5 bg-surface/30 border-b border-border gap-4">
-          <div className="w-5 h-5 rounded bg-border/40 shrink-0" />
-          {[120, 60, 60, 60, 80, 60, 50].map((w, i) => (
-            <div
-              key={i}
-              className="h-3.5 rounded bg-border/40"
-              style={{ width: w, flexShrink: 0 }}
-            />
+        <div className="grid grid-cols-[40px_1.8fr_0.7fr_0.7fr_0.7fr_0.8fr_0.7fr_88px] gap-4 border-b border-border bg-slate-50 px-4 py-3.5">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <div key={index} className="h-3 rounded bg-slate-200" />
           ))}
         </div>
-        {/* Rows */}
-        {Array.from({ length: 6 }).map((_, r) => (
+        {Array.from({ length: 7 }).map((_, row) => (
           <div
-            key={r}
-            className="flex items-center px-4 py-4 border-b border-border/40 gap-4"
+            key={row}
+            className="grid grid-cols-[40px_1.8fr_0.7fr_0.7fr_0.7fr_0.8fr_0.7fr_88px] gap-4 border-b border-border/70 px-4 py-4 last:border-b-0"
           >
-            <div className="w-5 h-5 rounded bg-border/30 shrink-0" />
-            <div className="flex-1 space-y-1.5">
-              <div className="h-3.5 w-3/4 rounded bg-border/30" />
-              <div className="h-2.5 w-1/3 rounded bg-border/20" />
-            </div>
-            <div className="h-5 w-16 rounded-full bg-border/25" />
-            <div className="h-5 w-14 rounded-full bg-border/25" />
-            <div className="h-4 w-12 rounded bg-border/20" />
-            <div className="h-3.5 w-20 rounded bg-border/20" />
-            <div className="h-4 w-16 rounded bg-border/25" />
-            <div className="h-7 w-14 rounded bg-border/20" />
+            {Array.from({ length: 8 }).map((_, index) => (
+              <div
+                key={index}
+                className={cn("h-3 rounded bg-slate-100", index === 1 && "h-8")}
+              />
+            ))}
           </div>
         ))}
       </div>
@@ -110,24 +105,20 @@ function TableSkeleton() {
   );
 }
 
-// ── Empty State ──
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center p-16 text-center border border-dashed border-border/60 rounded-xl bg-surface/10">
-      <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-surface border border-border/80 text-text-muted mb-5 shadow-sm">
-        <Inbox className="h-7 w-7" />
+    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-white p-14 text-center shadow-sm">
+      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-slate-50 text-text-muted">
+        <Inbox className="h-6 w-6" />
       </div>
-      <h4 className="text-sm font-semibold text-text-primary mb-1.5 font-heading">
-        No tickets found
-      </h4>
-      <p className="text-xs text-text-muted max-w-[280px]">
-        The queue is empty. No tickets match the current filters.
+      <h4 className="text-sm font-semibold text-text-primary">No tickets found</h4>
+      <p className="mt-1 max-w-[280px] text-xs text-text-muted">
+        No conversations match the current filters.
       </p>
     </div>
   );
 }
 
-// ── Sortable Header ──
 function SortableHead({
   label,
   field,
@@ -139,14 +130,16 @@ function SortableHead({
   field: SortField;
   currentSort: SortField | null;
   currentDir: SortDirection;
-  onSort: (f: SortField) => void;
+  onSort: (field: SortField) => void;
 }) {
   const isActive = currentSort === field;
+
   return (
     <TableHead>
       <button
+        type="button"
         onClick={() => onSort(field)}
-        className="flex items-center space-x-1.5 group hover:text-text-primary transition-colors"
+        className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-text-muted transition-colors hover:text-text-primary"
       >
         <span>{label}</span>
         {isActive ? (
@@ -156,14 +149,13 @@ function SortableHead({
             <ArrowDown className="h-3 w-3 text-primary" />
           )
         ) : (
-          <ArrowUpDown className="h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity" />
+          <ArrowUpDown className="h-3 w-3 opacity-35" />
         )}
       </button>
     </TableHead>
   );
 }
 
-// ── Main Component ──
 export default function TicketTable({
   tickets,
   isLoading,
@@ -174,8 +166,13 @@ export default function TicketTable({
   onBulkStatusChange,
 }: TicketTableProps) {
   const queryClient = useQueryClient();
+  const [internalSelected, setInternalSelected] = useState<Set<string>>(new Set());
+  const [sortField, setSortField] = useState<SortField | null>("created_at");
+  const [sortDir, setSortDir] = useState<SortDirection>("desc");
 
-  // Prefetch ticket details on hover
+  const selectedIds = externalSelectedIds ?? internalSelected;
+  const setSelectedIds = onSelectionChange ?? setInternalSelected;
+
   const prefetchTicket = (ticketId: string) => {
     queryClient.prefetchQuery({
       queryKey: ["ticket", ticketId],
@@ -187,69 +184,50 @@ export default function TicketTable({
     });
   };
 
-  // Internal selection state (if not controlled externally)
-  const [internalSelected, setInternalSelected] = useState<Set<string>>(
-    new Set()
-  );
-  const selectedIds = externalSelectedIds ?? internalSelected;
-  const setSelectedIds = onSelectionChange ?? setInternalSelected;
-
-  // Sorting
-  const [sortField, setSortField] = useState<SortField | null>(null);
-  const [sortDir, setSortDir] = useState<SortDirection>("desc");
-
   const handleSort = (field: SortField) => {
     if (sortField === field) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortField(field);
-      setSortDir("desc");
+      setSortDir((direction) => (direction === "asc" ? "desc" : "asc"));
+      return;
     }
+
+    setSortField(field);
+    setSortDir("desc");
   };
 
   const sortedTickets = useMemo(() => {
     if (!sortField) return tickets;
+
     return [...tickets].sort((a, b) => {
-      let cmp = 0;
+      let comparison = 0;
+
       switch (sortField) {
         case "subject":
-          cmp = (a.subject || "").localeCompare(b.subject || "");
+          comparison = (a.subject || "").localeCompare(b.subject || "");
           break;
         case "status":
-          cmp = (a.status || "").localeCompare(b.status || "");
+          comparison = (a.status || "").localeCompare(b.status || "");
           break;
         case "priority":
-          cmp =
-            (PRIORITY_ORDER[a.priority] ?? 0) -
-            (PRIORITY_ORDER[b.priority] ?? 0);
+          comparison = (PRIORITY_ORDER[a.priority] ?? 0) - (PRIORITY_ORDER[b.priority] ?? 0);
           break;
         case "sentiment":
-          cmp =
-            (SENTIMENT_ORDER[a.sentiment] ?? 1) -
-            (SENTIMENT_ORDER[b.sentiment] ?? 1);
+          comparison = (SENTIMENT_ORDER[a.sentiment] ?? 1) - (SENTIMENT_ORDER[b.sentiment] ?? 1);
           break;
         case "created_at":
-          cmp =
-            new Date(a.created_at).getTime() -
-            new Date(b.created_at).getTime();
+          comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
           break;
       }
-      return sortDir === "asc" ? cmp : -cmp;
+
+      return sortDir === "asc" ? comparison : -comparison;
     });
   }, [tickets, sortField, sortDir]);
 
-  // Selection
   const allSelected =
-    sortedTickets.length > 0 &&
-    sortedTickets.every((t) => selectedIds.has(t.id));
-  const someSelected = sortedTickets.some((t) => selectedIds.has(t.id));
+    sortedTickets.length > 0 && sortedTickets.every((ticket) => selectedIds.has(ticket.id));
+  const someSelected = sortedTickets.some((ticket) => selectedIds.has(ticket.id));
 
   const toggleAll = () => {
-    if (allSelected) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(sortedTickets.map((t) => t.id)));
-    }
+    setSelectedIds(allSelected ? new Set() : new Set(sortedTickets.map((ticket) => ticket.id)));
   };
 
   const toggleOne = (id: string) => {
@@ -262,7 +240,6 @@ export default function TicketTable({
     setSelectedIds(next);
   };
 
-  // ── Renders ──
   if (isLoading) return <TableSkeleton />;
   if (!tickets || tickets.length === 0) return <EmptyState />;
 
@@ -270,39 +247,34 @@ export default function TicketTable({
 
   return (
     <div className="space-y-3">
-      {/* Bulk Actions Bar */}
       {bulkCount > 0 && (
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass-card rounded-xl px-4 py-3 flex items-center justify-between border border-primary/20 bg-primary/5"
+          className="flex flex-col gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
         >
           <span className="text-xs font-bold text-primary">
             {bulkCount} ticket{bulkCount > 1 ? "s" : ""} selected
           </span>
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center gap-2">
             {onBulkStatusChange && (
               <>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() =>
-                    onBulkStatusChange(Array.from(selectedIds), "in_progress")
-                  }
+                  onClick={() => onBulkStatusChange(Array.from(selectedIds), "in_progress")}
                   className="h-7 text-[11px] text-text-muted hover:text-primary"
                 >
-                  <RefreshCw className="h-3 w-3 mr-1" />
-                  Mark In Progress
+                  <RefreshCw className="h-3 w-3" />
+                  Mark pending
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() =>
-                    onBulkStatusChange(Array.from(selectedIds), "resolved")
-                  }
-                  className="h-7 text-[11px] text-text-muted hover:text-success"
+                  onClick={() => onBulkStatusChange(Array.from(selectedIds), "resolved")}
+                  className="h-7 text-[11px] text-text-muted hover:text-emerald-700"
                 >
-                  Mark Resolved
+                  Mark resolved
                 </Button>
               </>
             )}
@@ -311,10 +283,10 @@ export default function TicketTable({
                 variant="ghost"
                 size="sm"
                 onClick={() => onBulkDelete(Array.from(selectedIds))}
-                className="h-7 text-[11px] text-text-muted hover:text-danger hover:bg-danger/10"
+                className="h-7 text-[11px] text-text-muted hover:bg-red-50 hover:text-red-700"
               >
-                <Trash2 className="h-3 w-3 mr-1" />
-                Delete
+                <Trash2 className="h-3 w-3" />
+                Archive
               </Button>
             )}
             <Button
@@ -329,164 +301,146 @@ export default function TicketTable({
         </motion.div>
       )}
 
-      {/* Table */}
-      <div className="border border-border/60 rounded-xl overflow-hidden bg-surface/20">
+      <div className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
         <Table>
-          <TableHeader>
-            <TableRow>
-              {/* Checkbox */}
+          <TableHeader className="bg-slate-50">
+            <TableRow className="hover:bg-slate-50">
               <TableHead className="w-12">
                 <input
                   type="checkbox"
                   checked={allSelected}
-                  ref={(el) => {
-                    if (el) el.indeterminate = someSelected && !allSelected;
+                  ref={(element) => {
+                    if (element) element.indeterminate = someSelected && !allSelected;
                   }}
                   onChange={toggleAll}
-                  className="w-4 h-4 rounded border-border bg-surface text-primary focus:ring-primary focus:ring-offset-0 cursor-pointer accent-primary"
+                  className="h-4 w-4 cursor-pointer rounded border-border accent-primary"
                 />
               </TableHead>
-              <SortableHead
-                label="Subject"
-                field="subject"
-                currentSort={sortField}
-                currentDir={sortDir}
-                onSort={handleSort}
-              />
-              <SortableHead
-                label="Status"
-                field="status"
-                currentSort={sortField}
-                currentDir={sortDir}
-                onSort={handleSort}
-              />
-              <SortableHead
-                label="Priority"
-                field="priority"
-                currentSort={sortField}
-                currentDir={sortDir}
-                onSort={handleSort}
-              />
-              <SortableHead
-                label="Sentiment"
-                field="sentiment"
-                currentSort={sortField}
-                currentDir={sortDir}
-                onSort={handleSort}
-              />
-              <SortableHead
-                label="Created"
-                field="created_at"
-                currentSort={sortField}
-                currentDir={sortDir}
-                onSort={handleSort}
-              />
-              <TableHead>Agent</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <SortableHead label="Conversation" field="subject" currentSort={sortField} currentDir={sortDir} onSort={handleSort} />
+              <SortableHead label="Status" field="status" currentSort={sortField} currentDir={sortDir} onSort={handleSort} />
+              <SortableHead label="Priority" field="priority" currentSort={sortField} currentDir={sortDir} onSort={handleSort} />
+              <SortableHead label="Sentiment" field="sentiment" currentSort={sortField} currentDir={sortDir} onSort={handleSort} />
+              <SortableHead label="Created" field="created_at" currentSort={sortField} currentDir={sortDir} onSort={handleSort} />
+              <TableHead className="text-[11px] font-bold uppercase tracking-wide text-text-muted">Owner</TableHead>
+              <TableHead className="text-right text-[11px] font-bold uppercase tracking-wide text-text-muted">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedTickets.map((ticket, idx) => {
+            {sortedTickets.map((ticket) => {
               const isSelected = selectedIds.has(ticket.id);
+              const isEscalated = ticket.priority === "urgent";
+
               return (
                 <TableRow
                   key={ticket.id}
                   data-state={isSelected ? "selected" : undefined}
-                  className={isSelected ? "bg-primary/[0.04]" : ""}
+                  className={cn(
+                    "hover:bg-slate-50/80",
+                    isSelected && "bg-primary/[0.04]",
+                    isEscalated && "bg-red-50/30"
+                  )}
                 >
-                  {/* Checkbox */}
                   <TableCell>
                     <input
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => toggleOne(ticket.id)}
-                      className="w-4 h-4 rounded border-border bg-surface text-primary focus:ring-primary focus:ring-offset-0 cursor-pointer accent-primary"
+                      className="h-4 w-4 cursor-pointer rounded border-border accent-primary"
                     />
                   </TableCell>
 
-                  {/* Subject + ID */}
-                  <TableCell className="font-medium max-w-[260px]" onMouseEnter={() => prefetchTicket(ticket.id)}>
-                    <Link
-                      href={`/tickets/${ticket.id}`}
-                      className="hover:text-primary transition-colors block group"
-                    >
-                      <p className="truncate text-sm text-text-primary font-heading group-hover:text-primary transition-colors">
-                        {truncateText(ticket.subject || "No Subject", 45)}
+                  <TableCell
+                    className="min-w-[260px] max-w-[360px]"
+                    onMouseEnter={() => prefetchTicket(ticket.id)}
+                  >
+                    <Link href={`/tickets/${ticket.id}`} className="group block">
+                      <p className="truncate text-sm font-semibold text-text-primary transition-colors group-hover:text-primary">
+                        {truncateText(ticket.subject || "Untitled support request", 58)}
                       </p>
-                      <span className="text-[10px] text-text-muted font-mono block mt-0.5">
-                        #{ticket.id.slice(0, 8)}
+                      <span className="mt-0.5 block text-[10px] font-medium text-text-muted">
+                        #{ticket.id.slice(0, 8)} · customer {ticket.customer_id?.slice(0, 6)}
                       </span>
                     </Link>
                   </TableCell>
 
-                  {/* Status */}
                   <TableCell>
                     <Badge className={getStatusColor(ticket.status)}>
-                      {ticket.status?.replace("_", " ")}
+                      {statusLabel(ticket.status)}
                     </Badge>
                   </TableCell>
 
-                  {/* Priority */}
                   <TableCell>
                     <Badge className={getPriorityColor(ticket.priority)}>
-                      {ticket.priority}
+                      {priorityLabel(ticket.priority)}
                     </Badge>
                   </TableCell>
 
-                  {/* Sentiment */}
                   <TableCell>
                     <span
-                      className={`inline-flex items-center space-x-1.5 text-xs font-semibold px-2 py-0.5 rounded-md ${getSentimentColor(
-                        ticket.sentiment
-                      )}`}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold",
+                        getSentimentColor(ticket.sentiment)
+                      )}
                     >
-                      <span>{SENTIMENT_EMOJI[ticket.sentiment] || "😐"}</span>
+                      <span
+                        className={cn(
+                          "h-1.5 w-1.5 rounded-full",
+                          SENTIMENT_DOT_COLOR[ticket.sentiment] || "bg-slate-400"
+                        )}
+                      />
                       <span className="capitalize">{ticket.sentiment}</span>
                     </span>
                   </TableCell>
 
-                  {/* Created */}
-                  <TableCell className="text-xs text-text-muted whitespace-nowrap">
+                  <TableCell className="whitespace-nowrap text-xs text-text-muted">
                     {formatDate(ticket.created_at, "MMM dd, yyyy")}
                   </TableCell>
 
-                  {/* Agent */}
-                  <TableCell className="text-xs text-text-muted font-mono">
+                  <TableCell className="text-xs text-text-muted">
                     {ticket.assigned_agent_id ? (
-                      <span className="text-text-primary bg-surface border border-border/80 px-2 py-1 rounded-md text-[10px]">
+                      <span className="rounded-md border border-border bg-white px-2 py-1 text-[10px] font-medium text-text-primary">
                         {ticket.assigned_agent_id.slice(0, 8)}
                       </span>
                     ) : (
-                      <span className="text-warning text-[10px] bg-warning/5 border border-warning/15 px-2 py-1 rounded-md">
+                      <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-medium text-slate-600">
                         Unassigned
                       </span>
                     )}
                   </TableCell>
 
-                  {/* Actions */}
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end space-x-1.5">
+                    <div className="flex items-center justify-end gap-1.5">
                       {onAssign && !ticket.assigned_agent_id && (
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => onAssign(ticket.id)}
-                          className="h-7 w-7 p-0 text-text-muted hover:text-primary"
-                          title="Assign Agent"
+                          className="h-8 w-8 p-0 text-text-muted hover:text-primary"
+                          title="Assign agent"
                         >
-                          <UserCheck className="h-3.5 w-3.5" />
+                          <UserCheck className="h-4 w-4" />
                         </Button>
                       )}
                       <Link href={`/tickets/${ticket.id}`}>
                         <Button
                           variant="secondary"
                           size="sm"
-                          className="h-7 px-2.5 text-[11px] text-text-primary flex items-center space-x-1"
+                          className="h-8 px-2.5 text-[11px]"
+                          title="Open ticket"
                         >
-                          <span>View</span>
+                          Open
                           <ArrowRight className="h-3 w-3" />
                         </Button>
                       </Link>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-text-muted"
+                        title="More actions"
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>

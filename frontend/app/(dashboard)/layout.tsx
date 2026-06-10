@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
-import { useUiStore } from "@/store/uiStore";
 import Sidebar from "@/components/dashboard/Sidebar";
 import Topbar from "@/components/dashboard/Topbar";
 import SearchPalette from "@/components/dashboard/SearchPalette";
@@ -15,7 +14,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const pathname = usePathname();
   const { isAuthenticated, user } = useAuthStore();
-  const { theme } = useUiStore();
   const [mounted, setMounted] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
@@ -36,20 +34,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       return;
     }
     
-    // Add theme class to document element on mount
     const root = window.document.documentElement;
-    if (theme === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
+    root.classList.remove("dark");
 
     if (!isAuthenticated) {
       router.replace("/login");
     } else if (user?.role === "customer") {
       router.replace("/portal");
     }
-  }, [isAuthenticated, user, router, theme, mounted]);
+  }, [isAuthenticated, user, router, mounted]);
 
   if (!mounted || !hydrated || !isAuthenticated || user?.role === "customer") {
     return (
@@ -60,7 +53,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-background">
+    <div className="flex h-screen w-screen overflow-hidden bg-background text-text-primary">
       {/* Search Command Palette CMD+K overlay */}
       <SearchPalette />
 
@@ -76,7 +69,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <Topbar />
 
         {/* Content pane */}
-        <main className="flex-1 overflow-y-auto p-6 bg-background/10 relative">
+        <main className="flex-1 overflow-y-auto bg-background p-4 sm:p-6 relative">
           <ErrorBoundary>
             {/* Animated Page Transitions */}
             <AnimatePresence mode="wait">

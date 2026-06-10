@@ -1,5 +1,8 @@
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { Search, RotateCcw } from "lucide-react";
 
 interface TicketFiltersProps {
@@ -12,7 +15,21 @@ interface TicketFiltersProps {
   onBrandChange: (brand: string) => void;
   onSearchChange: (search: string) => void;
   onReset: () => void;
+  statusCounts?: {
+    all?: number;
+    open?: number;
+    pending?: number;
+    resolved?: number;
+    escalated?: number;
+  };
 }
+
+const STATUS_CHIPS = [
+  { value: "all", label: "All", tone: "text-slate-700" },
+  { value: "open", label: "Open", tone: "text-amber-700" },
+  { value: "in_progress", label: "Pending", tone: "text-slate-700" },
+  { value: "resolved", label: "Resolved", tone: "text-emerald-700" },
+] as const;
 
 export function TicketFilters({
   status,
@@ -24,97 +41,101 @@ export function TicketFilters({
   onBrandChange,
   onSearchChange,
   onReset,
+  statusCounts,
 }: TicketFiltersProps) {
-  // Fetch brand configs for brand filters
   const { useBrands } = useAnalytics();
   const { data: brandsRes } = useBrands({ limit: 100 });
   const brands = brandsRes?.data || [];
 
   return (
-    <div className="glass-card rounded-xl p-4 flex flex-wrap gap-4 items-center justify-between border border-border/80 bg-surface/30">
-      {/* Search Input */}
-      <div className="relative flex-1 min-w-[200px]">
-        <Search className="absolute left-3 top-2.5 h-4.5 w-4.5 text-text-muted" />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Filter by subject or ID..."
-          className="w-full bg-surface border border-border rounded-lg pl-10 pr-4 py-2 text-xs text-text-primary placeholder-text-muted focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-        />
-      </div>
+    <section className="rounded-lg border border-border bg-white p-4 shadow-sm">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+        <div className="flex min-w-0 flex-1 flex-col gap-3">
+          <Input
+            type="text"
+            value={search}
+            onChange={(event) => onSearchChange(event.target.value)}
+            placeholder="Search by subject or ticket ID"
+            icon={<Search className="h-4 w-4" />}
+            className="h-10 text-sm"
+          />
 
-      {/* Selectors */}
-      <div className="flex flex-wrap gap-3.5 items-center">
-        {/* Status */}
-        <div className="flex flex-col space-y-1">
-          <label className="text-[10px] text-text-muted font-bold tracking-wider uppercase pl-0.5">
-            Status
-          </label>
-          <select
-            value={status}
-            onChange={(e) => onStatusChange(e.target.value)}
-            className="bg-surface border border-border rounded-lg px-3 py-1.5 text-xs text-text-primary focus:outline-none focus:border-primary transition-colors cursor-pointer"
-          >
-            <option value="all">All Statuses</option>
-            <option value="open">Open</option>
-            <option value="in_progress">In Progress</option>
-            <option value="resolved">Resolved</option>
-          </select>
+          <div className="flex flex-wrap gap-2">
+            {STATUS_CHIPS.map((chip) => {
+              const isActive = status === chip.value;
+              const countKey = chip.value === "in_progress" ? "pending" : chip.value;
+              const count = statusCounts?.[countKey as keyof typeof statusCounts];
+
+              return (
+                <button
+                  key={chip.value}
+                  type="button"
+                  onClick={() => onStatusChange(chip.value)}
+                  className={cn(
+                    "inline-flex h-8 items-center gap-2 rounded-full border px-3 text-xs font-semibold transition-colors",
+                    isActive
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border bg-white text-text-muted hover:border-slate-300 hover:text-text-primary"
+                  )}
+                >
+                  <span className={isActive ? "text-primary" : chip.tone}>{chip.label}</span>
+                  {typeof count === "number" && (
+                    <span
+                      className={cn(
+                        "rounded-full px-1.5 py-0.5 text-[10px]",
+                        isActive ? "bg-white text-primary" : "bg-slate-100 text-slate-600"
+                      )}
+                    >
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Priority */}
-        <div className="flex flex-col space-y-1">
-          <label className="text-[10px] text-text-muted font-bold tracking-wider uppercase pl-0.5">
-            Priority
-          </label>
-          <select
+        <div className="flex flex-wrap items-end gap-3">
+          <Select
+            label="Priority"
             value={priority}
-            onChange={(e) => onPriorityChange(e.target.value)}
-            className="bg-surface border border-border rounded-lg px-3 py-1.5 text-xs text-text-primary focus:outline-none focus:border-primary transition-colors cursor-pointer"
+            onChange={(event) => onPriorityChange(event.target.value)}
+            className="h-10 min-w-[150px] text-xs"
           >
-            <option value="all">All Priorities</option>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
+            <option value="all">All priorities</option>
+            <option value="urgent">Escalated</option>
             <option value="high">High</option>
-            <option value="urgent">Urgent</option>
-          </select>
-        </div>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </Select>
 
-        {/* D2C Brand */}
-        <div className="flex flex-col space-y-1">
-          <label className="text-[10px] text-text-muted font-bold tracking-wider uppercase pl-0.5">
-            D2C Brand
-          </label>
-          <select
+          <Select
+            label="Brand"
             value={brand}
-            onChange={(e) => onBrandChange(e.target.value)}
-            className="bg-surface border border-border rounded-lg px-3 py-1.5 text-xs text-text-primary focus:outline-none focus:border-primary transition-colors cursor-pointer max-w-[160px]"
+            onChange={(event) => onBrandChange(event.target.value)}
+            className="h-10 min-w-[170px] max-w-[220px] text-xs"
           >
-            <option value="all">All Brands</option>
-            {brands.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.brand_name}
+            <option value="all">All brands</option>
+            {brands.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.brand_name}
               </option>
             ))}
-          </select>
-        </div>
+          </Select>
 
-        {/* Reset Trigger */}
-        <div className="flex flex-col justify-end h-[38px] pt-4">
           <Button
             type="button"
             variant="ghost"
             size="sm"
             onClick={onReset}
-            className="h-8 px-2.5 text-text-muted hover:text-danger hover:bg-danger/10 flex items-center space-x-1.5"
-            title="Reset Filters"
+            className="h-10 px-3 text-text-muted hover:bg-slate-100 hover:text-text-primary"
+            title="Reset filters"
           >
             <RotateCcw className="h-3.5 w-3.5" />
-            <span className="text-[11px]">Reset</span>
+            Reset
           </Button>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

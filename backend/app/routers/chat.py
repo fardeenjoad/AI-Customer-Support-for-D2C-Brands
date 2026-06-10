@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from datetime import datetime, timezone
 from app.repositories.ticket_repo import TicketRepository
@@ -129,10 +130,12 @@ async def chat_with_bot(
         # 5. Fetch message thread history for AI context
         history = await message_repo.list_messages_by_ticket(ticket_id)
 
-        # 6. Sentiment & Intent checks
-        sentiment = await sentiment_service.analyze_sentiment(payload.message)
-        intent = await ai_service.detect_intent(payload.message)
-        should_escalate_ai = await ai_service.should_escalate(payload.message, history[:-1])
+        # 6. Sentiment & Intent checks (run concurrently to reduce latency)
+        sentiment, intent, should_escalate_ai = await asyncio.gather(
+            sentiment_service.analyze_sentiment(payload.message),
+            ai_service.detect_intent(payload.message),
+            ai_service.should_escalate(payload.message, history[:-1])
+        )
 
         # Priority rules
         new_priority = current_priority

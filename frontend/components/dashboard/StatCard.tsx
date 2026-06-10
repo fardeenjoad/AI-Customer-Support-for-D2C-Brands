@@ -1,17 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import * as LucideIcons from "lucide-react";
 import { ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
+import { Icon, IconName } from "@/components/ui/icon";
 
 export interface StatCardProps {
   title: string;
   value: string | number;
   description?: string;
-  icon: keyof typeof LucideIcons;
+  icon: IconName;
   trend?: "up" | "down" | "neutral";
   trendValue?: string;
   isLoading?: boolean;
@@ -28,7 +28,6 @@ export function StatCard({
   isLoading,
   color = "blue",
 }: StatCardProps) {
-  const IconComponent = LucideIcons[icon] as React.ComponentType<any>;
   const [displayValue, setDisplayValue] = useState<string | number>(0);
 
   // Animated counter on mount for numeric values
@@ -83,23 +82,22 @@ export function StatCard({
     );
   }
 
-  // Glow configurations based on color prop
-  const glowColors = {
-    blue: "group-hover:border-primary/50 group-hover:shadow-primary/5",
-    cyan: "group-hover:border-accent/50 group-hover:shadow-accent/5",
-    emerald: "group-hover:border-success/50 group-hover:shadow-success/5",
-    amber: "group-hover:border-warning/50 group-hover:shadow-warning/5",
-    red: "group-hover:border-danger/50 group-hover:shadow-danger/5",
-    purple: "group-hover:border-purple-500/50 group-hover:shadow-purple-500/5",
+  const cardAccent = {
+    blue: "border-l-primary",
+    cyan: "border-l-primary",
+    emerald: "border-l-primary",
+    amber: "border-l-primary",
+    red: "border-l-primary",
+    purple: "border-l-primary",
   };
 
   const iconTextColors = {
-    blue: "text-primary group-hover:bg-primary/10",
-    cyan: "text-accent group-hover:bg-accent/10",
-    emerald: "text-success group-hover:bg-success/10",
-    amber: "text-warning group-hover:bg-warning/10",
-    red: "text-danger group-hover:bg-danger/10",
-    purple: "text-purple-400 group-hover:bg-purple-500/10",
+    blue: "text-primary bg-primary/5 border-primary/15",
+    cyan: "text-primary bg-primary/5 border-primary/15",
+    emerald: "text-primary bg-primary/5 border-primary/15",
+    amber: "text-primary bg-primary/5 border-primary/15",
+    red: "text-primary bg-primary/5 border-primary/15",
+    purple: "text-primary bg-primary/5 border-primary/15",
   };
 
   return (
@@ -109,22 +107,18 @@ export function StatCard({
       transition={{ duration: 0.35, ease: "easeOut" }}
     >
       <Card className={cn(
-        "flex flex-col space-y-3 relative group overflow-hidden transition-all duration-300 hover:scale-[1.01] shadow-sm hover:shadow-glow",
-        glowColors[color]
+        "flex flex-col space-y-3 relative group overflow-hidden border-l-4 transition-all duration-200 hover:border-border hover:shadow-glow",
+        cardAccent[color]
       )}>
-        {/* Subtle interior glow filter */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-transparent to-surface/40 pointer-events-none" />
-
-        {/* Top Header Row */}
         <div className="flex items-center justify-between z-10">
           <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider pl-0.5 select-none">
             {title}
           </span>
           <div className={cn(
-            "flex items-center justify-center w-8 h-8 rounded-lg bg-surface border border-border/80 text-text-muted transition-all duration-300 shadow-sm shrink-0",
+            "flex items-center justify-center w-8 h-8 rounded-lg border transition-all duration-200 shrink-0",
             iconTextColors[color]
           )}>
-            {IconComponent && <IconComponent className="h-4.5 w-4.5" />}
+            <Icon name={icon} className="h-4.5 w-4.5" />
           </div>
         </div>
 
@@ -140,9 +134,9 @@ export function StatCard({
               <span
                 className={cn(
                   "font-bold rounded px-1.5 py-0.5 text-[10px] flex items-center space-x-0.5",
-                  trend === "up" && "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
-                  trend === "down" && "bg-red-500/10 text-red-400 border border-red-500/20",
-                  trend === "neutral" && "bg-border/60 text-text-muted border border-border/80"
+                  trend === "up" && "bg-emerald-50 text-emerald-700 border border-emerald-200",
+                  trend === "down" && "bg-red-50 text-red-700 border border-red-200",
+                  trend === "neutral" && "bg-slate-50 text-text-muted border border-border"
                 )}
               >
                 {trend === "up" && <ArrowUpRight className="h-3 w-3 shrink-0" />}

@@ -18,20 +18,20 @@ import {
 } from "recharts";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 
-// Colors corresponding to our design system
+// Colors corresponding to our design system (monochromatic primary shades)
 const STATUS_COLORS = {
-  open: "#a855f7",
-  in_progress: "#3b82f6",
-  resolved: "#10b981",
+  open: "#99d9d4",
+  in_progress: "#4db5ad",
+  resolved: "#0F766E",
 };
 
 const SENTIMENT_COLORS = {
-  positive: "#10b981",
-  neutral: "#64748b",
-  negative: "#ef4444",
+  positive: "#0F766E",
+  neutral: "#94a3b8",
+  negative: "#cbd5e1",
 };
 
-const ACCENT_COLORS = ["#3b82f6", "#06b6d4", "#f59e0b", "#ef4444", "#10b981"];
+const ACCENT_COLORS = ["#0F766E", "#0d645e", "#14958c", "#4db5ad", "#99d9d4"];
 
 interface ChartProps {
   data: Record<string, number>;
@@ -73,8 +73,8 @@ export function StatusPieChart({ data, title }: ChartProps) {
               ))}
             </Pie>
             <Tooltip
-              contentStyle={{ background: "#111118", borderColor: "#1e1e2e", borderRadius: "8px" }}
-              itemStyle={{ color: "#f8fafc" }}
+              contentStyle={{ background: "#FFFFFF", borderColor: "#E2E8F0", borderRadius: "8px", color: "#0F172A" }}
+              itemStyle={{ color: "#0F172A" }}
             />
             <Legend
               verticalAlign="bottom"
@@ -102,7 +102,7 @@ export function SentimentBarChart({ data, title }: ChartProps) {
   const chartData = Object.entries(data || {}).map(([key, val]) => ({
     sentiment: key.toUpperCase(),
     count: val,
-    fill: SENTIMENT_COLORS[key as keyof typeof SENTIMENT_COLORS] || "#3b82f6",
+    fill: SENTIMENT_COLORS[key as keyof typeof SENTIMENT_COLORS] || "#0F766E",
   }));
 
   return (
@@ -116,9 +116,9 @@ export function SentimentBarChart({ data, title }: ChartProps) {
             <XAxis dataKey="sentiment" stroke="#64748b" fontSize={9} tickLine={false} />
             <YAxis stroke="#64748b" fontSize={9} tickLine={false} />
             <Tooltip
-              cursor={{ fill: "rgba(255,255,255,0.03)" }}
-              contentStyle={{ background: "#111118", borderColor: "#1e1e2e", borderRadius: "8px" }}
-              itemStyle={{ color: "#f8fafc" }}
+              cursor={{ fill: "rgba(15, 118, 110, 0.04)" }}
+              contentStyle={{ background: "#FFFFFF", borderColor: "#E2E8F0", borderRadius: "8px", color: "#0F172A" }}
+              itemStyle={{ color: "#0F172A" }}
             />
             <Bar dataKey="count" radius={[4, 4, 0, 0]}>
               {chartData.map((entry, index) => (
@@ -158,9 +158,9 @@ export function IntentsBarChart({ data, title }: ChartProps) {
             <XAxis type="number" stroke="#64748b" fontSize={9} tickLine={false} />
             <YAxis dataKey="intent" type="category" stroke="#64748b" fontSize={9} tickLine={false} width={80} />
             <Tooltip
-              cursor={{ fill: "rgba(255,255,255,0.03)" }}
-              contentStyle={{ background: "#111118", borderColor: "#1e1e2e", borderRadius: "8px" }}
-              itemStyle={{ color: "#f8fafc" }}
+              cursor={{ fill: "rgba(15, 118, 110, 0.04)" }}
+              contentStyle={{ background: "#FFFFFF", borderColor: "#E2E8F0", borderRadius: "8px", color: "#0F172A" }}
+              itemStyle={{ color: "#0F172A" }}
             />
             <Bar dataKey="count" radius={[0, 4, 4, 0]}>
               {chartData.map((entry, index) => (
@@ -193,18 +193,18 @@ export function VolumeAreaChart({ data, title }: { data: any[]; title: string })
           <AreaChart data={data || []} margin={{ top: 10, right: 15, left: -15, bottom: 0 }}>
             <defs>
               <linearGradient id="colorVolume" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                <stop offset="5%" stopColor="#0F766E" stopOpacity={0.24} />
+                <stop offset="95%" stopColor="#0F766E" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1e1e2e" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
             <XAxis dataKey="date" stroke="#64748b" fontSize={9} tickLine={false} />
             <YAxis stroke="#64748b" fontSize={9} tickLine={false} />
             <Tooltip
-              contentStyle={{ background: "#111118", borderColor: "#1e1e2e", borderRadius: "8px" }}
-              itemStyle={{ color: "#f8fafc" }}
+              contentStyle={{ background: "#FFFFFF", borderColor: "#E2E8F0", borderRadius: "8px", color: "#0F172A" }}
+              itemStyle={{ color: "#0F172A" }}
             />
-            <Area type="monotone" dataKey="tickets" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorVolume)" />
+            <Area type="monotone" dataKey="tickets" stroke="#0F766E" strokeWidth={2} fillOpacity={1} fill="url(#colorVolume)" />
           </AreaChart>
         </ResponsiveContainer>
       </div>

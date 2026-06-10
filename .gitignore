@@ -15,3 +15,10 @@ env/
 # OS
 .DS_Store
 Thumbs.db
+
+# Keys
+*.pem
+
+# Scratch
+backend/scratch/
+

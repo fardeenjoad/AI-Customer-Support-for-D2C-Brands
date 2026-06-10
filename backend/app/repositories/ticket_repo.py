@@ -108,9 +108,34 @@ class TicketRepository:
 
         response = await execute_async(_query)
         if response.data:
+            ticket_ids = [t.get("id") for t in response.data if t.get("id")]
+            feedback_map = {}
+            if ticket_ids:
+                feedback_res = await execute_async(
+                    lambda: self.db.table("feedback")
+                                .select("ticket_id, rating, comment")
+                                .in_("ticket_id", ticket_ids)
+                                .execute()
+                )
+                if feedback_res.data:
+                    feedback_map = {fb.get("ticket_id"): fb for fb in feedback_res.data if fb.get("ticket_id")}
+
             final_results = []
             for t in response.data:
-                final_results.append(await self._attach_feedback(t))
+                # Translate assigned_to column back to API schema assigned_agent_id
+                if "assigned_to" in t:
+                    t["assigned_agent_id"] = t.pop("assigned_to")
+                else:
+                    t["assigned_agent_id"] = None
+                
+                fb = feedback_map.get(t.get("id"))
+                if fb:
+                    t["rating"] = fb.get("rating")
+                    t["feedback_comment"] = fb.get("comment")
+                else:
+                    t["rating"] = None
+                    t["feedback_comment"] = None
+                final_results.append(t)
             return final_results
         return []
 

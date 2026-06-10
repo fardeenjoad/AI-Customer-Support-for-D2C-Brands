@@ -14,23 +14,23 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || isLoading}
         className={cn(
-          "relative inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background active:scale-95 disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100",
+          "relative inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100",
           {
-            "gradient-primary text-text-primary hover:opacity-90 focus:ring-primary shadow-glow hover:shadow-glow-cyan":
+            "bg-primary text-white hover:bg-primary-hover focus:ring-primary shadow-sm":
               variant === "primary",
-            "bg-surface text-text-primary border border-border hover:bg-border/50 focus:ring-border":
+            "bg-white text-text-primary border border-border hover:bg-surface-light focus:ring-primary/30 shadow-sm":
               variant === "secondary",
-            "bg-danger text-text-primary hover:bg-danger/90 focus:ring-danger":
+            "bg-danger text-white hover:bg-danger/90 focus:ring-danger":
               variant === "danger",
-            "bg-transparent border border-primary text-primary hover:bg-primary/10 focus:ring-primary":
+            "bg-white border border-primary/35 text-primary hover:bg-primary/5 focus:ring-primary shadow-sm":
               variant === "outline",
-            "bg-transparent text-text-muted hover:text-text-primary hover:bg-surface focus:ring-surface":
+            "bg-transparent text-text-muted hover:text-text-primary hover:bg-surface-light focus:ring-primary/20":
               variant === "ghost",
           },
           {
             "px-3 py-1.5 text-xs": size === "sm",
-            "px-4 py-2.5 text-sm": size === "md",
-            "px-6 py-3.5 text-base": size === "lg",
+            "px-4 py-2 text-sm": size === "md",
+            "px-5 py-3 text-base": size === "lg",
           },
           className
         )}

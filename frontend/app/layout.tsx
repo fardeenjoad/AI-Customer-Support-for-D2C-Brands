@@ -9,8 +9,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "ResolveIQ — AI Customer Support Platform for D2C Brands",
-  description: "Ultra-premium customer support automation. Detect sentiment, automate ticketing, FAQ chatbot routing, and agent collaboration queues.",
+  title: "ResolveIQ - AI Customer Support Platform for D2C Brands",
+  description:
+    "AI customer support automation for D2C brands. Resolve common requests, route escalations, and manage agent queues from one workspace.",
 };
 
 export default function RootLayout({
@@ -19,8 +20,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
-      <body className={`${inter.variable} font-sans bg-background text-text-primary antialiased`}>
+    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
+      <body className={`${inter.variable} font-sans bg-background text-text-primary antialiased`} suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

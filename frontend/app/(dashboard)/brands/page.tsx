@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useAnalytics, Brand, FAQ } from "@/hooks/useAnalytics";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog } from "@/components/ui/dialog";
@@ -203,38 +205,32 @@ export default function BrandsManagementPage() {
         className="max-w-xl max-h-[85vh] overflow-y-auto"
       >
         <form onSubmit={handleSubmit} className="space-y-4 text-left">
-          <div className="space-y-1">
-            <label className="text-[10px] text-text-muted font-bold tracking-wider uppercase pl-0.5">Brand Name</label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. EcoStyle"
-              value={brandName}
-              onChange={(e) => setBrandName(e.target.value)}
-              className="flex h-10 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-            />
-          </div>
+          <Input
+            label="Brand Name"
+            type="text"
+            required
+            placeholder="e.g. EcoStyle"
+            value={brandName}
+            onChange={(e) => setBrandName(e.target.value)}
+          />
 
-          <div className="space-y-1">
-            <label className="text-[10px] text-text-muted font-bold tracking-wider uppercase pl-0.5">AI Copilot Tone</label>
-            <select
-              value={tone}
-              onChange={(e) => setTone(e.target.value as "formal" | "casual")}
-              className="flex h-10 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer"
-            >
-              <option value="casual">Casual (Friendly, conversational)</option>
-              <option value="formal">Formal (Professional, respectful)</option>
-            </select>
-          </div>
+          <Select
+            label="AI Copilot Tone"
+            value={tone}
+            onChange={(e) => setTone(e.target.value as "formal" | "casual")}
+          >
+            <option value="casual">Casual (Friendly, conversational)</option>
+            <option value="formal">Formal (Professional, respectful)</option>
+          </Select>
 
-          <div className="space-y-1">
+          <div className="flex flex-col space-y-1.5 w-full text-left">
             <label className="text-[10px] text-text-muted font-bold tracking-wider uppercase pl-0.5">Greeting Message</label>
             <textarea
               rows={2}
               placeholder="Welcome greeting..."
               value={customGreeting}
               onChange={(e) => setCustomGreeting(e.target.value)}
-              className="flex w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none"
+              className="flex w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 transition-all resize-none"
             />
           </div>
 
@@ -258,24 +254,22 @@ export default function BrandsManagementPage() {
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   )}
-                  <div className="space-y-1">
-                    <label className="text-[9px] text-text-muted font-bold uppercase tracking-wider pl-0.5">Question</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. What is the return policy?"
-                      value={faq.question}
-                      onChange={(e) => handleFaqChange(idx, "question", e.target.value)}
-                      className="flex h-8 w-full rounded-lg border border-border bg-surface px-2.5 py-1 text-xs text-text-primary focus:outline-none focus:border-primary"
-                    />
-                  </div>
-                  <div className="space-y-1">
+                  <Input
+                    label="Question"
+                    type="text"
+                    placeholder="e.g. What is the return policy?"
+                    value={faq.question}
+                    onChange={(e) => handleFaqChange(idx, "question", e.target.value)}
+                    className="h-9 text-xs"
+                  />
+                  <div className="flex flex-col space-y-1.5 w-full text-left">
                     <label className="text-[9px] text-text-muted font-bold uppercase tracking-wider pl-0.5">Answer</label>
                     <textarea
                       rows={2}
                       placeholder="e.g. We accept returns within 30 days of purchase."
                       value={faq.answer}
                       onChange={(e) => handleFaqChange(idx, "answer", e.target.value)}
-                      className="flex w-full rounded-lg border border-border bg-surface px-2.5 py-1 text-xs text-text-primary focus:outline-none focus:border-primary resize-none"
+                      className="flex w-full rounded-lg border border-border bg-white px-2.5 py-1.5 text-xs text-text-primary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 transition-all resize-none"
                     />
                   </div>
                 </div>

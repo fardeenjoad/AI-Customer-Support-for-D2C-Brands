@@ -42,13 +42,16 @@ export function useTickets() {
   const queryClient = useQueryClient();
 
   // Fetch list of tickets
-  const useListTickets = (filters: {
-    page?: number;
-    limit?: number;
-    status_filter?: string;
-    priority_filter?: string;
-    brand_filter?: string;
-  }) => {
+  const useListTickets = (
+    filters: {
+      page?: number;
+      limit?: number;
+      status_filter?: string;
+      priority_filter?: string;
+      brand_filter?: string;
+    },
+    options?: { refetchInterval?: number }
+  ) => {
     return useQuery<ApiResponse<Ticket[]>, Error>({
       queryKey: ["tickets", filters],
       queryFn: async () => {
@@ -68,11 +71,12 @@ export function useTickets() {
         const response = await api.get(`${API_ROUTES.tickets.base}?${params.toString()}`);
         return response.data;
       },
+      ...options,
     });
   };
 
   // Fetch single ticket details
-  const useTicketDetails = (ticketId: string) => {
+  const useTicketDetails = (ticketId: string, options?: { refetchInterval?: number }) => {
     return useQuery<ApiResponse<TicketDetailResponse>, Error>({
       queryKey: ["ticket", ticketId],
       queryFn: async () => {
@@ -80,6 +84,7 @@ export function useTickets() {
         return response.data;
       },
       enabled: !!ticketId,
+      ...options,
     });
   };
 
@@ -156,17 +161,53 @@ export function useTickets() {
   });
 
   // Send Agent Reply Message
-  const sendAgentReplyMutation = useMutation<ApiResponse<Message>, Error, { ticketId: string; content: string }>({
+  const sendAgentReplyMutation = useMutation<
+    ApiResponse<Message>,
+    Error,
+    { ticketId: string; content: string },
+    { previousDetails?: ApiResponse<TicketDetailResponse>; ticketId: string }
+  >({
     mutationFn: async ({ ticketId, content }) => {
       const response = await api.post(`/tickets/${ticketId}/reply`, { content });
       return response.data;
     },
-    onSuccess: (res, variables) => {
+    onMutate: async ({ ticketId, content }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["ticket", ticketId] });
+
+      // Snapshot previous value
+      const previousDetails = queryClient.getQueryData<ApiResponse<TicketDetailResponse>>(["ticket", ticketId]);
+
+      // Optimistically append the agent message
+      if (previousDetails) {
+        const optimisticMsg: Message = {
+          id: `temp-${Date.now()}`,
+          ticket_id: ticketId,
+          sender: "agent",
+          content: content,
+          created_at: new Date().toISOString(),
+        };
+
+        queryClient.setQueryData<ApiResponse<TicketDetailResponse>>(["ticket", ticketId], {
+          ...previousDetails,
+          data: {
+            ...previousDetails.data,
+            messages: [...previousDetails.data.messages, optimisticMsg],
+          },
+        });
+      }
+
+      return { previousDetails, ticketId };
+    },
+    onError: (error: any, variables, context) => {
+      if (context?.previousDetails && context.ticketId) {
+        queryClient.setQueryData(["ticket", context.ticketId], context.previousDetails);
+      }
+      toast.error(getApiErrorMessage(error, "Failed to send reply."));
+    },
+    onSettled: (data, error, variables) => {
       queryClient.invalidateQueries({ queryKey: ["ticket", variables.ticketId] });
       queryClient.invalidateQueries({ queryKey: ["tickets"] });
-    },
-    onError: (error: any) => {
-      toast.error(getApiErrorMessage(error, "Failed to send reply."));
     },
   });
 

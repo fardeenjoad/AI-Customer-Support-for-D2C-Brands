@@ -11,6 +11,7 @@ import { useAnalytics } from "@/hooks/useAnalytics";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { SkeletonCard, SkeletonChatBubble } from "@/components/common/LoadingSkeleton";
 import { getStatusColor, getPriorityColor, getSentimentColor, formatRelativeTime, cn } from "@/lib/utils";
 import {
@@ -22,8 +23,6 @@ import {
   ArrowLeft,
   Send,
   Star,
-  Sun,
-  Moon,
   Clock,
   CheckCircle2,
   AlertCircle,
@@ -83,22 +82,42 @@ function CustomerPortalContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-  const { logout, isAuthenticated } = useAuthStore();
+  const { logout, isAuthenticated, user } = useAuthStore();
+  const [authHydrated, setAuthHydrated] = useState(false);
   
-  // Scopes brand from URL param, defaults to EcoStyle
-  const brandId = searchParams.get("brand_id") || "f47ac10b-58cc-4372-a567-0e02b2c3d479";
+  // Scopes brand from URL param, then user's brand_id if authenticated, defaults to EcoStyle
+  const brandId =
+    searchParams.get("brand_id") ||
+    (authHydrated ? user?.brand_id : undefined) ||
+    "f47ac10b-58cc-4372-a567-0e02b2c3d479";
   
   const { useBrandDetail } = useAnalytics();
   const { data: brandRes } = useBrandDetail(brandId);
   const brand = brandRes?.data;
 
-  // Visual Custom Themes (White/Light Mode by default)
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const isDarkMode = false;
 
   // Portal States
   const [emailInput, setEmailInput] = useState(searchParams.get("email") || "");
   const [searchEmail, setSearchEmail] = useState(searchParams.get("email") || "");
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (useAuthStore.persist.hasHydrated()) {
+      setAuthHydrated(true);
+    } else {
+      const unsub = useAuthStore.persist.onFinishHydration(() => setAuthHydrated(true));
+      return unsub;
+    }
+  }, []);
+
+  // Sync email input from authenticated user when loaded/hydrated
+  useEffect(() => {
+    if (authHydrated && user?.email && !searchParams.get("email")) {
+      setEmailInput(user.email);
+      setSearchEmail(user.email);
+    }
+  }, [authHydrated, user, searchParams]);
 
   // New ticket state
   const [isNewTicketOpen, setIsNewTicketOpen] = useState(false);
@@ -139,8 +158,7 @@ function CustomerPortalContent() {
     refetchInterval: false,
   });
 
-  // 2. Ticket detail + history — NO automatic polling
-  // Refreshes only when: user sends a reply, or clicks the manual refresh button
+  // 2. Ticket detail + history — 3 seconds polling for real-time conversation sync
   const {
     data: detailData,
     isLoading: isLoadingDetails,
@@ -153,12 +171,13 @@ function CustomerPortalContent() {
       return res.data?.data;
     },
     enabled: !!activeTicketId && !!searchEmail,
-    refetchInterval: false,
-    refetchOnWindowFocus: false,
+    refetchInterval: 3000,
+    refetchOnWindowFocus: true,
   });
 
   const activeTicket = detailData?.ticket;
   const messages = useMemo(() => detailData?.messages || [], [detailData?.messages]);
+  const hasAgentReplied = useMemo(() => messages.some((m) => m.sender === "agent"), [messages]);
 
   // 3. Dynamic user profile initialization & ticket creation
   const createTicketMutation = useMutation({
@@ -191,13 +210,55 @@ function CustomerPortalContent() {
       });
       return res.data?.data;
     },
+    onMutate: async (content: string) => {
+      if (!activeTicketId) return;
+
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["portal-details", activeTicketId, searchEmail] });
+
+      // Snapshot previous value
+      const previousDetails = queryClient.getQueryData<{ ticket: PortalTicket; messages: PortalMessage[] }>([
+        "portal-details",
+        activeTicketId,
+        searchEmail,
+      ]);
+
+      // Optimistically append the customer message
+      if (previousDetails) {
+        const optimisticMsg: PortalMessage = {
+          id: `temp-${Date.now()}`,
+          ticket_id: activeTicketId,
+          sender: "customer",
+          content,
+          timestamp: new Date().toISOString(),
+        };
+
+        queryClient.setQueryData<{ ticket: PortalTicket; messages: PortalMessage[] }>(
+          ["portal-details", activeTicketId, searchEmail],
+          {
+            ...previousDetails,
+            messages: [...previousDetails.messages, optimisticMsg],
+          }
+        );
+      }
+
+      return { previousDetails };
+    },
+    onError: (err: any, variables, context) => {
+      if (context?.previousDetails) {
+        queryClient.setQueryData(
+          ["portal-details", activeTicketId, searchEmail],
+          context.previousDetails
+        );
+      }
+      toast.error(getApiErrorMessage(err, "Failed to submit message."));
+    },
     onSuccess: () => {
       setReplyText("");
+    },
+    onSettled: () => {
       refetchDetails();
       queryClient.invalidateQueries({ queryKey: ["portal-lookup", searchEmail] });
-    },
-    onError: (err: any) => {
-      toast.error(getApiErrorMessage(err, "Failed to submit message."));
     },
   });
 
@@ -217,6 +278,50 @@ function CustomerPortalContent() {
       });
       return res.data?.data;
     },
+    onMutate: async ({ file, caption }) => {
+      if (!activeTicketId) return;
+
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["portal-details", activeTicketId, searchEmail] });
+
+      // Snapshot previous value
+      const previousDetails = queryClient.getQueryData<{ ticket: PortalTicket; messages: PortalMessage[] }>([
+        "portal-details",
+        activeTicketId,
+        searchEmail,
+      ]);
+
+      // Optimistically append the attachment message
+      if (previousDetails) {
+        const contentStr = `[Attachment: ${file.name} (uploading...)]${caption ? `\n\n${caption}` : ""}`;
+        const optimisticMsg: PortalMessage = {
+          id: `temp-attach-${Date.now()}`,
+          ticket_id: activeTicketId,
+          sender: "customer",
+          content: contentStr,
+          timestamp: new Date().toISOString(),
+        };
+
+        queryClient.setQueryData<{ ticket: PortalTicket; messages: PortalMessage[] }>(
+          ["portal-details", activeTicketId, searchEmail],
+          {
+            ...previousDetails,
+            messages: [...previousDetails.messages, optimisticMsg],
+          }
+        );
+      }
+
+      return { previousDetails };
+    },
+    onError: (err: any, variables, context) => {
+      if (context?.previousDetails) {
+        queryClient.setQueryData(
+          ["portal-details", activeTicketId, searchEmail],
+          context.previousDetails
+        );
+      }
+      toast.error(getApiErrorMessage(err, "Attachment upload failed."));
+    },
     onSuccess: () => {
       setPortalFile(null);
       setReplyText("");
@@ -224,11 +329,10 @@ function CustomerPortalContent() {
         portalFileInputRef.current.value = "";
       }
       toast.success("Attachment uploaded successfully!");
+    },
+    onSettled: () => {
       refetchDetails();
       queryClient.invalidateQueries({ queryKey: ["portal-lookup", searchEmail] });
-    },
-    onError: (err: any) => {
-      toast.error(getApiErrorMessage(err, "Attachment upload failed."));
     },
   });
 
@@ -392,22 +496,8 @@ function CustomerPortalContent() {
             </button>
           )}
 
-          {/* LIGHT / DARK THEME TOGGLE */}
-          <button
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            className={cn(
-              "p-2 rounded-lg border transition-all duration-200 flex items-center justify-center",
-              isDarkMode
-                ? "bg-slate-800/80 border-slate-700 text-amber-400 hover:bg-slate-800"
-                : "bg-surface border-border text-primary hover:bg-background"
-            )}
-            title={isDarkMode ? "Toggle Light Mode" : "Toggle Dark Mode"}
-          >
-            {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </button>
-
           {/* LOGOUT BUTTON */}
-          {isAuthenticated && (
+          {authHydrated && isAuthenticated && (
             <button
               onClick={() => {
                 logout();
@@ -482,29 +572,15 @@ function CustomerPortalContent() {
                 </div>
 
                 <form onSubmit={handleSearchSubmit} className="space-y-4">
-                  <div className="space-y-1 text-left">
-                    <label
-                      className={cn(
-                        "text-[10px] font-bold uppercase tracking-wider pl-0.5",
-                        isDarkMode ? "text-text-muted" : "text-text-muted"
-                      )}
-                    >
-                      Your Email Address
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      placeholder="e.g. customer@example.com"
-                      value={emailInput}
-                      onChange={(e) => setEmailInput(e.target.value)}
-                      className={cn(
-                        "flex h-11 w-full rounded-xl border px-3.5 py-2 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary/20",
-                        isDarkMode
-                          ? "bg-[#1d1f2d] border-slate-800 text-white focus:border-primary"
-                          : "bg-background border-border text-text-primary focus:border-primary"
-                      )}
-                    />
-                  </div>
+                  <Input
+                    label="Your Email Address"
+                    type="email"
+                    required
+                    placeholder="e.g. customer@example.com"
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    className="h-11 rounded-xl"
+                  />
 
                   <Button
                     type="submit"
@@ -783,7 +859,8 @@ function CustomerPortalContent() {
                             <SkeletonChatBubble />
                           </div>
                         ) : (
-                          messages.map((msg) => {
+                          <>
+                            {messages.map((msg) => {
                             const isCustomer = msg.sender === "customer";
                             const isAI = msg.sender === "ai";
                             return (
@@ -889,8 +966,43 @@ function CustomerPortalContent() {
                                 </div>
                               </motion.div>
                             );
-                          })
-                        )}
+                          })}
+                          <AnimatePresence>
+                            {sendReplyMutation.isPending && !hasAgentReplied && (
+                              <motion.div
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -4 }}
+                                className="flex w-full items-end space-x-2.5 my-3 justify-start"
+                              >
+                                <div
+                                  className={cn(
+                                    "w-7 h-7 rounded-full flex items-center justify-center shrink-0 shadow-sm border",
+                                    isDarkMode
+                                      ? "bg-slate-800 border-slate-700 text-accent"
+                                      : "bg-primary/10 border-primary/10 text-primary"
+                                  )}
+                                >
+                                  <Sparkles className="h-3.5 w-3.5" />
+                                </div>
+                                <div className="flex flex-col space-y-0.5">
+                                  <div
+                                    className={cn(
+                                      "max-w-md px-4 py-3 text-[13px] leading-relaxed break-words whitespace-pre-wrap shadow-sm rounded-2xl flex items-center space-x-2",
+                                      isDarkMode
+                                        ? "bg-[#181a25] border border-slate-800/80 text-slate-200 rounded-br-sm"
+                                        : "bg-surface border border-border text-text-primary rounded-br-sm"
+                                    )}
+                                  >
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin text-primary shrink-0" />
+                                    <span className="font-medium">AI is formulating reply...</span>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </>
+                      )}
                         <div ref={messageEndRef} />
                       </div>
 
@@ -935,7 +1047,7 @@ function CustomerPortalContent() {
                             <button
                               type="button"
                               onClick={() => portalFileInputRef.current?.click()}
-                              disabled={sendReplyMutation.isPending || uploadAttachmentMutation.isPending}
+                              disabled={uploadAttachmentMutation.isPending}
                               className="p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-background/50 transition-colors"
                               title="Attach file"
                             >
@@ -951,7 +1063,6 @@ function CustomerPortalContent() {
                               placeholder="Add a reply to this ticket..."
                               value={replyText}
                               onChange={(e) => setReplyText(e.target.value)}
-                              disabled={sendReplyMutation.isPending || uploadAttachmentMutation.isPending}
                               className={cn(
                                 "flex-grow h-10 rounded-xl border px-3 text-xs transition-all focus:outline-none focus:ring-2 focus:ring-primary/20",
                                 isDarkMode
@@ -1395,61 +1506,38 @@ function CustomerPortalContent() {
         <form onSubmit={handleCreateTicket} className="space-y-4 text-left">
           {/* Email input is displayed if searchEmail is empty */}
           {!searchEmail && (
-            <div className="space-y-1">
-                <label className="text-[10px] text-text-muted uppercase font-bold tracking-wider pl-0.5">
-                  Your Email Address
-                </label>
-                <input
-                  type="email"
-                  required
-                  placeholder="customer@example.com"
-                  value={emailInput}
-                  onChange={(e) => setEmailInput(e.target.value)}
-                  className={cn(
-                    "flex h-10 w-full rounded-lg border px-3 py-2 text-sm transition-all focus:outline-none focus:ring-1 focus:ring-primary",
-                    isDarkMode
-                      ? "bg-[#1d1f2d] border-slate-800 text-white focus:border-primary"
-                      : "bg-surface border-border text-text-primary focus:border-primary"
-                  )}
-              />
-            </div>
+            <Input
+              label="Your Email Address"
+              type="email"
+              required
+              placeholder="customer@example.com"
+              value={emailInput}
+              onChange={(e) => setEmailInput(e.target.value)}
+              className="h-10 text-xs"
+            />
           )}
 
-          <div className="space-y-1">
-              <label className="text-[10px] text-text-muted uppercase font-bold tracking-wider pl-0.5">
-                Subject Inquiry
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. Problem applying coupon on check-out"
-                value={newSubject}
-                onChange={(e) => setNewSubject(e.target.value)}
-                className={cn(
-                  "flex h-10 w-full rounded-lg border px-3 py-2 text-sm transition-all focus:outline-none focus:ring-1 focus:ring-primary",
-                  isDarkMode
-                    ? "bg-[#1d1f2d] border-slate-800 text-white focus:border-primary"
-                    : "bg-surface border-border text-text-primary focus:border-primary"
-                )}
-            />
-          </div>
+          <Input
+            label="Subject Inquiry"
+            type="text"
+            required
+            placeholder="e.g. Problem applying coupon on check-out"
+            value={newSubject}
+            onChange={(e) => setNewSubject(e.target.value)}
+            className="h-10 text-xs"
+          />
 
-          <div className="space-y-1">
-              <label className="text-[10px] text-text-muted uppercase font-bold tracking-wider pl-0.5">
-                Describe your issue
-              </label>
-              <textarea
-                required
-                rows={4}
-                placeholder="Please provide full details about your request..."
-                value={newInitialMsg}
-                onChange={(e) => setNewInitialMsg(e.target.value)}
-                className={cn(
-                  "flex w-full rounded-lg border px-3 py-2 text-sm transition-all focus:outline-none focus:ring-1 focus:ring-primary resize-none",
-                  isDarkMode
-                    ? "bg-[#1d1f2d] border-slate-800 text-white focus:border-primary"
-                    : "bg-surface border-border text-text-primary focus:border-primary"
-                )}
+          <div className="flex flex-col space-y-1.5 w-full text-left">
+            <label className="text-[10px] text-text-muted uppercase font-bold tracking-wider pl-0.5">
+              Describe your issue
+            </label>
+            <textarea
+              required
+              rows={4}
+              placeholder="Please provide full details about your request..."
+              value={newInitialMsg}
+              onChange={(e) => setNewInitialMsg(e.target.value)}
+              className="flex w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 transition-all resize-none"
             />
           </div>
 

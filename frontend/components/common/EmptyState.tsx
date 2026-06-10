@@ -1,9 +1,9 @@
-import * as LucideIcons from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { Icon, IconName } from "@/components/ui/icon";
 
 interface EmptyStateProps {
-  icon: keyof typeof LucideIcons;
+  icon: IconName;
   title: string;
   description: string;
   actionLabel?: string;
@@ -11,7 +11,6 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({ icon, title, description, actionLabel, onAction }: EmptyStateProps) {
-  const IconComponent = LucideIcons[icon] as React.ComponentType<any>;
 
   return (
     <motion.div
@@ -24,7 +23,7 @@ export function EmptyState({ icon, title, description, actionLabel, onAction }: 
         whileHover={{ scale: 1.06, rotate: 2 }}
         className="flex items-center justify-center w-14 h-14 rounded-2xl bg-surface border border-border text-text-muted mb-5 shadow-sm"
       >
-        {IconComponent && <IconComponent className="h-6 w-6 text-indigo-500" />}
+        <Icon name={icon} className="h-6 w-6 text-primary" />
       </motion.div>
       <h3 className="text-base font-bold text-text-primary mb-2 font-heading tracking-tight">
         {title}
@@ -34,10 +33,10 @@ export function EmptyState({ icon, title, description, actionLabel, onAction }: 
       </p>
       {actionLabel && onAction && (
         <Button
-          variant="secondary"
+          variant="outline"
           size="sm"
           onClick={onAction}
-          className="bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 hover:text-indigo-300 border border-indigo-500/20 h-9 rounded-lg px-4"
+          className="border-primary text-primary hover:bg-primary/5 h-9 rounded-lg px-4"
         >
           {actionLabel}
         </Button>

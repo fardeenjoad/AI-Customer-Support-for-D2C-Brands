@@ -220,7 +220,7 @@ function TicketCreatedBanner({
 
 export function ChatWidget({
   brandId,
-  brandColor = "#3b82f6",
+  brandColor = "#0F766E",
   brandName,
   brandLogo,
   portalUrl = "/portal",
@@ -244,8 +244,9 @@ export function ChatWidget({
   const brand = brandRes?.data;
 
   const { useGetChatHistory, sendChatMessage, isSending } = useChat();
-  const { data: historyRes } = useGetChatHistory(ticketId || "", !!ticketId && isOpen);
+  const { data: historyRes } = useGetChatHistory(ticketId || "", !!ticketId && isOpen, { refetchInterval: 3000 });
   const messages = useMemo(() => historyRes?.data || [], [historyRes?.data]);
+  const hasAgentReplied = useMemo(() => messages.some((m) => m.sender === "agent"), [messages]);
 
   const { createTicket, uploadAttachment } = useTickets();
 
@@ -328,6 +329,7 @@ export function ChatWidget({
         await sendChatMessage({
           brand_id: brandId,
           message: content,
+          ticketId,
         });
       }
     } catch {
@@ -509,7 +511,7 @@ export function ChatWidget({
 
               {/* Typing indicator */}
               <AnimatePresence>
-                {isSending && <TypingDots brandColor={brandColor} />}
+                {isSending && !hasAgentReplied && <TypingDots brandColor={brandColor} />}
               </AnimatePresence>
 
               <div ref={chatEndRef} />
@@ -638,14 +640,13 @@ export function ChatWidget({
                   onChange={(e) => setMessageText(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Type a message..."
-                  disabled={isSending}
                   className="flex-1 bg-transparent border-0 outline-none text-[13px] text-[#e2e8f0] placeholder-[#4a5568] py-1"
                 />
 
                 {/* Send button */}
                 <button
                   onClick={handleSendMessage}
-                  disabled={(!messageText.trim() && !file) || isSending}
+                  disabled={!messageText.trim() && !file}
                   className="p-2 rounded-lg transition-all duration-200 disabled:opacity-30 shrink-0"
                   style={{
                     background:
