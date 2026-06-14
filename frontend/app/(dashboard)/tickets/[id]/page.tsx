@@ -398,7 +398,7 @@ export default function TicketDetailPage() {
 
   return (
     <motion.div
-      className="flex flex-col h-full overflow-hidden space-y-5 text-left pb-2"
+      className="flex flex-col h-full overflow-hidden space-y-3 text-left"
       initial="hidden"
       animate="visible"
       variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.05 } } }}
@@ -454,10 +454,10 @@ export default function TicketDetailPage() {
 
       <motion.div
         variants={fadeUp}
-        className="flex-1 min-h-0 grid grid-cols-1 gap-5 xl:grid-cols-[1fr_340px] xl:overflow-hidden"
+        className="flex-1 min-h-0 grid grid-cols-1 gap-4 xl:grid-cols-[1fr_340px] xl:grid-rows-[minmax(0,1fr)] xl:overflow-hidden"
       >
         {/* LEFT COLUMN: CONVERSATION CARD */}
-        <Card className="flex xl:h-full xl:min-h-0 min-h-[500px] flex-col p-0 overflow-hidden border border-border shadow-sm bg-white">
+        <Card className="flex min-h-0 h-full flex-col p-0 overflow-hidden border border-border shadow-sm bg-white">
           <div className="flex items-center justify-between border-b border-border px-5 py-4">
             <div>
               <h2 className="text-sm font-bold text-text-primary">Conversation</h2>
@@ -468,9 +468,9 @@ export default function TicketDetailPage() {
             <Badge variant="outline">{statusLabel(ticket.status)}</Badge>
           </div>
 
-          <div ref={scrollContainerRef} className="flex-1 space-y-5 overflow-y-auto bg-slate-50/60 px-5 py-5">
+          <div ref={scrollContainerRef} className="flex-1 min-h-0 space-y-4 overflow-y-auto bg-slate-50/60 px-5 py-4">
             {messages.length === 0 && (
-              <div className="flex h-full min-h-[320px] flex-col items-center justify-center text-center">
+              <div className="flex h-full min-h-[200px] flex-col items-center justify-center text-center">
                 <MessageSquare className="mb-3 h-8 w-8 text-text-muted" />
                 <p className="text-sm font-semibold text-text-primary">No messages yet</p>
                 <p className="mt-1 text-xs text-text-muted">
@@ -485,7 +485,7 @@ export default function TicketDetailPage() {
           </div>
 
           {/* AGENT REPLY COMPOSER AREA */}
-          <div className="border-t border-border bg-white p-4 shrink-0">
+          <div className="border-t border-border bg-white px-4 py-3 shrink-0">
             {/* File attachment preview */}
             {file && (
               <div className="flex items-center justify-between bg-slate-50 border border-border rounded-lg p-2.5 mb-3 max-w-sm animate-fadeIn text-xs text-text-primary">
@@ -507,11 +507,11 @@ export default function TicketDetailPage() {
               </div>
             )}
 
-            <div className="flex flex-col rounded-lg border border-border overflow-hidden focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all duration-200 shadow-sm mb-3">
-              <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-slate-50/50 select-none">
+            <div className="flex flex-col rounded-lg border border-border overflow-hidden focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all duration-200 shadow-sm mb-2">
+              <div className="flex items-center justify-between px-3 py-1.5 border-b border-border bg-slate-50/50 select-none">
                 <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-primary">
-                  <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />
-                  <span>Reply Composer (AI Suggested)</span>
+                  <Sparkles className="h-3 w-3 text-primary shrink-0" />
+                  <span>Reply Composer</span>
                 </div>
                 {/* File input trigger */}
                 <button
@@ -539,8 +539,8 @@ export default function TicketDetailPage() {
                 ref={replyRef}
                 value={reply}
                 onChange={(event) => setReply(event.target.value)}
-                rows={4}
-                className="w-full p-3 resize-none border-0 bg-transparent text-sm leading-relaxed text-text-primary outline-none placeholder:text-text-muted"
+                rows={2}
+                className="w-full px-3 py-2 resize-none border-0 bg-transparent text-sm leading-relaxed text-text-primary outline-none placeholder:text-text-muted"
                 placeholder="Type your reply here..."
               />
             </div>
@@ -578,7 +578,7 @@ export default function TicketDetailPage() {
         </Card>
 
         {/* RIGHT COLUMN: SIDEBAR */}
-        <aside className="space-y-5 xl:h-full xl:overflow-y-auto xl:pr-1 scrollbar-thin pb-4">
+        <aside className="space-y-4 xl:h-full xl:min-h-0 xl:overflow-y-auto xl:pr-1 scrollbar-thin pb-4">
           {/* Ticket Controls Card */}
           <Card className="space-y-4 p-5">
             <div>
