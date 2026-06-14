@@ -18,8 +18,8 @@ class Settings(BaseSettings):
     PRIVY_APP_ID: Optional[str] = None
     PRIVY_APP_SECRET: Optional[str] = None
 
-    FRONTEND_BASE_URL: str = "http://localhost:3000"
-    BACKEND_BASE_URL: str = "http://localhost:8000"
+    FRONTEND_BASE_URL: str = "http://127.0.0.1:3000"
+    BACKEND_BASE_URL: str = "http://127.0.0.1:8000"
     CORS_ALLOWED_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001"
 
     MAX_UPLOAD_BYTES: int = 5 * 1024 * 1024
