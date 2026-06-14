@@ -112,6 +112,7 @@ class TicketResponse(BaseModel):
     rating: Optional[int] = None
     feedback_comment: Optional[str] = None
     last_message_preview: Optional[str] = None
+    last_message_sender: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

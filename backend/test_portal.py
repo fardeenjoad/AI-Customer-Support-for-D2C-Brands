@@ -212,3 +212,35 @@ def test_portal_submit_feedback():
     assert response.json()["success"] is True
     assert response.json()["data"]["rating"] == 5
     assert response.json()["data"]["feedback_comment"] == "Awesome support response!"
+
+def test_portal_lookup_last_message_sender():
+    # 1. Initially last_message_sender should be None
+    response = client.get("/tickets/portal/lookup?email=customer@gmail.com")
+    assert response.status_code == 200
+    assert response.json()["data"][0]["last_message_sender"] is None
+
+    # 2. Add a message from AI
+    MockMessageRepository.messages.append({
+        "id": "msg_1",
+        "ticket_id": "ticket_123",
+        "sender": "ai",
+        "content": "Hello! I am AI helper.",
+        "timestamp": "2026-06-06T12:05:00Z"
+    })
+    
+    response = client.get("/tickets/portal/lookup?email=customer@gmail.com")
+    assert response.status_code == 200
+    assert response.json()["data"][0]["last_message_sender"] == "ai"
+
+    # 3. Add a later message from customer
+    MockMessageRepository.messages.append({
+        "id": "msg_2",
+        "ticket_id": "ticket_123",
+        "sender": "customer",
+        "content": "Thanks!",
+        "timestamp": "2026-06-06T12:06:00Z"
+    })
+    
+    response = client.get("/tickets/portal/lookup?email=customer@gmail.com")
+    assert response.status_code == 200
+    assert response.json()["data"][0]["last_message_sender"] == "customer"

@@ -29,12 +29,16 @@ export const useAuthStore = create<AuthState>()(
           token,
           isAuthenticated: true,
         }),
-      logout: () =>
+      logout: () => {
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("just-logged-out", "true");
+        }
         set({
           user: null,
           token: null,
           isAuthenticated: false,
-        }),
+        });
+      },
       setUser: (user) => set({ user }),
     }),
     {

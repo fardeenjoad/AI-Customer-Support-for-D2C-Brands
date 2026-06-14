@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { SkeletonCard, SkeletonChatBubble } from "@/components/common/LoadingSkeleton";
 import { getStatusColor, getPriorityColor, getSentimentColor, formatRelativeTime, cn } from "@/lib/utils";
 import {
@@ -52,6 +53,7 @@ interface PortalTicket {
   rating?: number | null;
   feedback_comment?: string | null;
   last_message_preview?: string | null;
+  last_message_sender?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -91,8 +93,9 @@ function CustomerPortalContent() {
     (authHydrated ? user?.brand_id : undefined) ||
     "f47ac10b-58cc-4372-a567-0e02b2c3d479";
   
-  const { useBrandDetail } = useAnalytics();
+  const { useBrandDetail, useBrands } = useAnalytics();
   const { data: brandRes } = useBrandDetail(brandId);
+  const { data: brandsRes } = useBrands({ limit: 100, public: true });
   const brand = brandRes?.data;
 
   const isDarkMode = false;
@@ -123,6 +126,13 @@ function CustomerPortalContent() {
   const [isNewTicketOpen, setIsNewTicketOpen] = useState(false);
   const [newSubject, setNewSubject] = useState("");
   const [newInitialMsg, setNewInitialMsg] = useState("");
+  const [selectedBrandId, setSelectedBrandId] = useState(brandId);
+
+  useEffect(() => {
+    if (isNewTicketOpen) {
+      setSelectedBrandId(brandId);
+    }
+  }, [isNewTicketOpen, brandId]);
 
   // Feedback states
   const [ratingHover, setRatingHover] = useState<number | null>(null);
@@ -157,6 +167,22 @@ function CustomerPortalContent() {
     // No polling — refetch only on user action
     refetchInterval: false,
   });
+
+  // Sort tickets: agent/ai response on top, followed by customer/no response. Both sub-sorted by updated_at (newest first).
+  const sortedTickets = useMemo(() => {
+    return [...ticketsList].sort((a, b) => {
+      const aHasResponse = a.last_message_sender === "agent" || a.last_message_sender === "ai";
+      const bHasResponse = b.last_message_sender === "agent" || b.last_message_sender === "ai";
+
+      if (aHasResponse && !bHasResponse) return -1;
+      if (!aHasResponse && bHasResponse) return 1;
+
+      // Secondary sort: updated_at (descending)
+      const dateA = new Date(a.updated_at).getTime();
+      const dateB = new Date(b.updated_at).getTime();
+      return dateB - dateA;
+    });
+  }, [ticketsList]);
 
   // 2. Ticket detail + history — 3 seconds polling for real-time conversation sync
   const {
@@ -386,7 +412,7 @@ function CustomerPortalContent() {
       email: emailInput.trim(),
       subject: newSubject.trim(),
       initial_message: newInitialMsg.trim(),
-      brand_id: brandId,
+      brand_id: selectedBrandId,
     });
   };
 
@@ -432,7 +458,7 @@ function CustomerPortalContent() {
   return (
     <div
       className={cn(
-        "min-h-screen transition-colors duration-300 flex flex-col justify-between font-sans",
+        "lg:h-screen lg:overflow-hidden min-h-screen transition-colors duration-300 flex flex-col justify-between font-sans",
         isDarkMode ? "bg-[#0b0c10] text-[#f1f5f9]" : "bg-background text-text-primary"
       )}
     >
@@ -638,10 +664,9 @@ function CustomerPortalContent() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className={cn(
-                "flex-1 flex flex-col lg:flex-row border rounded-2xl overflow-hidden shadow-xl",
+                "flex-grow flex flex-col lg:flex-row border rounded-2xl lg:overflow-hidden overflow-auto shadow-xl lg:h-[calc(100vh-160px)] h-auto",
                 isDarkMode ? "border-[#1e293b] bg-[#0e1017]" : "border-border bg-surface"
               )}
-              style={{ height: "calc(100vh - 160px)" }}
             >
               {/* LEFT SIDEBAR: TICKETS LIST */}
               <div
@@ -683,7 +708,13 @@ function CustomerPortalContent() {
 
                 {/* Tickets list box */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                  {ticketsList.length === 0 ? (
+                  {isSearching ? (
+                    <div className="space-y-3">
+                      <SkeletonCard />
+                      <SkeletonCard />
+                      <SkeletonCard />
+                    </div>
+                  ) : sortedTickets.length === 0 ? (
                     <div className="flex flex-col items-center justify-center p-6 text-center h-full space-y-3">
                       <Inbox className="h-8 w-8 text-text-muted opacity-60 animate-bounce" />
                       <div>
@@ -707,7 +738,7 @@ function CustomerPortalContent() {
                       </Button>
                     </div>
                   ) : (
-                    ticketsList.map((t) => {
+                    sortedTickets.map((t) => {
                       const isActive = activeTicketId === t.id;
                       return (
                         <motion.div
@@ -797,13 +828,13 @@ function CustomerPortalContent() {
               </div>
 
               {/* RIGHT VIEWPORT: TICKET CHAT DETAIL */}
-              <div className="flex-1 flex flex-col justify-between overflow-hidden bg-background/5 relative">
+              <div className="flex-1 flex flex-col justify-between lg:overflow-hidden overflow-visible bg-background/5 relative">
                 {activeTicketId ? (
-                  <div className="flex-1 flex flex-col md:flex-row h-full overflow-hidden">
+                  <div className="flex-1 flex flex-col md:flex-row lg:h-full lg:overflow-hidden h-auto overflow-visible">
                     {/* Chat Logs Window */}
                     <div
                       className={cn(
-                        "flex-1 flex flex-col justify-between h-full border-r",
+                        "flex-1 flex flex-col justify-between lg:h-full h-auto border-r",
                         isDarkMode ? "border-slate-800/70" : "border-border"
                       )}
                     >
@@ -1105,7 +1136,7 @@ function CustomerPortalContent() {
                     {/* RIGHT SIDEBAR: TICKET METRICS & FEEDBACK */}
                     <div
                       className={cn(
-                        "w-full md:w-[280px] shrink-0 flex flex-col h-full",
+                        "w-full md:w-[280px] shrink-0 flex flex-col lg:h-full h-auto",
                         isDarkMode ? "bg-[#12141c]/40" : "bg-background/20"
                       )}
                     >
@@ -1516,6 +1547,19 @@ function CustomerPortalContent() {
               className="h-10 text-xs"
             />
           )}
+
+          <Select
+            label="Select D2C Brand"
+            value={selectedBrandId}
+            onChange={(e) => setSelectedBrandId(e.target.value)}
+            className="h-10 text-xs"
+          >
+            {brandsRes?.data?.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.brand_name}
+              </option>
+            ))}
+          </Select>
 
           <Input
             label="Subject Inquiry"

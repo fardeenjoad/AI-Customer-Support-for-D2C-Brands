@@ -367,19 +367,34 @@ async def get_admin_alerts(
 @limiter.limit("20/minute")
 async def list_agents(
     request: Request,
+    brand_id: Optional[str] = None,
     current_user: TokenData = Depends(require_admin_or_agent),
     user_repo: UserRepository = Depends()
 ) -> ResponseEnvelope[List[Dict[str, Any]]]:
     """
-    Lists all support agents.
+    Lists all support agents, optionally filtered by brand ID.
     Accessible to admins and agents.
     """
     try:
         db = get_db()
-        response = await execute_async(
-            lambda: db.table("users").select("id", "email", "full_name", "role").eq("role", "agent").execute()
-        )
-        agents = response.data if response.data else []
+        if brand_id:
+            agent_brands = await execute_async(
+                lambda: db.table("agent_brands").select("agent_id").eq("brand_id", brand_id).execute()
+            )
+            agent_ids = [row.get("agent_id") for row in agent_brands.data] if agent_brands.data else []
+            if agent_ids:
+                response = await execute_async(
+                    lambda: db.table("users").select("id", "email", "full_name", "role").eq("role", "agent").in_("id", agent_ids).execute()
+                )
+                agents = response.data if response.data else []
+            else:
+                agents = []
+        else:
+            response = await execute_async(
+                lambda: db.table("users").select("id", "email", "full_name", "role").eq("role", "agent").execute()
+            )
+            agents = response.data if response.data else []
+
         return ResponseEnvelope[List[Dict[str, Any]]](
             success=True,
             data=agents,
@@ -447,6 +462,7 @@ async def get_admin_brands(
     request: Request,
     page: int = 1,
     limit: int = 10,
+    public: bool = False,
     current_user: Optional[TokenData] = Depends(get_optional_user),
     brand_repo: BrandRepository = Depends()
 ) -> ResponseEnvelope[List[BrandResponse]]:
@@ -455,7 +471,7 @@ async def get_admin_brands(
     Accessible publicly (for registration) and to Admins/Agents.
     """
     try:
-        if current_user and current_user.role == "agent":
+        if current_user and current_user.role == "agent" and not public:
             db = get_db()
             agent_brands = await execute_async(
                 lambda: db.table("agent_brands").select("brand_id").eq("agent_id", current_user.user_id).execute()

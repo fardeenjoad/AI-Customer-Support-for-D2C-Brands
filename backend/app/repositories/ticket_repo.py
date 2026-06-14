@@ -104,6 +104,7 @@ class TicketRepository:
                 builder = builder.eq("priority", priority)
             if allowed_brand_ids is not None:
                 builder = builder.in_("brand_id", allowed_brand_ids)
+            builder = builder.order("updated_at", desc=True)
             return builder.execute()
 
         response = await execute_async(_query)

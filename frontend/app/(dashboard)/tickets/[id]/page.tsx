@@ -28,8 +28,11 @@ import {
   Calendar,
   CheckCircle2,
   Clock3,
+  FileCheck,
+  Loader2,
   Mail,
   MessageSquare,
+  Paperclip,
   RefreshCw,
   Send,
   Sparkles,
@@ -37,6 +40,7 @@ import {
   Trash2,
   User,
   UserCog,
+  X,
   Zap,
 } from "lucide-react";
 
@@ -150,7 +154,56 @@ function ConversationMessage({ message }: { message: Message }) {
               AI generated
             </div>
           )}
-          <p className="whitespace-pre-wrap break-words">{message.content}</p>
+          {(() => {
+            const match = message.content.match(/^\[Attachment:\s*(.*?)\s*\((.*?)\)\](?:\n\n([\s\S]*))?$/);
+            if (match) {
+              const filename = match[1];
+              const url = match[2];
+              const caption = match[3];
+              const isImage = /\.(jpg|jpeg|png|webp|gif|svg)($|\?)/i.test(filename) || /\.(jpg|jpeg|png|webp|gif|svg)($|\?)/i.test(url);
+              return (
+                <div className="flex flex-col space-y-1.5">
+                  {isImage ? (
+                    <div className="flex flex-col space-y-1.5 mt-1 max-w-xs sm:max-w-sm rounded-lg overflow-hidden border border-black/10 bg-black/5">
+                      <a href={url} target="_blank" rel="noopener noreferrer" className="block relative aspect-video bg-black/20">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={url}
+                          alt={filename}
+                          className="w-full h-full object-cover hover:scale-[1.02] transition-transform duration-200 cursor-zoom-in"
+                        />
+                      </a>
+                      <div className={cn(
+                        "flex items-center justify-between px-2.5 py-1.5 text-[10px] border-t border-black/10",
+                        isAgent ? "text-white/85" : "text-text-muted"
+                      )}>
+                        <span className="truncate max-w-[150px] font-semibold">{filename}</span>
+                        <a href={url} target="_blank" rel="noopener noreferrer" className="hover:underline flex items-center space-x-0.5 font-bold">
+                          <Paperclip className="h-3 w-3 shrink-0" />
+                          <span>View full</span>
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={cn(
+                        "flex items-center space-x-2 font-semibold rounded-lg p-2.5 max-w-sm mt-1 hover:underline",
+                        isAgent ? "bg-white/10 border border-white/20 text-white" : "bg-primary/10 border border-primary/20 text-primary"
+                      )}
+                    >
+                      <Paperclip className="h-4 w-4 shrink-0" />
+                      <span className="truncate max-w-[180px]">{filename}</span>
+                    </a>
+                  )}
+                  {caption && <div className="text-xs pt-0.5 leading-relaxed">{caption}</div>}
+                </div>
+              );
+            }
+            return <p className="whitespace-pre-wrap break-words">{message.content}</p>;
+          })()}
         </div>
       </div>
 
@@ -188,21 +241,28 @@ export default function TicketDetailPage() {
     deleteTicket,
     sendAgentReply,
     isSendingReply,
+    uploadAttachment,
+    isUploading,
   } = useTickets();
   const { assignAgent, isAssigning, useListAgents } = useAnalytics();
 
   const { data: detailRes, isLoading, refetch, isRefetching } = useTicketDetails(id);
-  const { data: agentsRes } = useListAgents();
-
   const ticket = detailRes?.data?.ticket;
+  const { data: agentsRes } = useListAgents(ticket?.brand_id);
   const dbMessages = useMemo(() => detailRes?.data?.messages ?? [], [detailRes?.data?.messages]);
   const agents = useMemo(() => agentsRes?.data ?? [], [agentsRes?.data]);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [reply, setReply] = useState("");
   const [agentId, setAgentId] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const replyRef = useRef<HTMLTextAreaElement>(null);
   const threadEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setReply("");
+  }, [id]);
 
   useEffect(() => {
     setMessages(dbMessages);
@@ -211,12 +271,6 @@ export default function TicketDetailPage() {
   useEffect(() => {
     threadEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages]);
-
-  useEffect(() => {
-    if (ticket && !reply) {
-      setReply(buildAIDraft(ticket, messages));
-    }
-  }, [messages, reply, ticket]);
 
   const timeline = useMemo(() => {
     if (!ticket) return [];
@@ -284,14 +338,30 @@ export default function TicketDetailPage() {
   };
 
   const handleSendReply = async () => {
-    if (!reply.trim()) return;
+    const content = reply.trim();
+    if (!content && !file) return;
 
-    await sendAgentReply({
-      ticketId: id,
-      content: reply.trim(),
-    });
-    setReply("");
-    toast.success("Reply sent.");
+    try {
+      if (file) {
+        await uploadAttachment({
+          ticketId: id,
+          file,
+          caption: content || undefined,
+        });
+        setFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      } else {
+        await sendAgentReply({
+          ticketId: id,
+          content,
+        });
+        toast.success("Reply sent.");
+      }
+      setReply("");
+      refetch();
+    } catch (error) {
+      console.error("Failed to send reply:", error);
+    }
   };
 
   const handleArchive = async () => {
@@ -326,7 +396,7 @@ export default function TicketDetailPage() {
 
   return (
     <motion.div
-      className="space-y-5 pb-6 text-left"
+      className="flex flex-col xl:h-[calc(100vh-130px)] xl:overflow-hidden h-auto space-y-5 text-left pb-6"
       initial="hidden"
       animate="visible"
       variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.05 } } }}
@@ -382,9 +452,9 @@ export default function TicketDetailPage() {
 
       <motion.div
         variants={fadeUp}
-        className="grid grid-cols-1 gap-5 xl:grid-cols-[280px_minmax(0,1fr)_360px]"
+        className="grid grid-cols-1 gap-5 xl:grid-cols-[280px_minmax(0,1fr)_360px] xl:flex-1 xl:min-h-0 xl:overflow-hidden"
       >
-        <aside className="space-y-5">
+        <aside className="space-y-5 xl:h-full xl:overflow-y-auto xl:pr-1 scrollbar-thin">
           <Card className="p-5">
             <div className="mb-5 flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-sm font-bold text-primary">
@@ -468,7 +538,7 @@ export default function TicketDetailPage() {
           </Card>
         </aside>
 
-        <Card className="flex min-h-[640px] flex-col p-0">
+        <Card className="flex xl:h-full xl:min-h-0 min-h-[640px] flex-col p-0 overflow-hidden">
           <div className="flex items-center justify-between border-b border-border px-5 py-4">
             <div>
               <h2 className="text-sm font-bold text-text-primary">Conversation</h2>
@@ -495,64 +565,100 @@ export default function TicketDetailPage() {
             ))}
             <div ref={threadEndRef} />
           </div>
-        </Card>
-
-        <aside className="space-y-5">
-          <Card className="border-primary/20 bg-primary/[0.03] p-5">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
-                  <Sparkles className="h-4 w-4" />
+          {/* AGENT REPLY COMPOSER AREA */}
+          <div className="border-t border-border bg-white p-4 shrink-0">
+            {/* File attachment preview */}
+            {file && (
+              <div className="flex items-center justify-between bg-slate-50 border border-border rounded-lg p-2.5 mb-3 max-w-sm animate-fadeIn text-xs text-text-primary">
+                <div className="flex items-center space-x-2">
+                  <FileCheck className="h-4 w-4 text-primary animate-pulse shrink-0" />
+                  <span className="font-semibold truncate max-w-[200px]">{file.name}</span>
+                  <span className="text-[10px] text-text-muted">({(file.size / 1024).toFixed(1)} KB)</span>
                 </div>
-                <div>
-                  <h2 className="text-sm font-bold text-text-primary">AI response</h2>
-                  <p className="text-xs text-text-muted">Suggested agent reply.</p>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFile(null);
+                    if (fileInputRef.current) fileInputRef.current.value = "";
+                  }}
+                  className="p-1 rounded-md text-text-muted hover:text-danger hover:bg-danger/10 transition-colors"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
               </div>
-              <Badge className="border-primary/20 bg-white text-primary">AI</Badge>
-            </div>
+            )}
 
-            <div className="mb-4 border-l-4 border-primary bg-white px-4 py-3">
-              <div className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-primary">
-                <Zap className="h-3.5 w-3.5" />
-                Draft
+            <div className="flex flex-col rounded-lg border border-border overflow-hidden focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all duration-200 shadow-sm mb-3">
+              <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-slate-50/50 select-none">
+                <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-primary">
+                  <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />
+                  <span>Reply Composer (AI Suggested)</span>
+                </div>
+                {/* File input trigger */}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="p-1 rounded text-text-muted hover:text-text-primary hover:bg-slate-200 transition-colors"
+                  title="Attach file (Photo/PDF)"
+                >
+                  <Paperclip className="h-3.5 w-3.5" />
+                </button>
               </div>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={(e) => {
+                  if (e.target.files && e.target.files.length > 0) {
+                    setFile(e.target.files[0]);
+                  }
+                }}
+                className="hidden"
+                accept="image/*,application/pdf"
+              />
               <textarea
                 ref={replyRef}
                 value={reply}
                 onChange={(event) => setReply(event.target.value)}
-                rows={9}
-                className="w-full resize-none border-0 bg-transparent text-sm leading-6 text-text-primary outline-none placeholder:text-slate-400"
-                placeholder="Generate or write a reply"
+                rows={4}
+                className="w-full p-3 resize-none border-0 bg-transparent text-sm leading-relaxed text-text-primary outline-none placeholder:text-text-muted"
+                placeholder="Type your reply here..."
               />
             </div>
 
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={handleGenerateDraft}
-                className="h-9 flex-1"
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-                Regenerate
-              </Button>
-              <Button
-                type="button"
-                variant="primary"
-                size="sm"
-                onClick={handleSendReply}
-                disabled={!reply.trim() || isSendingReply}
-                isLoading={isSendingReply}
-                className="h-9 flex-1"
-              >
-                <Send className="h-3.5 w-3.5" />
-                Send
-              </Button>
+            <div className="flex items-center justify-between">
+              <div className="text-[11px] text-text-muted">
+                Press Send to reply as agent.
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleGenerateDraft}
+                  className="h-9"
+                >
+                  <Sparkles className="h-3.5 w-3.5 mr-1" />
+                  Regenerate AI Draft
+                </Button>
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  onClick={handleSendReply}
+                  disabled={(!reply.trim() && !file) || isSendingReply || isUploading}
+                  isLoading={isSendingReply || isUploading}
+                  className="h-9 px-5"
+                >
+                  <Send className="h-3.5 w-3.5 mr-1" />
+                  Send Reply
+                </Button>
+              </div>
             </div>
-          </Card>
+          </div>
+        </Card>
 
+        <aside className="space-y-5 xl:h-full xl:overflow-y-auto xl:pr-1 scrollbar-thin">
           <Card className="p-5">
             <div className="mb-4 flex items-center justify-between">
               <div>

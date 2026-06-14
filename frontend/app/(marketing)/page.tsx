@@ -371,6 +371,7 @@ export default function MarketingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [navVisible, setNavVisible] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
   const lastScrollY = useRef(0);
 
   // Scroll animation refs
@@ -493,7 +494,7 @@ export default function MarketingPage() {
               </Link>
             ) : (
               <>
-                <Link href="/login">
+                <Link href="/login" onClick={() => setIsNavigating(true)}>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -506,7 +507,7 @@ export default function MarketingPage() {
                     Log In
                   </Button>
                 </Link>
-                <Link href="/register">
+                <Link href="/register" onClick={() => setIsNavigating(true)}>
                   <Button variant="primary" size="sm" className="btn-shine">
                     Start Free
                   </Button>
@@ -559,7 +560,7 @@ export default function MarketingPage() {
                 </Link>
               ) : (
                 <>
-                  <Link href="/login" className="flex-1">
+                  <Link href="/login" className="flex-1" onClick={() => setIsNavigating(true)}>
                     <Button
                       variant="secondary"
                       className="w-full text-xs"
@@ -567,7 +568,7 @@ export default function MarketingPage() {
                       Log In
                     </Button>
                   </Link>
-                  <Link href="/register" className="flex-1">
+                  <Link href="/register" className="flex-1" onClick={() => setIsNavigating(true)}>
                     <Button
                       variant="primary"
                       className="w-full text-xs"
@@ -608,7 +609,7 @@ export default function MarketingPage() {
               </p>
 
               <div className="mt-8 flex flex-wrap gap-4">
-                <Link href="/register">
+                <Link href="/register" onClick={() => setIsNavigating(true)}>
                   <Button
                     variant="primary"
                     size="lg"
@@ -886,7 +887,7 @@ export default function MarketingPage() {
                       </li>
                     ))}
                   </ul>
-                  <Link href="/register" className="mt-6 block">
+                  <Link href="/register" className="mt-6 block" onClick={() => setIsNavigating(true)}>
                     <Button
                       variant={plan.highlighted ? "primary" : "secondary"}
                       className={`w-full text-sm ${
@@ -922,7 +923,7 @@ export default function MarketingPage() {
                   Launch ResolveIQ for your brand queues and give customers
                   faster answers with cleaner escalation paths.
                 </p>
-                <Link href="/register" className="mt-8 inline-block">
+                <Link href="/register" className="mt-8 inline-block" onClick={() => setIsNavigating(true)}>
                   <Button
                     variant="primary"
                     size="lg"
@@ -970,6 +971,16 @@ export default function MarketingPage() {
           </div>
         </div>
       </footer>
+
+      {isNavigating && (
+        <div 
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-950/85 backdrop-blur-md"
+          style={{ animation: 'fadeIn 0.3s ease-out forwards' }}
+        >
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="mt-4 text-xs font-semibold text-slate-300">Loading ResolveIQ...</p>
+        </div>
+      )}
     </div>
   );
 }

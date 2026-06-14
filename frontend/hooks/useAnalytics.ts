@@ -70,13 +70,14 @@ export function useAnalytics() {
   };
 
   // Fetch registered D2C brand configs list
-  const useBrands = (filters?: { page?: number; limit?: number }) => {
+  const useBrands = (filters?: { page?: number; limit?: number; public?: boolean }) => {
     return useQuery<ApiResponse<Brand[]>, Error>({
       queryKey: ["admin-brands", filters],
       queryFn: async () => {
         const params = new URLSearchParams();
         if (filters?.page) params.append("page", filters.page.toString());
         if (filters?.limit) params.append("limit", filters.limit.toString());
+        if (filters?.public) params.append("public", "true");
         
         const response = await api.get(`${API_ROUTES.admin.brands}?${params.toString()}`);
         return response.data;
@@ -85,13 +86,15 @@ export function useAnalytics() {
   };
 
   // Fetch all support agents list
-  const useListAgents = () => {
+  const useListAgents = (brandId?: string) => {
     return useQuery<ApiResponse<{ id: string; email: string; full_name?: string }[]>, Error>({
-      queryKey: ["admin-agents"],
+      queryKey: ["admin-agents", brandId],
       queryFn: async () => {
-        const response = await api.get("/admin/agents");
+        const url = brandId ? `/admin/agents?brand_id=${brandId}` : "/admin/agents";
+        const response = await api.get(url);
         return response.data;
       },
+      enabled: brandId === undefined || !!brandId, // Run immediately if no brandId is passed, or wait for brandId to be loaded
     });
   };
 

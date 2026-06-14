@@ -15,10 +15,12 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
     ENVIRONMENT: str = "development"
+    PRIVY_APP_ID: Optional[str] = None
+    PRIVY_APP_SECRET: Optional[str] = None
 
     FRONTEND_BASE_URL: str = "http://localhost:3000"
     BACKEND_BASE_URL: str = "http://localhost:8000"
-    CORS_ALLOWED_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
+    CORS_ALLOWED_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001"
 
     MAX_UPLOAD_BYTES: int = 5 * 1024 * 1024
     ALLOWED_UPLOAD_CONTENT_TYPES: str = "image/png,image/jpeg,image/webp,application/pdf,text/plain"

@@ -110,15 +110,17 @@ async def portal_lookup_tickets(
         
         tickets = await ticket_repo.list_tickets(customer_id=user["id"])
         
-        # Attach last message preview to each ticket
+        # Attach last message preview and sender to each ticket
         response_data = []
         for t in tickets:
             msgs = await message_repo.list_messages_by_ticket(t["id"])
             last_msg = msgs[-1]["content"] if msgs else ""
+            last_sender = msgs[-1]["sender"] if msgs else None
             
             # Map database keys to schema keys
             t_copy = t.copy()
             t_copy["last_message_preview"] = last_msg
+            t_copy["last_message_sender"] = last_sender
             response_data.append(TicketResponse.model_validate(t_copy))
             
         return ResponseEnvelope[List[TicketResponse]](

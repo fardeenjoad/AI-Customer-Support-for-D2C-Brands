@@ -18,6 +18,22 @@ interface LoginResponse {
   token_type: string;
 }
 
+function parseJwt(token: string): any {
+  try {
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return null;
+  }
+}
+
 export function useAuth() {
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -36,6 +52,51 @@ export function useAuth() {
     });
   };
 
+  // Privy Login mutation
+  const privyLoginMutation = useMutation<ApiResponse<LoginResponse>, Error, { token: string }>({
+    mutationFn: async ({ token }) => {
+      const response = await api.post("/auth/privy-login", { token });
+      return response.data;
+    },
+    onMutate: () => {
+      setIsRedirecting(false);
+    },
+    onSuccess: async (res) => {
+      const token = res.data.access_token;
+      
+      try {
+        const decoded = parseJwt(token);
+        if (!decoded || !decoded.user_id || !decoded.email || !decoded.role) {
+          throw new Error("Token payload is missing user details.");
+        }
+
+        const meUser: User = {
+          id: decoded.user_id,
+          email: decoded.email,
+          role: decoded.role,
+          brand_id: decoded.brand_id || null,
+        };
+
+        // Save full logged state
+        setLoginStore(meUser, token);
+        toast.success("Welcome back to ResolveIQ!");
+
+        // Redirect based on role
+        const destination = meUser.role === "customer" ? "/portal" : "/dashboard";
+        setIsRedirecting(true);
+        router.prefetch(destination);
+        router.replace(destination);
+      } catch (err: any) {
+        setIsRedirecting(false);
+        toast.error("Failed to parse user details from login token.");
+      }
+    },
+    onError: (error: any) => {
+      setIsRedirecting(false);
+      toast.error(getApiErrorMessage(error, "Failed to authenticate via Privy."));
+    },
+  });
+
   // Login mutation
   const loginMutation = useMutation<ApiResponse<LoginResponse>, Error, any>({
     mutationFn: async (credentials) => {
@@ -48,17 +109,19 @@ export function useAuth() {
     onSuccess: async (res) => {
       const token = res.data.access_token;
       
-      // Temporary token storage to fetch user details
-      localStorage.setItem(
-        "resolveiq-auth",
-        JSON.stringify({ state: { token, user: null, isAuthenticated: false } })
-      );
-
       try {
-        // Fetch profile detail
-        const meRes = await api.get(API_ROUTES.auth.me);
-        const meUser: User = meRes.data.data;
-        
+        const decoded = parseJwt(token);
+        if (!decoded || !decoded.user_id || !decoded.email || !decoded.role) {
+          throw new Error("Token payload is missing user details.");
+        }
+
+        const meUser: User = {
+          id: decoded.user_id,
+          email: decoded.email,
+          role: decoded.role,
+          brand_id: decoded.brand_id || null,
+        };
+
         // Save full logged state
         setLoginStore(meUser, token);
         toast.success("Welcome back to ResolveIQ!");
@@ -69,9 +132,8 @@ export function useAuth() {
         router.prefetch(destination);
         router.replace(destination);
       } catch (err: any) {
-        localStorage.removeItem("resolveiq-auth");
         setIsRedirecting(false);
-        toast.error("Failed to retrieve user profile after login.");
+        toast.error("Failed to parse user details from login token.");
       }
     },
     onError: (error: any) => {
@@ -106,7 +168,8 @@ export function useAuth() {
   return {
     useMe,
     login: loginMutation.mutate,
-    isLoggingIn: loginMutation.isPending || isRedirecting,
+    privyLogin: privyLoginMutation.mutate,
+    isLoggingIn: loginMutation.isPending || privyLoginMutation.isPending || isRedirecting,
     isRedirecting,
     register: registerMutation.mutate,
     isRegistering: registerMutation.isPending,

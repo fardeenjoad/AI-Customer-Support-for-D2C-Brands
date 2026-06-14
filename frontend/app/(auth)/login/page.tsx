@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { usePrivy } from "@privy-io/react-auth";
 
 const loginSchema = zod.object({
   email: zod.string().min(1, "Email is required").email("Invalid email address"),
@@ -21,12 +22,47 @@ type LoginFormData = zod.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isLoggingIn, isRedirecting } = useAuth();
+  const { login, privyLogin, isLoggingIn, isRedirecting } = useAuth();
+  const { login: triggerPrivy, ready, authenticated, logout: privyLogout, getAccessToken } = usePrivy();
+  const [mockEmail, setMockEmail] = useState("");
+  const isPrivyConfigured = process.env.NEXT_PUBLIC_PRIVY_APP_ID && process.env.NEXT_PUBLIC_PRIVY_APP_ID !== "cl00000000000000000000000";
+  const privyHandled = useRef(false);
 
   useEffect(() => {
     router.prefetch("/dashboard");
     router.prefetch("/portal");
   }, [router]);
+
+  // Stable reference to privyLogin to avoid re-render loops
+  const privyLoginRef = useRef(privyLogin);
+  privyLoginRef.current = privyLogin;
+
+  // Clear Privy session if user just logged out from ResolveIQ
+  useEffect(() => {
+    if (ready && authenticated && typeof window !== "undefined" && sessionStorage.getItem("just-logged-out") === "true") {
+      privyLogout();
+    } else if (ready && !authenticated && typeof window !== "undefined" && sessionStorage.getItem("just-logged-out") === "true") {
+      sessionStorage.removeItem("just-logged-out");
+    }
+  }, [ready, authenticated, privyLogout]);
+
+  useEffect(() => {
+    if (!authenticated || privyHandled.current) return;
+    if (typeof window !== "undefined" && sessionStorage.getItem("just-logged-out") === "true") return;
+    
+    const handlePrivyAuth = async () => {
+      try {
+        const token = await getAccessToken();
+        if (token) {
+          privyHandled.current = true;
+          privyLoginRef.current({ token });
+        }
+      } catch (error) {
+        console.error("Failed to get Privy access token:", error);
+      }
+    };
+    handlePrivyAuth();
+  }, [authenticated, getAccessToken]);
 
   const {
     register,
@@ -96,7 +132,62 @@ export default function LoginPage() {
               <CardDescription>
                 Enter your credentials to access the ResolveIQ workspace.
               </CardDescription>
-            </CardHeader>
+            </CardHeader>            <div className="px-6 pt-2">
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full h-10 flex items-center justify-center space-x-2 font-semibold text-xs border border-border"
+                onClick={triggerPrivy}
+                disabled={!ready}
+              >
+                <span>Sign In with Privy (Customers)</span>
+              </Button>
+
+              {!isPrivyConfigured && (
+                <div className="mt-4 p-4 border border-dashed border-amber-500/30 rounded-lg bg-amber-500/5 space-y-3 text-left">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500">
+                      Sandbox Bypass Mode
+                    </span>
+                    <span className="text-[9px] text-text-muted">
+                      No Privy App ID detected
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-text-muted leading-normal">
+                    Enter any customer email to mock Privy login.
+                  </p>
+                  <Input
+                    type="email"
+                    placeholder="name@customer.com"
+                    icon={<Mail className="h-4 w-4 text-text-muted" />}
+                    value={mockEmail}
+                    onChange={(e) => setMockEmail(e.target.value)}
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="w-full h-9 text-xs border border-amber-500/20 text-amber-500 hover:bg-amber-500/10 font-semibold"
+                    disabled={!mockEmail.includes("@") || isLoggingIn}
+                    onClick={() => {
+                      if (mockEmail) {
+                        privyLogin({ token: mockEmail });
+                      }
+                    }}
+                    isLoading={isLoggingIn}
+                  >
+                    Simulate Customer Sign In
+                  </Button>
+                </div>
+              )}
+
+              <div className="relative flex py-3 items-center">
+                <div className="flex-grow border-t border-border"></div>
+                <span className="flex-shrink mx-4 text-[9px] uppercase font-bold tracking-widest text-text-muted">
+                  OR (Agents / Admins)
+                </span>
+                <div className="flex-grow border-t border-border"></div>
+              </div>
+            </div>
 
             <form onSubmit={handleSubmit(onSubmit)}>
               <CardContent className="space-y-4 text-left">
@@ -128,12 +219,6 @@ export default function LoginPage() {
                 >
                   Sign In
                 </Button>
-                <div className="text-xs text-text-muted text-center">
-                  Don&apos;t have an account?{" "}
-                  <Link href="/register" className="text-primary hover:underline font-semibold transition-colors">
-                    Create Account
-                  </Link>
-                </div>
               </CardFooter>
             </form>
           </Card>
