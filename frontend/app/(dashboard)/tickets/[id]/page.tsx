@@ -398,7 +398,7 @@ export default function TicketDetailPage() {
 
   return (
     <motion.div
-      className="flex flex-col h-full overflow-hidden space-y-3 text-left"
+      className="flex flex-col space-y-3 text-left pb-4"
       initial="hidden"
       animate="visible"
       variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.05 } } }}
@@ -454,10 +454,10 @@ export default function TicketDetailPage() {
 
       <motion.div
         variants={fadeUp}
-        className="flex-1 min-h-0 grid grid-cols-1 gap-4 xl:grid-cols-[1fr_340px] xl:grid-rows-[minmax(0,1fr)] xl:overflow-hidden"
+        className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_340px]"
       >
         {/* LEFT COLUMN: CONVERSATION CARD */}
-        <Card className="flex min-h-0 h-full flex-col p-0 overflow-hidden border border-border shadow-sm bg-white">
+        <Card className="flex flex-col min-h-[70vh] p-0 overflow-hidden border border-border shadow-sm bg-white">
           <div className="flex items-center justify-between border-b border-border px-5 py-4">
             <div>
               <h2 className="text-sm font-bold text-text-primary">Conversation</h2>
@@ -468,7 +468,7 @@ export default function TicketDetailPage() {
             <Badge variant="outline">{statusLabel(ticket.status)}</Badge>
           </div>
 
-          <div ref={scrollContainerRef} className="flex-1 min-h-0 space-y-4 overflow-y-auto bg-slate-50/60 px-5 py-4">
+          <div ref={scrollContainerRef} className="flex-1 min-h-[400px] space-y-4 overflow-y-auto bg-slate-50/60 px-5 py-4">
             {messages.length === 0 && (
               <div className="flex h-full min-h-[200px] flex-col items-center justify-center text-center">
                 <MessageSquare className="mb-3 h-8 w-8 text-text-muted" />
@@ -578,7 +578,7 @@ export default function TicketDetailPage() {
         </Card>
 
         {/* RIGHT COLUMN: SIDEBAR */}
-        <aside className="space-y-4 xl:h-full xl:min-h-0 xl:overflow-y-auto xl:pr-1 scrollbar-thin pb-4">
+        <aside className="space-y-4 pb-4">
           {/* Ticket Controls Card */}
           <Card className="space-y-4 p-5">
             <div>
