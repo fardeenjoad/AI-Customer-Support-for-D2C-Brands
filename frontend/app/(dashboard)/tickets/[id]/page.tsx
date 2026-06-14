@@ -262,6 +262,9 @@ export default function TicketDetailPage() {
 
   useEffect(() => {
     setReply("");
+    if (replyRef.current) {
+      replyRef.current.style.height = "auto";
+    }
   }, [id]);
 
   useEffect(() => {
@@ -337,6 +340,14 @@ export default function TicketDetailPage() {
     if (!ticket) return;
     setReply(buildAIDraft(ticket, messages));
     replyRef.current?.focus();
+    if (replyRef.current) {
+      setTimeout(() => {
+        if (replyRef.current) {
+          replyRef.current.style.height = "auto";
+          replyRef.current.style.height = `${Math.min(replyRef.current.scrollHeight, 120)}px`;
+        }
+      }, 0);
+    }
   };
 
   const handleSendReply = async () => {
@@ -360,6 +371,9 @@ export default function TicketDetailPage() {
         toast.success("Reply sent.");
       }
       setReply("");
+      if (replyRef.current) {
+        replyRef.current.style.height = "auto";
+      }
       refetch();
     } catch (error) {
       console.error("Failed to send reply:", error);
@@ -398,7 +412,7 @@ export default function TicketDetailPage() {
 
   return (
     <motion.div
-      className="flex flex-col space-y-3 text-left pb-4"
+      className="flex flex-col flex-1 min-h-0 text-left"
       initial="hidden"
       animate="visible"
       variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.05 } } }}
@@ -454,11 +468,11 @@ export default function TicketDetailPage() {
 
       <motion.div
         variants={fadeUp}
-        className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_340px]"
+        className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_340px] flex-1 min-h-0"
       >
         {/* LEFT COLUMN: CONVERSATION CARD */}
-        <Card className="flex flex-col min-h-[70vh] p-0 overflow-hidden border border-border shadow-sm bg-white">
-          <div className="flex items-center justify-between border-b border-border px-5 py-4">
+        <Card className="flex flex-col h-full min-h-0 p-0 overflow-hidden border border-border shadow-sm bg-white">
+          <div className="flex items-center justify-between border-b border-border px-5 py-4 select-none shrink-0">
             <div>
               <h2 className="text-sm font-bold text-text-primary">Conversation</h2>
               <p className="text-xs text-text-muted">
@@ -468,7 +482,7 @@ export default function TicketDetailPage() {
             <Badge variant="outline">{statusLabel(ticket.status)}</Badge>
           </div>
 
-          <div ref={scrollContainerRef} className="flex-1 min-h-[400px] space-y-4 overflow-y-auto bg-slate-50/60 px-5 py-4">
+          <div ref={scrollContainerRef} className="flex-1 min-h-0 space-y-4 overflow-y-auto bg-slate-50/60 px-5 py-4">
             {messages.length === 0 && (
               <div className="flex h-full min-h-[200px] flex-col items-center justify-center text-center">
                 <MessageSquare className="mb-3 h-8 w-8 text-text-muted" />
@@ -538,9 +552,13 @@ export default function TicketDetailPage() {
               <textarea
                 ref={replyRef}
                 value={reply}
-                onChange={(event) => setReply(event.target.value)}
+                onChange={(event) => {
+                  setReply(event.target.value);
+                  event.target.style.height = "auto";
+                  event.target.style.height = `${Math.min(event.target.scrollHeight, 120)}px`;
+                }}
                 rows={2}
-                className="w-full px-3 py-2 resize-none border-0 bg-transparent text-sm leading-relaxed text-text-primary outline-none placeholder:text-text-muted"
+                className="w-full px-3 py-2 resize-none border-0 bg-transparent text-sm leading-relaxed text-text-primary outline-none placeholder:text-text-muted max-h-[120px]"
                 placeholder="Type your reply here..."
               />
             </div>
@@ -578,7 +596,7 @@ export default function TicketDetailPage() {
         </Card>
 
         {/* RIGHT COLUMN: SIDEBAR */}
-        <aside className="space-y-4 pb-4">
+        <aside className="space-y-4 pb-4 hidden xl:block overflow-y-auto h-full min-h-0 pr-1">
           {/* Ticket Controls Card */}
           <Card className="space-y-4 p-5">
             <div>
