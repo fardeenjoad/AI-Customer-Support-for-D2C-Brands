@@ -14,6 +14,9 @@ import {
   RefreshCw,
   Trash2,
   UserCheck,
+  Sparkles,
+  Clock,
+  AlertTriangle,
 } from "lucide-react";
 import api from "@/lib/axios";
 import { Ticket } from "@/hooks/useTickets";
@@ -34,6 +37,8 @@ import {
   getSentimentColor,
   getStatusColor,
   truncateText,
+  getSLAInfo,
+  getAIPriorityScore,
 } from "@/lib/utils";
 
 type SortField = "subject" | "status" | "priority" | "sentiment" | "created_at";
@@ -301,10 +306,10 @@ export default function TicketTable({
         </motion.div>
       )}
 
-      <div className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-border bg-white shadow-sm transition-all duration-200 focus-within:ring-2 focus-within:ring-primary/10">
         <Table>
-          <TableHeader className="bg-slate-50">
-            <TableRow className="hover:bg-slate-50">
+          <TableHeader className="bg-slate-50/70 border-b border-border">
+            <TableRow className="hover:bg-slate-50/70">
               <TableHead className="w-12">
                 <input
                   type="checkbox"
@@ -320,6 +325,7 @@ export default function TicketTable({
               <SortableHead label="Status" field="status" currentSort={sortField} currentDir={sortDir} onSort={handleSort} />
               <SortableHead label="Priority" field="priority" currentSort={sortField} currentDir={sortDir} onSort={handleSort} />
               <SortableHead label="Sentiment" field="sentiment" currentSort={sortField} currentDir={sortDir} onSort={handleSort} />
+              <TableHead className="text-[11px] font-bold uppercase tracking-wide text-text-muted">SLA Countdown</TableHead>
               <SortableHead label="Created" field="created_at" currentSort={sortField} currentDir={sortDir} onSort={handleSort} />
               <TableHead className="text-[11px] font-bold uppercase tracking-wide text-text-muted">Owner</TableHead>
               <TableHead className="text-right text-[11px] font-bold uppercase tracking-wide text-text-muted">Action</TableHead>
@@ -328,16 +334,18 @@ export default function TicketTable({
           <TableBody>
             {sortedTickets.map((ticket) => {
               const isSelected = selectedIds.has(ticket.id);
-              const isEscalated = ticket.priority === "urgent";
+              const priorityScore = getAIPriorityScore(ticket.id, ticket.priority, ticket.sentiment);
+              const isEscalated = ticket.priority === "urgent" || priorityScore >= 90;
+              const sla = getSLAInfo(ticket.created_at, ticket.priority, ticket.status);
 
               return (
                 <TableRow
                   key={ticket.id}
                   data-state={isSelected ? "selected" : undefined}
                   className={cn(
-                    "hover:bg-slate-50/80",
-                    isSelected && "bg-primary/[0.04]",
-                    isEscalated && "bg-red-50/30"
+                    "hover:bg-slate-50/40 border-b border-border/60 transition-colors duration-150",
+                    isSelected && "bg-primary/[0.02]",
+                    isEscalated && "bg-purple-50/10 hover:bg-purple-50/20"
                   )}
                 >
                   <TableCell>
@@ -350,27 +358,43 @@ export default function TicketTable({
                   </TableCell>
 
                   <TableCell
-                    className="min-w-[260px] max-w-[360px]"
+                    className="min-w-[320px] max-w-[420px]"
                     onMouseEnter={() => prefetchTicket(ticket.id)}
                   >
-                    <Link href={`/tickets/${ticket.id}`} className="group block">
+                    <Link href={`/tickets/${ticket.id}`} className="group block space-y-1">
                       <p className="truncate text-sm font-semibold text-text-primary transition-colors group-hover:text-primary">
                         {truncateText(ticket.subject || "Untitled support request", 58)}
                       </p>
-                      <span className="mt-0.5 block text-[10px] font-medium text-text-muted">
-                        #{ticket.id.slice(0, 8)} · customer {ticket.customer_id?.slice(0, 6)}
-                      </span>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="text-[10px] font-medium text-text-muted">
+                          #{ticket.id.slice(0, 8)} · customer {ticket.customer_id?.slice(0, 6)}
+                        </span>
+                        <span className={cn(
+                          "text-[9px] font-bold px-1.5 py-0.5 rounded border font-mono tracking-tight",
+                          priorityScore >= 90 ? "bg-red-50 text-red-700 border-red-200" :
+                          priorityScore >= 70 ? "bg-amber-50 text-amber-700 border-amber-200" :
+                          "bg-indigo-50 text-primary border-indigo-100"
+                        )}>
+                          AI Priority: {priorityScore}
+                        </span>
+                        {isEscalated && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border bg-purple-50 text-purple-700 border-purple-200 flex items-center gap-0.5 animate-pulse">
+                            <Sparkles className="h-2.5 w-2.5" />
+                            AI Escalated
+                          </span>
+                        )}
+                      </div>
                     </Link>
                   </TableCell>
 
                   <TableCell>
-                    <Badge className={getStatusColor(ticket.status)}>
+                    <Badge className={cn("font-medium", getStatusColor(ticket.status))}>
                       {statusLabel(ticket.status)}
                     </Badge>
                   </TableCell>
 
                   <TableCell>
-                    <Badge className={getPriorityColor(ticket.priority)}>
+                    <Badge className={cn("font-medium", getPriorityColor(ticket.priority))}>
                       {priorityLabel(ticket.priority)}
                     </Badge>
                   </TableCell>
@@ -378,7 +402,7 @@ export default function TicketTable({
                   <TableCell>
                     <span
                       className={cn(
-                        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold",
+                        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold shadow-sm",
                         getSentimentColor(ticket.sentiment)
                       )}
                     >
@@ -392,13 +416,20 @@ export default function TicketTable({
                     </span>
                   </TableCell>
 
+                  <TableCell>
+                    <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[11px] font-medium shadow-sm", sla.color)}>
+                      <Clock className="h-3 w-3 shrink-0" />
+                      <span>{sla.text}</span>
+                    </span>
+                  </TableCell>
+
                   <TableCell className="whitespace-nowrap text-xs text-text-muted">
                     {formatDate(ticket.created_at, "MMM dd, yyyy")}
                   </TableCell>
 
                   <TableCell className="text-xs text-text-muted">
                     {ticket.assigned_agent_id ? (
-                      <span className="rounded-md border border-border bg-white px-2 py-1 text-[10px] font-medium text-text-primary">
+                      <span className="rounded-md border border-border bg-white px-2 py-1 text-[10px] font-medium text-text-primary shadow-sm">
                         {ticket.assigned_agent_id.slice(0, 8)}
                       </span>
                     ) : (
@@ -415,7 +446,7 @@ export default function TicketTable({
                           variant="ghost"
                           size="sm"
                           onClick={() => onAssign(ticket.id)}
-                          className="h-8 w-8 p-0 text-text-muted hover:text-primary"
+                          className="h-8 w-8 p-0 text-text-muted hover:text-primary hover:bg-slate-100"
                           title="Assign agent"
                         >
                           <UserCheck className="h-4 w-4" />
@@ -425,7 +456,7 @@ export default function TicketTable({
                         <Button
                           variant="secondary"
                           size="sm"
-                          className="h-8 px-2.5 text-[11px]"
+                          className="h-8 px-2.5 text-[11px] hover:bg-slate-100"
                           title="Open ticket"
                         >
                           Open
@@ -436,7 +467,7 @@ export default function TicketTable({
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0 text-text-muted"
+                        className="h-8 w-8 p-0 text-text-muted hover:bg-slate-100"
                         title="More actions"
                       >
                         <MoreHorizontal className="h-4 w-4" />

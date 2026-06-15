@@ -10,6 +10,12 @@ import {
   Plus,
   RefreshCw,
   Ticket as TicketIcon,
+  Sparkles,
+  Clock,
+  AlertTriangle,
+  Inbox,
+  UserMinus,
+  Flame,
 } from "lucide-react";
 import { useTickets } from "@/hooks/useTickets";
 import TicketTable from "@/components/tickets/TicketTable";
@@ -17,6 +23,7 @@ import { TicketFilters } from "@/components/tickets/TicketFilters";
 import { CreateTicketPanel } from "@/components/tickets/CreateTicketPanel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { cn, getAIPriorityScore, getSLAInfo } from "@/lib/utils";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 10 },
@@ -41,11 +48,12 @@ export default function TicketsPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [showCreatePanel, setShowCreatePanel] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [smartTab, setSmartTab] = useState<"all" | "active" | "escalated" | "sla" | "negative" | "unassigned">("active");
 
   const { useListTickets, updateTicket, deleteTicket } = useTickets();
   const { data: ticketsRes, isLoading, refetch, isRefetching } = useListTickets({
     page,
-    limit: 10,
+    limit: 15, // High density pagination
     status_filter: status,
     priority_filter: priority,
     brand_filter: brand,
@@ -62,16 +70,43 @@ export default function TicketsPage() {
   const ticketsList = useMemo(() => ticketsRes?.data ?? [], [ticketsRes?.data]);
 
   const filteredTickets = useMemo(() => {
-    if (!debouncedSearch.trim()) return ticketsList;
+    let list = ticketsList;
+
+    // Apply Smart Tab filter
+    if (smartTab === "active") {
+      list = list.filter((ticket) => ticket.status !== "resolved");
+    } else if (smartTab === "escalated") {
+      list = list.filter((ticket) => {
+        const score = getAIPriorityScore(ticket.id, ticket.priority, ticket.sentiment);
+        return ticket.priority === "urgent" || score >= 90;
+      });
+    } else if (smartTab === "sla") {
+      list = list.filter((ticket) => {
+        if (ticket.status === "resolved") return false;
+        let hoursLimit = 48;
+        if (ticket.priority === "urgent") hoursLimit = 4;
+        else if (ticket.priority === "high") hoursLimit = 12;
+        else if (ticket.priority === "medium") hoursLimit = 24;
+        const limitTime = new Date(ticket.created_at).getTime() + hoursLimit * 60 * 60 * 1000;
+        const remainingMs = limitTime - Date.now();
+        return remainingMs < 2 * 60 * 60 * 1000; // Less than 2 hours left or overdue
+      });
+    } else if (smartTab === "negative") {
+      list = list.filter((ticket) => ticket.sentiment === "negative" && ticket.status !== "resolved");
+    } else if (smartTab === "unassigned") {
+      list = list.filter((ticket) => !ticket.assigned_agent_id && ticket.status !== "resolved");
+    }
+
+    if (!debouncedSearch.trim()) return list;
     const term = debouncedSearch.toLowerCase();
-    return ticketsList.filter((ticket) => {
+    return list.filter((ticket) => {
       return (
         ticket.subject?.toLowerCase().includes(term) ||
         ticket.id?.toLowerCase().includes(term) ||
         ticket.customer_id?.toLowerCase().includes(term)
       );
     });
-  }, [debouncedSearch, ticketsList]);
+  }, [debouncedSearch, ticketsList, smartTab]);
 
   const counts = useMemo(() => {
     return {
@@ -79,7 +114,10 @@ export default function TicketsPage() {
       open: ticketsList.filter((ticket) => ticket.status === "open").length,
       pending: ticketsList.filter((ticket) => ticket.status === "in_progress").length,
       resolved: ticketsList.filter((ticket) => ticket.status === "resolved").length,
-      escalated: ticketsList.filter((ticket) => ticket.priority === "urgent").length,
+      escalated: ticketsList.filter((ticket) => {
+        const score = getAIPriorityScore(ticket.id, ticket.priority, ticket.sentiment);
+        return ticket.priority === "urgent" || score >= 90;
+      }).length,
     };
   }, [ticketsList]);
 
@@ -89,6 +127,7 @@ export default function TicketsPage() {
     setBrand("all");
     setSearch("");
     setDebouncedSearch("");
+    setSmartTab("active");
     setPage(1);
     setSelectedIds(new Set());
   };
@@ -141,30 +180,25 @@ export default function TicketsPage() {
     >
       <motion.div
         variants={fadeUp}
-        className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"
+        className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between border-b border-border/40 pb-5"
       >
         <div>
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white">
-              <TicketIcon className="h-4 w-4" />
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-white shadow-glow">
+              <TicketIcon className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-text-primary">
-                Tickets
+              <h1 className="text-2xl font-bold tracking-tight text-text-primary flex items-center gap-2">
+                ResolveIQ Queue
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                  AI-First OS
+                </span>
               </h1>
-              <p className="text-xs text-text-muted">
-                Search, filter, bulk update, and resolve customer support threads.
+              <p className="text-xs text-text-muted mt-0.5">
+                AI priority scoring, SLA countdown tracking, and smart intent routing.
               </p>
             </div>
           </div>
-          {!isLoading && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Badge variant="warning">{counts.open} open</Badge>
-              <Badge variant="default">{counts.pending} pending</Badge>
-              <Badge variant="success">{counts.resolved} resolved</Badge>
-              <Badge variant="danger">{counts.escalated} escalated</Badge>
-            </div>
-          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -227,7 +261,54 @@ export default function TicketsPage() {
         />
       </motion.div>
 
-      <motion.div variants={fadeUp}>
+      <motion.div variants={fadeUp} className="space-y-4">
+        {/* Smart tabs row */}
+        <div className="flex border-b border-border overflow-x-auto select-none scrollbar-none gap-2">
+          {[
+            { id: "active", label: "Active Queue", icon: Sparkles, count: ticketsList.filter(t => t.status !== "resolved").length },
+            { id: "escalated", label: "AI Escalated", icon: AlertTriangle, count: ticketsList.filter(t => {
+              const score = getAIPriorityScore(t.id, t.priority, t.sentiment);
+              return t.priority === "urgent" || score >= 90;
+            }).length },
+            { id: "sla", label: "SLA Breaching", icon: Clock, count: ticketsList.filter(t => {
+              if (t.status === "resolved") return false;
+              let hoursLimit = 48;
+              if (t.priority === "urgent") hoursLimit = 4;
+              else if (t.priority === "high") hoursLimit = 12;
+              else if (t.priority === "medium") hoursLimit = 24;
+              const limitTime = new Date(t.created_at).getTime() + hoursLimit * 60 * 60 * 1000;
+              return (limitTime - Date.now()) < 2 * 60 * 60 * 1000;
+            }).length },
+            { id: "negative", label: "Negative Sentiment", icon: Flame, count: ticketsList.filter(t => t.sentiment === "negative" && t.status !== "resolved").length },
+            { id: "unassigned", label: "Unassigned", icon: UserMinus, count: ticketsList.filter(t => !t.assigned_agent_id && t.status !== "resolved").length },
+            { id: "all", label: "All Tickets", icon: Inbox, count: ticketsList.length },
+          ].map((tab) => {
+            const isActive = smartTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setSmartTab(tab.id as any)}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all duration-150 whitespace-nowrap",
+                  isActive
+                    ? "border-primary text-primary"
+                    : "border-transparent text-text-muted hover:text-text-primary hover:border-slate-300"
+                )}
+              >
+                <tab.icon className="h-4 w-4 shrink-0" />
+                <span>{tab.label}</span>
+                <span className={cn(
+                  "text-[10px] px-1.5 py-0.5 rounded-full font-bold",
+                  isActive ? "bg-primary/10 text-primary" : "bg-slate-100 text-slate-600"
+                )}>
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
         <TicketTable
           tickets={filteredTickets}
           isLoading={isLoading}

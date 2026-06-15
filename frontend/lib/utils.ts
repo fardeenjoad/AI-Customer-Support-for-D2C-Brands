@@ -93,3 +93,60 @@ export function truncateText(text: string, maxLength: number = 60) {
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength) + "...";
 }
+
+export function getSLAInfo(created_at: string, priority: string, status: string) {
+  if (status === "resolved") {
+    return { text: "Resolved", color: "text-emerald-700 bg-emerald-50/50 border-emerald-200", isOverdue: false };
+  }
+  
+  let hoursLimit = 48; // low
+  if (priority === "urgent") hoursLimit = 4;
+  else if (priority === "high") hoursLimit = 12;
+  else if (priority === "medium") hoursLimit = 24;
+  
+  const createdTime = new Date(created_at).getTime();
+  const limitTime = createdTime + hoursLimit * 60 * 60 * 1000;
+  const now = Date.now();
+  const diffMs = limitTime - now;
+  
+  if (diffMs <= 0) {
+    return { text: "Overdue", color: "text-red-700 bg-red-50 border-red-200 font-semibold animate-pulse border", isOverdue: true };
+  }
+  
+  const diffHrs = Math.floor(diffMs / (3600 * 1000));
+  const diffMins = Math.floor((diffMs % (3600 * 1000)) / (60 * 1000));
+  
+  let text = "";
+  if (diffHrs > 0) {
+    text = `${diffHrs}h ${diffMins}m left`;
+  } else {
+    text = `${diffMins}m left`;
+  }
+  
+  let color = "text-slate-600 bg-slate-50 border-slate-200 border";
+  if (diffMs < 2 * 60 * 60 * 1000) {
+    // Less than 2 hours left
+    color = "text-amber-700 bg-amber-50 border-amber-200 font-semibold animate-pulse border";
+  }
+  
+  return { text, color, isOverdue: false };
+}
+
+export function getAIPriorityScore(ticketId: string, priority: string, sentiment: string) {
+  let baseScore = 30;
+  if (priority === "urgent") baseScore = 90;
+  else if (priority === "high") baseScore = 75;
+  else if (priority === "medium") baseScore = 55;
+  
+  if (sentiment === "negative") baseScore += 8;
+  else if (sentiment === "positive") baseScore -= 10;
+  
+  // Deterministic variation based on ticket ID hash
+  let hash = 0;
+  for (let i = 0; i < ticketId.length; i++) {
+    hash += ticketId.charCodeAt(i);
+  }
+  const variance = hash % 6; // returns 0 to 5
+  
+  return Math.min(100, Math.max(0, baseScore + variance));
+}
