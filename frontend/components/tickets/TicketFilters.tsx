@@ -48,7 +48,7 @@ export function TicketFilters({
   const brands = brandsRes?.data || [];
 
   return (
-    <section className="rounded-lg border border-border bg-white p-4 shadow-sm">
+    <section className="rounded-lg border border-border bg-white p-4">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           <Input
@@ -82,7 +82,7 @@ export function TicketFilters({
                   {typeof count === "number" && (
                     <span
                       className={cn(
-                        "rounded-full px-1.5 py-0.5 text-[10px]",
+                        "rounded-full px-1.5 py-0.5 text-[10px] tabular-nums",
                         isActive ? "bg-white text-primary" : "bg-slate-100 text-slate-600"
                       )}
                     >

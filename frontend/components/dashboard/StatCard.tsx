@@ -83,12 +83,12 @@ export function StatCard({
   }
 
   const cardAccent = {
-    blue: "border-l-primary",
-    cyan: "border-l-primary",
-    emerald: "border-l-primary",
-    amber: "border-l-primary",
-    red: "border-l-primary",
-    purple: "border-l-primary",
+    blue: "",
+    cyan: "",
+    emerald: "",
+    amber: "",
+    red: "",
+    purple: "",
   };
 
   const iconTextColors = {
@@ -107,11 +107,11 @@ export function StatCard({
       transition={{ duration: 0.35, ease: "easeOut" }}
     >
       <Card className={cn(
-        "flex flex-col space-y-3 relative group overflow-hidden border-l-4 transition-all duration-200 hover:border-border hover:shadow-glow",
+        "flex flex-col space-y-3 relative group overflow-hidden transition-colors duration-150 hover:border-border",
         cardAccent[color]
       )}>
         <div className="flex items-center justify-between z-10">
-          <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider pl-0.5 select-none">
+          <span className="text-[10px] font-medium text-text-muted uppercase tracking-[0.02em] pl-0.5 select-none">
             {title}
           </span>
           <div className={cn(
@@ -123,7 +123,7 @@ export function StatCard({
         </div>
 
         {/* Value Display */}
-        <div className="text-2xl font-bold font-heading text-text-primary tracking-tight z-10 select-none">
+        <div className="text-2xl font-semibold font-heading text-text-primary tracking-tight z-10 select-none tabular-nums">
           {displayValue}
         </div>
 

@@ -72,7 +72,7 @@ export default function Sidebar() {
     return (
       <div className="space-y-1.5 mt-5 first:mt-0">
         {!isSidebarCollapsed && (
-          <h4 className="text-[10px] text-text-muted/60 uppercase font-bold tracking-wider pl-3 select-none">
+          <h4 className="text-[10px] text-text-muted/60 uppercase font-medium tracking-[0.02em] pl-3 select-none">
             {title}
           </h4>
         )}
@@ -90,7 +90,7 @@ export default function Sidebar() {
                 className={cn(
                   "flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition-all duration-200 group relative",
                   isActive
-                    ? "bg-primary/10 text-primary border-l-[3px] border-primary"
+                    ? "bg-primary/[0.08] text-primary"
                     : "text-text-muted hover:text-text-primary hover:bg-surface-light"
                 )}
                 title={isSidebarCollapsed ? item.label : undefined}
@@ -133,7 +133,7 @@ export default function Sidebar() {
       {/* Brand Header */}
       <div className="h-16 border-b border-border flex items-center px-4 justify-between">
         <div className="flex items-center space-x-2.5 overflow-hidden">
-          <div className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shadow-sm shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shrink-0">
             <LifeBuoy className="h-4 w-4" />
           </div>
           {!isSidebarCollapsed && (

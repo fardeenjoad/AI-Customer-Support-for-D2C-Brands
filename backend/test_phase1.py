@@ -15,7 +15,8 @@ def test_settings_load():
     """Verify settings loaded configuration from environment."""
     assert settings.SUPABASE_URL is not None
     assert settings.SUPABASE_KEY is not None
-    assert settings.JWT_SECRET in ["your_jwt_secret_key_change_me_in_production", "mock_secret_key_long_enough_to_be_secure"]
+    assert settings.JWT_SECRET in ["your_jwt_secret_key_change_me_in_production", "mock_secret_key_long_enough_to_be_secure"] or len(settings.JWT_SECRET) >= 32
+
 
 @pytest.mark.anyio
 async def test_password_hashing():

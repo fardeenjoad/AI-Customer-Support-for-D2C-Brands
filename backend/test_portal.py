@@ -124,15 +124,51 @@ def setup_overrides():
     from app.repositories.user_repo import UserRepository
     from app.repositories.ticket_repo import TicketRepository
     from app.repositories.message_repo import MessageRepository
+    from app.services.ai_service import AIService
+    from app.services.sentiment_service import SentimentService
+    from app.services.email_service import EmailService
+    orig_send_resend_email = EmailService._send_resend_email
+    async def mock_send_resend_email(self, to_email, subject, html_body):
+        pass
+    EmailService._send_resend_email = mock_send_resend_email
 
     app.dependency_overrides[UserRepository] = lambda: MockUserRepository()
     app.dependency_overrides[TicketRepository] = lambda: MockTicketRepository()
     app.dependency_overrides[MessageRepository] = lambda: MockMessageRepository()
 
+    class MockAIService:
+        async def detect_intent(self, message: str) -> str:
+            lower_msg = message.lower()
+            if "refund" in lower_msg:
+                return "refund"
+            if "hate" in lower_msg or "terrible" in lower_msg:
+                return "complaint"
+            return "general"
+            
+        async def should_escalate(self, message: str, history: list) -> bool:
+            lower_msg = message.lower()
+            return "refund" in lower_msg or "hate" in lower_msg or "terrible" in lower_msg
+            
+        async def generate_reply(self, customer_message: str, brand_context: dict, message_history: list = None) -> str:
+            return "Mock AI reply"
+            
+    class MockSentimentService:
+        async def analyze_sentiment(self, message: str) -> str:
+            lower_msg = message.lower()
+            if "hate" in lower_msg or "terrible" in lower_msg:
+                return "negative"
+            return "neutral"
+
+    app.dependency_overrides[AIService] = lambda: MockAIService()
+    app.dependency_overrides[SentimentService] = lambda: MockSentimentService()
+
     yield
     app.dependency_overrides.clear()
     SupabaseDB.get_client = orig_get_client
+    EmailService._send_resend_email = orig_send_resend_email
     MockMessageRepository.messages.clear()
+
+
 
 @pytest.fixture
 def anyio_backend():

@@ -181,9 +181,41 @@ def setup_db_mock_and_clear_overrides():
     orig_get_client = SupabaseDB.get_client
     SupabaseDB.get_client = lambda: MockSupabaseClient()
     app.dependency_overrides.clear()
+    
+    from app.services.ai_service import AIService
+    from app.services.sentiment_service import SentimentService
+    
+    class MockAIService:
+        async def detect_intent(self, message: str) -> str:
+            lower_msg = message.lower()
+            if "refund" in lower_msg:
+                return "refund"
+            if "hate" in lower_msg or "terrible" in lower_msg:
+                return "complaint"
+            return "general"
+            
+        async def should_escalate(self, message: str, history: list) -> bool:
+            lower_msg = message.lower()
+            return "refund" in lower_msg or "hate" in lower_msg or "terrible" in lower_msg
+            
+        async def generate_reply(self, customer_message: str, brand_context: dict, message_history: list = None) -> str:
+            return "Mock AI reply"
+            
+    class MockSentimentService:
+        async def analyze_sentiment(self, message: str) -> str:
+            lower_msg = message.lower()
+            if "hate" in lower_msg or "terrible" in lower_msg:
+                return "negative"
+            return "neutral"
+            
+    app.dependency_overrides[AIService] = lambda: MockAIService()
+    app.dependency_overrides[SentimentService] = lambda: MockSentimentService()
+
+    
     yield
     app.dependency_overrides.clear()
     SupabaseDB.get_client = orig_get_client
+
 
 client = TestClient(app)
 

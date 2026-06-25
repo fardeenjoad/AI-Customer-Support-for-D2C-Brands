@@ -115,7 +115,7 @@ export default function SearchPalette() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: -16 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="relative w-full max-w-lg bg-surface border border-border rounded-xl shadow-2xl overflow-hidden flex flex-col text-left z-50 mx-4"
+            className="relative w-full max-w-lg bg-surface border border-border rounded-xl shadow-lg overflow-hidden flex flex-col text-left z-50 mx-4"
           >
             {/* Input Header */}
             <div className="flex items-center border-b border-border/80 px-4 h-12">
@@ -141,7 +141,7 @@ export default function SearchPalette() {
               {/* Category: Navigation shortcuts */}
               {query === "" && (
                 <div className="p-2">
-                  <span className="text-[10px] text-text-muted uppercase font-bold tracking-wider pl-1">
+                  <span className="text-[10px] text-text-muted uppercase font-medium tracking-[0.02em] pl-1">
                     Quick Navigation
                   </span>
                   <div className="grid grid-cols-2 gap-2 mt-2">
@@ -167,7 +167,7 @@ export default function SearchPalette() {
               {query === "" && recentSearches.length > 0 && (
                 <div className="p-2 border-t border-border/40 mt-1">
                   <div className="flex items-center justify-between pl-1">
-                    <span className="text-[10px] text-text-muted uppercase font-bold tracking-wider flex items-center space-x-1">
+                    <span className="text-[10px] text-text-muted uppercase font-medium tracking-[0.02em] flex items-center space-x-1">
                       <Clock className="h-3 w-3" />
                       <span>Recent Searches</span>
                     </span>
@@ -195,7 +195,7 @@ export default function SearchPalette() {
 
               {/* Category: Support Tickets */}
               <div className="p-2 border-t border-border/40 mt-1">
-                <span className="text-[10px] text-text-muted uppercase font-bold tracking-wider pl-1">
+                <span className="text-[10px] text-text-muted uppercase font-medium tracking-[0.02em] pl-1">
                   {query === "" ? "Recent Tickets" : "Matching Support Tickets"}
                 </span>
                 <div className="space-y-1.5 mt-2">

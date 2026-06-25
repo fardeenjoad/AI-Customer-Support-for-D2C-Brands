@@ -85,7 +85,7 @@ function priorityLabel(priority: string) {
 
 function TableSkeleton() {
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
+    <div className="overflow-hidden rounded-lg border border-border bg-white">
       <div className="animate-pulse">
         <div className="grid grid-cols-[40px_1.8fr_0.7fr_0.7fr_0.7fr_0.8fr_0.7fr_88px] gap-4 border-b border-border bg-slate-50 px-4 py-3.5">
           {Array.from({ length: 8 }).map((_, index) => (
@@ -112,7 +112,7 @@ function TableSkeleton() {
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-white p-14 text-center shadow-sm">
+    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-white p-14 text-center">
       <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-slate-50 text-text-muted">
         <Inbox className="h-6 w-6" />
       </div>
@@ -306,8 +306,9 @@ export default function TicketTable({
         </motion.div>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-border bg-white shadow-sm transition-all duration-200 focus-within:ring-2 focus-within:ring-primary/10">
-        <Table>
+      <div className="overflow-hidden rounded-xl border border-border bg-white transition-all duration-200 focus-within:ring-2 focus-within:ring-primary/10">
+        <div className="overflow-x-auto">
+          <Table className="min-w-[1000px] table-fixed">
           <TableHeader className="bg-slate-50/70 border-b border-border">
             <TableRow className="hover:bg-slate-50/70">
               <TableHead className="w-12">
@@ -387,37 +388,37 @@ export default function TicketTable({
                     </Link>
                   </TableCell>
 
-                  <TableCell>
-                    <Badge className={cn("font-medium", getStatusColor(ticket.status))}>
+                  <TableCell className="w-[120px]">
+                    <Badge className={cn("text-[10px] font-semibold tracking-wider px-2 py-0.5 rounded-full select-none uppercase", getStatusColor(ticket.status))}>
                       {statusLabel(ticket.status)}
                     </Badge>
                   </TableCell>
 
-                  <TableCell>
-                    <Badge className={cn("font-medium", getPriorityColor(ticket.priority))}>
+                  <TableCell className="w-[120px]">
+                    <Badge className={cn("text-[10px] font-semibold tracking-wider px-2 py-0.5 rounded-full select-none uppercase", getPriorityColor(ticket.priority))}>
                       {priorityLabel(ticket.priority)}
                     </Badge>
                   </TableCell>
 
-                  <TableCell>
-                    <span
+                  <TableCell className="w-[140px]">
+                    <Badge
                       className={cn(
-                        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold shadow-sm",
+                        "text-[10px] font-semibold tracking-wider px-2 py-0.5 rounded-full select-none uppercase gap-1.5",
                         getSentimentColor(ticket.sentiment)
                       )}
                     >
                       <span
                         className={cn(
-                          "h-1.5 w-1.5 rounded-full",
+                          "h-1.5 w-1.5 rounded-full shrink-0",
                           SENTIMENT_DOT_COLOR[ticket.sentiment] || "bg-slate-400"
                         )}
                       />
-                      <span className="capitalize">{ticket.sentiment}</span>
-                    </span>
+                      <span>{ticket.sentiment}</span>
+                    </Badge>
                   </TableCell>
 
                   <TableCell>
-                    <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[11px] font-medium shadow-sm", sla.color)}>
+                    <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[11px] font-medium", sla.color)}>
                       <Clock className="h-3 w-3 shrink-0" />
                       <span>{sla.text}</span>
                     </span>
@@ -427,16 +428,18 @@ export default function TicketTable({
                     {formatDate(ticket.created_at, "MMM dd, yyyy")}
                   </TableCell>
 
-                  <TableCell className="text-xs text-text-muted">
-                    {ticket.assigned_agent_id ? (
-                      <span className="rounded-md border border-border bg-white px-2 py-1 text-[10px] font-medium text-text-primary shadow-sm">
-                        {ticket.assigned_agent_id.slice(0, 8)}
-                      </span>
-                    ) : (
-                      <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-medium text-slate-600">
-                        Unassigned
-                      </span>
-                    )}
+                  <TableCell className="w-[140px] text-xs text-text-muted">
+                    <div className="truncate max-w-[120px]" title={ticket.assigned_agent_id || "Unassigned"}>
+                      {ticket.assigned_agent_id ? (
+                        <span className="rounded-md border border-border bg-white px-2 py-1 text-[10px] font-medium text-text-primary">
+                          {ticket.assigned_agent_id.slice(0, 8)}
+                        </span>
+                      ) : (
+                        <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-medium text-slate-600">
+                          Unassigned
+                        </span>
+                      )}
+                    </div>
                   </TableCell>
 
                   <TableCell className="text-right">
@@ -479,6 +482,7 @@ export default function TicketTable({
             })}
           </TableBody>
         </Table>
+        </div>
       </div>
     </div>
   );

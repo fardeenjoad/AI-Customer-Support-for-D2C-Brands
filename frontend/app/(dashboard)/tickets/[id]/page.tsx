@@ -117,7 +117,7 @@ function InfoRow({
     <div className="flex items-start gap-3 border-b border-border/70 py-2.5 last:border-b-0">
       <Icon className="mt-0.5 h-4 w-4 shrink-0 text-text-muted" />
       <div className="min-w-0">
-        <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted">
+        <p className="text-[10px] font-medium uppercase tracking-[0.02em] text-text-muted">
           {label}
         </p>
         <p className="mt-0.5 truncate text-xs font-semibold text-text-primary">{value}</p>
@@ -140,7 +140,7 @@ function ConversationMessage({ message }: { message: Message }) {
       {!isAgent && !isInternal && (
         <div
           className={cn(
-            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border shadow-sm",
+            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border",
             isAI
               ? "border-primary/20 bg-primary/10 text-primary"
               : "border-border bg-slate-50 text-text-muted"
@@ -153,7 +153,7 @@ function ConversationMessage({ message }: { message: Message }) {
       <div className={cn(isInternal ? "w-full" : "max-w-[82%]", isAgent && "ml-auto")}>
         {!isInternal && (
           <div className={cn("mb-1 flex items-center gap-2", isAgent && "justify-end")}>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">
+            <span className="text-[10px] font-medium uppercase tracking-[0.02em] text-text-muted">
               {meta.label}
             </span>
             <span className="text-[10px] text-text-muted">
@@ -164,7 +164,7 @@ function ConversationMessage({ message }: { message: Message }) {
 
         <div
           className={cn(
-            "rounded-xl border px-3 py-1.5 text-xs text-text-primary shadow-sm",
+            "rounded-xl border px-3 py-1.5 text-xs text-text-primary",
             isAI && "border-primary/20 border-l-4 bg-primary/[0.03]",
             isAgent && "border-primary/20 bg-primary text-white",
             message.sender === "customer" && "border-border bg-white",
@@ -172,13 +172,13 @@ function ConversationMessage({ message }: { message: Message }) {
           )}
         >
           {isAI && (
-            <div className="mb-2 flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-primary">
+            <div className="mb-2 flex items-center gap-1 text-[9px] font-medium uppercase tracking-[0.02em] text-primary">
               <Sparkles className="h-3 w-3 text-primary animate-pulse" />
               <span>AI Copilot Draft</span>
             </div>
           )}
           {isInternal && (
-            <div className="mb-1.5 flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-amber-700">
+            <div className="mb-1.5 flex items-center gap-1.5 text-[9px] font-medium uppercase tracking-[0.02em] text-amber-700">
               <Lock className="h-3 w-3 text-amber-600" />
               <span>Internal Note (Agents Only)</span>
             </div>
@@ -237,7 +237,7 @@ function ConversationMessage({ message }: { message: Message }) {
       </div>
 
       {isAgent && !isInternal && (
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary shadow-sm">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
           <UserCog className="h-4 w-4" />
         </div>
       )}
@@ -262,38 +262,38 @@ function AIInsightCard({
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="my-3 rounded-xl border border-primary/15 bg-gradient-to-r from-primary/[0.02] to-indigo-[0.02] p-3 text-left shadow-sm select-none"
+      className="my-3 rounded-xl border border-primary/15 bg-gradient-to-r from-primary/[0.02] to-indigo-[0.02] p-3 text-left select-none"
     >
       <div className="flex items-center justify-between border-b border-primary/10 pb-2 mb-2">
         <div className="flex items-center gap-2">
           <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <Sparkles className="h-3.5 w-3.5 animate-pulse" />
           </div>
-          <span className="text-xs font-bold text-text-primary tracking-wide">
+          <span className="text-xs font-semibold text-text-primary tracking-wide">
             ResolveIQ AI Insight
           </span>
         </div>
-        <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary text-[9px] font-bold font-mono">
+        <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary text-[9px] font-medium font-mono">
           Confidence: {confidence}%
         </Badge>
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 text-xs mb-3">
         <div className="bg-slate-50/70 border border-border/60 p-2 rounded-lg">
-          <span className="text-[9px] font-bold text-text-muted uppercase tracking-wider block">Intent</span>
+          <span className="text-[9px] font-medium text-text-muted uppercase tracking-[0.02em] block">Intent</span>
           <span className="font-semibold text-text-primary mt-0.5 block capitalize">{intent}</span>
         </div>
         <div className="bg-slate-50/70 border border-border/60 p-2 rounded-lg">
-          <span className="text-[9px] font-bold text-text-muted uppercase tracking-wider block">Sentiment</span>
+          <span className="text-[9px] font-medium text-text-muted uppercase tracking-[0.02em] block">Sentiment</span>
           <span className="font-semibold text-text-primary mt-0.5 block capitalize">{sentiment}</span>
         </div>
         <div className="bg-slate-50/70 border border-border/60 p-2 rounded-lg">
-          <span className="text-[9px] font-bold text-text-muted uppercase tracking-wider block">Escalation Risk</span>
-          <span className={cn("font-semibold mt-0.5 block capitalize", risk === "High" ? "text-red-600 font-bold" : "text-text-primary")}>
+          <span className="text-[9px] font-medium text-text-muted uppercase tracking-[0.02em] block">Escalation Risk</span>
+          <span className={cn("font-semibold mt-0.5 block capitalize", risk === "High" ? "text-red-600 font-semibold" : "text-text-primary")}>
             {risk}
           </span>
         </div>
         <div className="bg-slate-50/70 border border-border/60 p-2 rounded-lg">
-          <span className="text-[9px] font-bold text-text-muted uppercase tracking-wider block">Recommended Action</span>
+          <span className="text-[9px] font-medium text-text-muted uppercase tracking-[0.02em] block">Recommended Action</span>
           <span className="font-semibold text-primary mt-0.5 block truncate">{action}</span>
         </div>
       </div>
@@ -581,9 +581,9 @@ export default function TicketDetailPage() {
 
   if (!ticket) {
     return (
-      <div className="flex min-h-[420px] flex-col items-center justify-center rounded-xl border border-border bg-white p-10 text-center shadow-sm">
+      <div className="flex min-h-[420px] flex-col items-center justify-center rounded-xl border border-border bg-white p-10 text-center">
         <MessageSquare className="mb-3 h-8 w-8 text-text-muted" />
-        <h1 className="text-lg font-bold text-text-primary">Ticket not found</h1>
+        <h1 className="text-lg font-semibold text-text-primary">Ticket not found</h1>
         <p className="mt-1 text-sm text-text-muted">
           This support thread is unavailable or was archived.
         </p>
@@ -609,26 +609,26 @@ export default function TicketDetailPage() {
       {/* 1. Header Area */}
       <motion.div
         variants={fadeUp}
-        className="relative overflow-hidden flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between bg-white border border-border py-1.5 px-3 rounded-lg shadow-sm shrink-0"
+        className="relative overflow-hidden flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between bg-white border border-border py-1.5 px-3 rounded-lg shrink-0"
       >
         <div className="min-w-0 flex-1 flex flex-wrap items-center gap-1.5 select-none">
           <Link
             href="/tickets"
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border bg-white text-text-muted hover:text-text-primary hover:bg-slate-50 transition-colors shadow-sm"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border bg-white text-text-muted hover:text-text-primary hover:bg-slate-50 transition-colors"
             title="Back to operations"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
           </Link>
-          <h1 className="text-sm font-bold tracking-tight text-text-primary truncate max-w-[180px] sm:max-w-xs mr-1">
+          <h1 className="text-sm font-semibold tracking-[-0.01em] text-text-primary truncate max-w-[180px] sm:max-w-xs mr-1">
             {ticket.subject || "Untitled support request"}
           </h1>
-          <span className="shrink-0 text-[9px] font-bold font-mono px-1.5 py-0.5 rounded-full border border-border bg-slate-50 text-text-muted mr-1.5">
+          <span className="shrink-0 text-[9px] font-medium font-mono px-1.5 py-0.5 rounded-full border border-border bg-slate-50 text-text-muted mr-1.5">
             #{ticket.id.slice(0, 8)}
           </span>
           
           {/* AI Escalated badge */}
           {(ticket.priority === "urgent" || priorityScore >= 90) && (
-            <Badge className="bg-purple-50 text-purple-700 border border-purple-200 text-[9px] px-1.5 py-0 font-bold flex items-center gap-0.5 animate-pulse">
+            <Badge className="bg-purple-50 text-purple-700 border border-purple-200 text-[9px] px-1.5 py-0 font-semibold flex items-center gap-0.5 animate-pulse">
               <Sparkles className="h-2.5 w-2.5" />
               AI Escalated
             </Badge>
@@ -636,7 +636,7 @@ export default function TicketDetailPage() {
 
           {/* SLA countdown badge */}
           {ticket.status !== "resolved" ? (
-            <span className={cn("relative overflow-hidden inline-flex items-center gap-1 px-2.5 pt-1 pb-1.5 rounded-full text-[10px] font-bold shadow-sm border", slaInfo.color)}>
+            <span className={cn("relative overflow-hidden inline-flex items-center gap-1 px-2.5 pt-1 pb-1.5 rounded-full text-[10px] font-semibold border", slaInfo.color)}>
               <Clock className="h-3 w-3" />
               <span>{slaInfo.text.replace("SLA: ", "")}</span>
               {/* SLA Countdown Progress line inside the badge */}
@@ -651,7 +651,7 @@ export default function TicketDetailPage() {
               </div>
             </span>
           ) : (
-            <span className={cn("inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold shadow-sm border", slaInfo.color)}>
+            <span className={cn("inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold border", slaInfo.color)}>
               <Clock className="h-3 w-3" />
               <span>{slaInfo.text.replace("SLA: ", "")}</span>
             </span>
@@ -659,7 +659,7 @@ export default function TicketDetailPage() {
 
           {/* CSAT Display (only when resolved) */}
           {ticket.status === "resolved" && (
-            <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 border text-[9px] px-1.5 py-0 font-bold">
+            <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 border text-[9px] px-1.5 py-0 font-semibold">
               CSAT: 5.0
             </Badge>
           )}
@@ -689,10 +689,10 @@ export default function TicketDetailPage() {
         className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_360px] flex-1 min-h-0 overflow-hidden"
       >
         {/* LEFT COLUMN: CONVERSATION PANEL */}
-        <Card className="flex flex-col h-full min-h-0 p-0 overflow-hidden border border-border shadow-sm bg-white">
+        <Card className="flex flex-col h-full min-h-0 p-0 overflow-hidden border border-border bg-white">
           <div className="flex items-center justify-between border-b border-border px-3 py-1.5 select-none shrink-0">
             <div>
-              <h2 className="text-xs font-bold uppercase tracking-wider text-text-primary">Conversation ({messages.length})</h2>
+              <h2 className="text-xs font-medium uppercase tracking-[0.02em] text-text-primary">Conversation ({messages.length})</h2>
             </div>
             <Badge variant="outline" className="text-[9px] font-mono border-slate-300 py-0 px-1">
               {statusLabel(ticket.status)}
@@ -733,12 +733,12 @@ export default function TicketDetailPage() {
             {/* Simulated AI drafting loader */}
             {isAIDrafting && (
               <div className="flex gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary shadow-sm animate-pulse">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary animate-pulse">
                   <Bot className="h-4 w-4" />
                 </div>
                 <div className="max-w-[82%]">
                   <div className="mb-1 flex items-center gap-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">ResolveIQ AI</span>
+                    <span className="text-[10px] font-medium uppercase tracking-[0.02em] text-text-muted">ResolveIQ AI</span>
                     <Loader2 className="h-3 w-3 animate-spin text-primary" />
                   </div>
                   <div className="rounded-xl border border-primary/15 bg-primary/[0.02] p-3 text-xs text-text-muted italic flex items-center gap-2">
@@ -773,7 +773,7 @@ export default function TicketDetailPage() {
             )}
 
             {/* Composer Box */}
-            <div className="flex flex-col rounded-xl border border-border overflow-hidden focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/10 transition-all duration-200 shadow-sm">
+            <div className="flex flex-col rounded-xl border border-border overflow-hidden focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/10 transition-all duration-200">
               
               {/* Tab toggler: Public vs Internal */}
               <div className="flex items-center justify-between px-3 py-1 border-b border-border bg-slate-50/50 select-none">
@@ -879,7 +879,7 @@ export default function TicketDetailPage() {
                     type="button"
                     onClick={handleGenerateDraft}
                     disabled={isAIDrafting}
-                    className="flex items-center gap-1 text-[10px] font-bold text-primary hover:bg-primary/5 px-2.5 py-1 rounded-md border border-primary/20 transition-all"
+                    className="flex items-center gap-1 text-[10px] font-semibold text-primary hover:bg-primary/5 px-2.5 py-1 rounded-md border border-primary/20 transition-all"
                   >
                     <Sparkles className="h-3 w-3 text-primary" />
                     <span>Draft with AI</span>
@@ -892,7 +892,7 @@ export default function TicketDetailPage() {
                   onClick={handleSendReply}
                   disabled={(!reply.trim() && !file) || isSendingReply || isUploading}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-1 rounded-md text-[10px] font-bold text-white shadow-sm transition-all shrink-0",
+                    "flex items-center gap-1.5 px-3 py-1 rounded-md text-[10px] font-semibold text-white transition-all shrink-0",
                     composerTab === "internal" 
                       ? "bg-amber-600 hover:bg-amber-700 disabled:bg-amber-300"
                       : "bg-primary hover:bg-primary/95 disabled:bg-primary/50"
@@ -907,14 +907,14 @@ export default function TicketDetailPage() {
         </Card>
 
         {/* RIGHT COLUMN: SIDEBAR */}
-        <aside className="flex flex-col h-full min-h-0 bg-white border border-border rounded-xl shadow-sm overflow-hidden select-none">
+        <aside className="flex flex-col h-full min-h-0 bg-white border border-border rounded-xl overflow-hidden select-none">
           {/* Right sidebar tab selector */}
           <div className="flex border-b border-border bg-slate-50 shrink-0 select-none">
             <button
               type="button"
               onClick={() => setActiveRightTab("copilot")}
               className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold border-b-2 transition-all",
+                "flex-1 flex items-center justify-center gap-2 py-2 text-xs font-semibold border-b-2 transition-all",
                 activeRightTab === "copilot"
                   ? "border-primary text-primary bg-white"
                   : "border-transparent text-text-muted hover:text-text-primary"
@@ -927,7 +927,7 @@ export default function TicketDetailPage() {
               type="button"
               onClick={() => setActiveRightTab("customer")}
               className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold border-b-2 transition-all",
+                "flex-1 flex items-center justify-center gap-2 py-2 text-xs font-semibold border-b-2 transition-all",
                 activeRightTab === "customer"
                   ? "border-primary text-primary bg-white"
                   : "border-transparent text-text-muted hover:text-text-primary"
@@ -952,7 +952,7 @@ export default function TicketDetailPage() {
                 >
                   {/* AI Summary Section */}
                   <div className="space-y-2 border-b border-border/60 pb-3">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-text-primary flex items-center gap-1.5">
+                    <h3 className="text-xs font-medium uppercase tracking-[0.02em] text-text-primary flex items-center gap-1.5">
                       <FileText className="h-3.5 w-3.5 text-primary" />
                       AI Summary
                     </h3>
@@ -970,26 +970,26 @@ export default function TicketDetailPage() {
 
                   {/* Intent & Confidence Section */}
                   <div className="space-y-2 border-b border-border/60 pb-3">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-text-primary flex items-center gap-1.5">
+                    <h3 className="text-xs font-medium uppercase tracking-[0.02em] text-text-primary flex items-center gap-1.5">
                       <Tag className="h-3.5 w-3.5 text-primary" />
                       Intent Detection
                     </h3>
                     <div className="flex flex-col gap-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-text-muted uppercase">Detected</span>
-                        <span className="text-xs font-bold text-primary">{computedIntent.label}</span>
+                        <span className="text-[11px] font-medium text-text-muted uppercase">Detected</span>
+                        <span className="text-xs font-semibold text-primary">{computedIntent.label}</span>
                       </div>
                       <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                         <div className="h-full bg-primary" style={{ width: `${computedIntent.conf}%` }} />
                       </div>
                       <div className="flex flex-wrap gap-1.5 mt-1">
-                        <Badge variant={computedIntent.intent === "missing_product" ? "default" : "outline"} className="text-[9px] font-bold px-2 py-0.5 rounded-full">
+                        <Badge variant={computedIntent.intent === "missing_product" ? "default" : "outline"} className="text-[9px] font-semibold px-2 py-0.5 rounded-full">
                           Missing Product
                         </Badge>
-                        <Badge variant={computedIntent.intent === "refund" ? "default" : "outline"} className="text-[9px] font-bold px-2 py-0.5 rounded-full">
+                        <Badge variant={computedIntent.intent === "refund" ? "default" : "outline"} className="text-[9px] font-semibold px-2 py-0.5 rounded-full">
                           Refund Request
                         </Badge>
-                        <Badge variant={computedIntent.intent === "delivery" ? "default" : "outline"} className="text-[9px] font-bold px-2 py-0.5 rounded-full">
+                        <Badge variant={computedIntent.intent === "delivery" ? "default" : "outline"} className="text-[9px] font-semibold px-2 py-0.5 rounded-full">
                           Delivery Issue
                         </Badge>
                       </div>
@@ -998,14 +998,14 @@ export default function TicketDetailPage() {
 
                   {/* Sentiment Analysis Gauge */}
                   <div className="space-y-2 border-b border-border/60 pb-3">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-text-primary flex items-center gap-1.5">
+                    <h3 className="text-xs font-medium uppercase tracking-[0.02em] text-text-primary flex items-center gap-1.5">
                       <Heart className="h-3.5 w-3.5 text-primary" />
                       Sentiment analysis
                     </h3>
                     <div className="bg-slate-50 border border-border/70 p-3 rounded-xl space-y-2">
                       <div className="flex justify-between items-center text-xs">
-                        <span className="font-bold text-text-primary">Live sentiment:</span>
-                        <span className={cn("font-bold capitalize", ticket.sentiment === "negative" ? "text-red-600" : "text-emerald-600")}>
+                        <span className="font-semibold text-text-primary">Live sentiment:</span>
+                        <span className={cn("font-semibold capitalize", ticket.sentiment === "negative" ? "text-red-600" : "text-emerald-600")}>
                           {ticket.sentiment}
                         </span>
                       </div>
@@ -1022,7 +1022,7 @@ export default function TicketDetailPage() {
                           }}
                         />
                       </div>
-                      <div className="flex justify-between text-[9px] text-text-muted font-bold uppercase">
+                      <div className="flex justify-between text-[9px] text-text-muted font-medium uppercase tracking-[0.02em]">
                         <span>Negative</span>
                         <span>Neutral</span>
                         <span>Positive</span>
@@ -1032,7 +1032,7 @@ export default function TicketDetailPage() {
 
                   {/* Suggested Action Buttons */}
                   <div className="space-y-2 border-b border-border/60 pb-3">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-text-primary flex items-center gap-1.5">
+                    <h3 className="text-xs font-medium uppercase tracking-[0.02em] text-text-primary flex items-center gap-1.5">
                       <Zap className="h-3.5 w-3.5 text-primary" />
                       Suggested Actions
                     </h3>
@@ -1078,7 +1078,7 @@ export default function TicketDetailPage() {
 
                   {/* Knowledge Base Matches */}
                   <div className="space-y-2">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-text-primary flex items-center gap-1.5">
+                    <h3 className="text-xs font-medium uppercase tracking-[0.02em] text-text-primary flex items-center gap-1.5">
                       <Award className="h-3.5 w-3.5 text-primary" />
                       KB Matches & Templates
                     </h3>
@@ -1086,12 +1086,12 @@ export default function TicketDetailPage() {
                       {brandDetail?.faqs && brandDetail.faqs.length > 0 ? (
                         brandDetail.faqs.slice(0, 2).map((faq, index) => (
                           <div key={index} className="bg-slate-50 border border-border/80 p-2.5 rounded-xl text-xs space-y-1.5 hover:border-primary/20 transition-all">
-                            <span className="font-bold text-text-primary block truncate">{faq.question}</span>
+                            <span className="font-semibold text-text-primary block truncate">{faq.question}</span>
                             <p className="text-[11px] text-text-muted line-clamp-2">{faq.answer}</p>
                             <button
                               type="button"
                               onClick={() => triggerAIDraft(faq.answer)}
-                              className="text-[10px] font-bold text-primary flex items-center gap-1 hover:underline pt-1"
+                              className="text-[10px] font-semibold text-primary flex items-center gap-1 hover:underline pt-1"
                             >
                               <Copy className="h-3 w-3" />
                               Use FAQ Answer
@@ -1119,13 +1119,13 @@ export default function TicketDetailPage() {
                   {customerInfo && (
                     <>
                       <div className="flex items-center gap-3 border-b border-border/60 pb-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/5 text-base font-bold text-primary shadow-sm shrink-0">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/5 text-base font-semibold text-primary shrink-0">
                           {customerInitial(ticket.customer_id)}
                         </div>
                         <div className="min-w-0">
-                          <h4 className="truncate text-sm font-bold text-text-primary">{customerInfo.name}</h4>
+                          <h4 className="truncate text-sm font-semibold text-text-primary">{customerInfo.name}</h4>
                           <span className="truncate text-[10px] text-text-muted block">{customerInfo.email}</span>
-                          <span className="text-[9px] text-primary font-bold uppercase tracking-wider block mt-0.5">
+                          <span className="text-[9px] text-primary font-medium uppercase tracking-[0.02em] block mt-0.5">
                             CSAT: {customerInfo.rating}/5.0 avg
                           </span>
                         </div>
@@ -1136,28 +1136,28 @@ export default function TicketDetailPage() {
                         <div className="bg-slate-50/70 border border-border/60 p-2.5 rounded-xl flex items-center gap-2">
                           <DollarSign className="h-4 w-4 text-primary shrink-0" />
                           <div>
-                            <span className="text-[9px] font-bold text-text-muted uppercase tracking-wider block">LTV</span>
-                            <span className="font-bold text-text-primary mt-0.5 block">${customerInfo.ltv.toFixed(2)}</span>
+                            <span className="text-[9px] font-medium text-text-muted uppercase tracking-[0.02em] block">LTV</span>
+                            <span className="font-semibold text-text-primary mt-0.5 block">${customerInfo.ltv.toFixed(2)}</span>
                           </div>
                         </div>
                         <div className="bg-slate-50/70 border border-border/60 p-2.5 rounded-xl flex items-center gap-2">
                           <History className="h-4 w-4 text-primary shrink-0" />
                           <div>
-                            <span className="text-[9px] font-bold text-text-muted uppercase tracking-wider block">Age</span>
-                            <span className="font-bold text-text-primary mt-0.5 block">{customerInfo.ageMonths} months</span>
+                            <span className="text-[9px] font-medium text-text-muted uppercase tracking-[0.02em] block">Age</span>
+                            <span className="font-semibold text-text-primary mt-0.5 block">{customerInfo.ageMonths} months</span>
                           </div>
                         </div>
                         <div className="bg-slate-50/70 border border-border/60 p-2.5 rounded-xl flex items-center gap-2">
                           <FileText className="h-4 w-4 text-primary shrink-0" />
                           <div>
-                            <span className="text-[9px] font-bold text-text-muted uppercase tracking-wider block">Total Tickets</span>
-                            <span className="font-bold text-text-primary mt-0.5 block">{customerInfo.totalTickets} threads</span>
+                            <span className="text-[9px] font-medium text-text-muted uppercase tracking-[0.02em] block">Total Tickets</span>
+                            <span className="font-semibold text-text-primary mt-0.5 block">{customerInfo.totalTickets} threads</span>
                           </div>
                         </div>
                         <div className="bg-slate-50/70 border border-border/60 p-2.5 rounded-xl flex items-center gap-2">
                           <Briefcase className="h-4 w-4 text-primary shrink-0" />
                           <div>
-                            <span className="text-[9px] font-bold text-text-muted uppercase tracking-wider block">Customer ID</span>
+                            <span className="text-[9px] font-medium text-text-muted uppercase tracking-[0.02em] block">Customer ID</span>
                             <span className="font-mono text-[9px] font-semibold text-text-primary mt-0.5 block truncate max-w-[80px]" title={ticket.customer_id}>
                               {ticket.customer_id.slice(0, 8)}
                             </span>
@@ -1167,7 +1167,7 @@ export default function TicketDetailPage() {
 
                       {/* Order History */}
                       <div className="space-y-2 pt-2">
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-text-primary flex items-center gap-1.5">
+                        <h3 className="text-xs font-medium uppercase tracking-[0.02em] text-text-primary flex items-center gap-1.5">
                           <History className="h-3.5 w-3.5 text-primary" />
                           Recent Orders
                         </h3>
@@ -1175,7 +1175,7 @@ export default function TicketDetailPage() {
                           {customerInfo.orders.map((order, index) => (
                             <div key={order.id} className="bg-slate-50 border border-border/80 p-2.5 rounded-xl text-xs space-y-1">
                               <div className="flex items-center justify-between">
-                                <span className="font-bold text-text-primary font-mono">{order.id}</span>
+                                <span className="font-semibold text-text-primary font-mono">{order.id}</span>
                                 <Badge variant="outline" className="text-[9px] font-semibold px-2 py-0 bg-emerald-50 text-emerald-700 border-emerald-200">
                                   {order.status}
                                 </Badge>
@@ -1183,7 +1183,7 @@ export default function TicketDetailPage() {
                               <p className="text-[10px] text-text-muted truncate">{order.items}</p>
                               <div className="flex justify-between items-center text-[10px] text-text-muted pt-1">
                                 <span>{order.date}</span>
-                                <span className="font-bold text-text-primary">{order.total}</span>
+                                <span className="font-semibold text-text-primary">{order.total}</span>
                               </div>
                             </div>
                           ))}
@@ -1198,14 +1198,14 @@ export default function TicketDetailPage() {
 
           {/* Static controls row (Routing assignments) */}
           <div className="border-t border-border bg-slate-50 p-2.5 space-y-1.5 shrink-0 text-left select-none">
-            <h3 className="text-[10px] font-bold uppercase tracking-wider text-text-muted">
+            <h3 className="text-[10px] font-medium uppercase tracking-[0.02em] text-text-muted">
               Routing & Assignment
             </h3>
             
             <div className="space-y-1 text-xs">
               {/* Status Row */}
               <div className="flex items-center justify-between py-0.5 border-b border-border/40 last:border-0">
-                <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider w-20">
+                <span className="text-[10px] font-medium text-text-muted uppercase tracking-[0.02em] w-20">
                   Status
                 </span>
                 <div className="relative flex-1 max-w-[150px]">
@@ -1229,7 +1229,7 @@ export default function TicketDetailPage() {
 
               {/* Priority Row */}
               <div className="flex items-center justify-between py-0.5 border-b border-border/40 last:border-0">
-                <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider w-20">
+                <span className="text-[10px] font-medium text-text-muted uppercase tracking-[0.02em] w-20">
                   Priority
                 </span>
                 <div className="relative flex-1 max-w-[150px]">
@@ -1254,7 +1254,7 @@ export default function TicketDetailPage() {
 
               {/* Assignee Row */}
               <div className="flex items-center justify-between py-0.5 border-b border-border/40 last:border-0">
-                <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider w-20">
+                <span className="text-[10px] font-medium text-text-muted uppercase tracking-[0.02em] w-20">
                   Assignee
                 </span>
                 <div className="relative flex-1 max-w-[150px]">
@@ -1302,7 +1302,7 @@ function TicketLoading() {
 
 function Card({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("rounded-2xl border border-border bg-white p-4 shadow-sm", className)}>
+    <div className={cn("rounded-2xl border border-border bg-white p-4", className)}>
       {children}
     </div>
   );

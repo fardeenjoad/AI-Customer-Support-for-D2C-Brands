@@ -105,16 +105,16 @@ export function CreateTicketPanel({ isOpen, onClose }: CreateTicketPanelProps) {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="relative w-full max-w-lg h-full bg-surface border-l border-border shadow-2xl z-10 flex flex-col"
+            className="relative w-full max-w-lg h-full bg-surface border-l border-border shadow-lg z-10 flex flex-col"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-border/60">
               <div className="flex items-center space-x-3">
-                <div className="w-9 h-9 rounded-lg gradient-primary flex items-center justify-center shadow-glow">
+                <div className="w-9 h-9 rounded-lg gradient-primary flex items-center justify-center">
                   <Zap className="h-4 w-4 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-base font-bold font-heading text-text-primary">
+                  <h2 className="text-base font-semibold font-heading text-text-primary">
                     Create Ticket
                   </h2>
                   <p className="text-[10px] text-text-muted">
@@ -138,7 +138,7 @@ export function CreateTicketPanel({ isOpen, onClose }: CreateTicketPanelProps) {
               <div className="flex-1 px-6 py-6 space-y-5">
                 {/* Subject */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] text-text-muted font-bold tracking-wider uppercase pl-0.5">
+                  <label className="text-[10px] text-text-muted font-medium tracking-[0.02em] uppercase pl-0.5">
                     Subject
                   </label>
                   <input
@@ -156,7 +156,7 @@ export function CreateTicketPanel({ isOpen, onClose }: CreateTicketPanelProps) {
 
                 {/* Brand */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] text-text-muted font-bold tracking-wider uppercase pl-0.5">
+                  <label className="text-[10px] text-text-muted font-medium tracking-[0.02em] uppercase pl-0.5">
                     D2C Brand
                   </label>
                   <select
@@ -180,7 +180,7 @@ export function CreateTicketPanel({ isOpen, onClose }: CreateTicketPanelProps) {
                 {/* Description */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-[10px] text-text-muted font-bold tracking-wider uppercase pl-0.5">
+                    <label className="text-[10px] text-text-muted font-medium tracking-[0.02em] uppercase pl-0.5">
                       Description
                     </label>
                     <span className="text-[10px] text-text-muted">

@@ -28,6 +28,7 @@
     "zustand": "^4.5.2"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.2.9",
     "@types/bn.js": "^5.2.0",
     "@types/debug": "^4.1.13",
     "@types/lodash": "^4.17.24",

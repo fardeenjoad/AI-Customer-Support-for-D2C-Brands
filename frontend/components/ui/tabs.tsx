@@ -30,7 +30,7 @@ interface TabsListProps {
 
 const TabsList = ({ children, className, value, onValueChange }: TabsListProps) => {
   return (
-    <div className={cn("inline-flex items-center justify-start rounded-lg bg-surface/50 p-1 border border-border", className)}>
+    <div className={cn("inline-flex items-center justify-start gap-1 border-b border-border", className)}>
       {React.Children.map(children, (child) => {
         if (React.isValidElement(child)) {
           return React.cloneElement(child as React.ReactElement<any>, {
@@ -61,8 +61,8 @@ const TabsTrigger = ({ value, children, className, activeValue, onClick }: TabsT
       className={cn(
         "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
         isActive
-          ? "bg-surface text-text-primary border border-border shadow-sm"
-          : "text-text-muted hover:text-text-primary hover:bg-surface/30",
+          ? "text-text-primary border-b-2 border-primary -mb-px"
+          : "text-text-muted hover:text-text-primary",
         className
       )}
     >

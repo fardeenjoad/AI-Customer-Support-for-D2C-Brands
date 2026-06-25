@@ -53,7 +53,7 @@ export default function Topbar() {
       <div className="flex items-center space-x-4 min-w-0">
         <button
           onClick={toggleMobileSidebar}
-          className="p-1.5 rounded-lg border border-border bg-white text-text-muted hover:text-text-primary md:hidden transition-colors shadow-sm"
+          className="p-1.5 rounded-lg border border-border bg-white text-text-muted hover:text-text-primary md:hidden transition-colors"
           title="Toggle navigation menu"
         >
           <Menu className="h-5 w-5" />
@@ -67,7 +67,7 @@ export default function Topbar() {
                 className={cn(
                   "truncate",
                   idx === breadcrumbs.length - 1
-                    ? "text-text-primary font-semibold"
+                    ? "text-text-primary font-medium"
                     : "text-text-muted"
                 )}
               >
@@ -81,7 +81,7 @@ export default function Topbar() {
       <div className="flex items-center space-x-2 sm:space-x-3">
         <button
           onClick={() => setSearchOpen(true)}
-          className="flex items-center bg-white border border-border hover:border-primary/45 rounded-lg px-3 py-1.5 w-60 max-sm:w-36 text-text-muted hover:text-text-primary transition-all duration-200 shadow-sm"
+          className="flex items-center bg-white border border-border hover:border-primary/45 rounded-lg px-3 py-1.5 w-60 max-sm:w-36 text-text-muted hover:text-text-primary transition-all duration-200"
         >
           <Search className="h-4 w-4 shrink-0 mr-2" />
           <span className="text-[11px] text-left flex-1 truncate">Search tickets...</span>
@@ -98,7 +98,7 @@ export default function Topbar() {
         <div className="relative">
           <button
             onClick={() => setShowNotifications((value) => !value)}
-            className="relative p-2 rounded-lg bg-white border border-border text-text-muted hover:text-text-primary transition-colors shadow-sm"
+            className="relative p-2 rounded-lg bg-white border border-border text-text-muted hover:text-text-primary transition-colors"
             title="Notifications"
           >
             <Bell className="h-4 w-4" />
@@ -114,7 +114,7 @@ export default function Topbar() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.97, y: 8 }}
                 transition={{ duration: 0.15 }}
-                className="absolute right-0 mt-3 w-80 bg-white border border-border rounded-lg shadow-xl overflow-hidden z-50 text-left"
+                className="absolute right-0 mt-3 w-80 bg-white border border-border rounded-lg shadow-lg overflow-hidden z-50 text-left"
               >
                 <div className="p-4 border-b border-border flex items-center justify-between bg-surface-light">
                   <h4 className="text-xs font-semibold text-text-primary">
@@ -208,7 +208,7 @@ export default function Topbar() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.97, y: 8 }}
                 transition={{ duration: 0.15 }}
-                className="absolute right-0 mt-3 w-56 bg-white border border-border rounded-lg shadow-xl overflow-hidden z-50 text-left"
+                className="absolute right-0 mt-3 w-56 bg-white border border-border rounded-lg shadow-lg overflow-hidden z-50 text-left"
               >
                 <div className="p-3 bg-surface-light border-b border-border flex flex-col space-y-0.5">
                   <span className="text-xs font-semibold text-text-primary truncate">

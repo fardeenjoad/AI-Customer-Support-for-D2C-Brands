@@ -127,7 +127,7 @@ export default function SupportChatWidget() {
       <motion.button
         onClick={() => setIsOpen(true)}
         className={cn(
-          "fixed bottom-6 right-6 h-14 w-14 rounded-full bg-primary text-white flex items-center justify-center shadow-lg hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 z-50 select-none",
+          "fixed bottom-6 right-6 h-14 w-14 rounded-full bg-primary text-white flex items-center justify-center shadow-md hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 z-50 select-none",
           isOpen && "pointer-events-none opacity-0 scale-75"
         )}
         initial={{ scale: 0.8, opacity: 0 }}
@@ -148,18 +148,18 @@ export default function SupportChatWidget() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 30 }}
             transition={{ type: "spring", duration: 0.4 }}
-            className="fixed bottom-6 right-6 w-[360px] max-w-[calc(100vw-2rem)] h-[520px] rounded-lg border border-border bg-white shadow-xl flex flex-col overflow-hidden z-50 select-none text-left"
+            className="fixed bottom-6 right-6 w-[360px] max-w-[calc(100vw-2rem)] h-[520px] rounded-lg border border-border bg-white shadow-lg flex flex-col overflow-hidden z-50 select-none text-left"
           >
-            <div className="bg-white border-b border-border p-4 flex items-center justify-between shadow-sm">
+            <div className="bg-white border-b border-border p-4 flex items-center justify-between">
               <div className="flex items-center space-x-2.5">
                 <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
                   <Bot className="h-4.5 w-4.5" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold tracking-wide flex items-center text-text-primary">
+                  <h4 className="text-xs font-semibold tracking-wide flex items-center text-text-primary">
                     AI Copilot Simulator
                   </h4>
-                  <span className="text-[9px] text-accent font-semibold uppercase tracking-wider block">
+                  <span className="text-[9px] text-accent font-medium uppercase tracking-[0.02em] block">
                     Online - instant replies
                   </span>
                 </div>
@@ -208,7 +208,7 @@ export default function SupportChatWidget() {
                     <div className="space-y-1">
                       <div
                         className={cn(
-                          "rounded-lg px-3.5 py-2 text-xs shadow-sm leading-relaxed whitespace-pre-line border",
+                          "rounded-lg px-3.5 py-2 text-xs leading-relaxed whitespace-pre-line border",
                           isAI
                             ? "bg-white text-text-primary border-border"
                             : "bg-primary text-white border-primary"
@@ -229,7 +229,7 @@ export default function SupportChatWidget() {
                   <div className="w-7 h-7 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center shrink-0">
                     <Bot className="h-3.5 w-3.5" />
                   </div>
-                  <div className="bg-white text-text-muted border border-border rounded-lg px-3.5 py-2.5 text-xs shadow-sm flex items-center space-x-1.5 shrink-0">
+                  <div className="bg-white text-text-muted border border-border rounded-lg px-3.5 py-2.5 text-xs flex items-center space-x-1.5 shrink-0">
                     <Loader2 className="h-3 w-3 animate-spin text-primary" />
                     <span>AI is preparing a reply...</span>
                   </div>
@@ -248,7 +248,7 @@ export default function SupportChatWidget() {
                       <button
                         key={action.id}
                         onClick={() => handleSendMessage(action.label)}
-                        className="px-2.5 py-1 text-[10px] font-bold rounded-full border border-border bg-white text-primary hover:bg-primary/5 hover:border-primary/40 transition-all flex items-center space-x-1 shadow-sm active:scale-95"
+                        className="px-2.5 py-1 text-[10px] font-medium rounded-full border border-border bg-white text-primary hover:bg-primary/5 hover:border-primary/40 transition-all flex items-center space-x-1 active:scale-95"
                       >
                         <Icon className="h-3 w-3" />
                         <span>{action.label}</span>
@@ -279,7 +279,7 @@ export default function SupportChatWidget() {
                     setInputValue("");
                   }}
                   disabled={!inputValue.trim() || isTyping}
-                  className="p-1.5 rounded-lg bg-primary text-white hover:bg-primary-hover disabled:opacity-40 disabled:hover:bg-primary transition-all shrink-0 shadow-sm"
+                  className="p-1.5 rounded-lg bg-primary text-white hover:bg-primary-hover disabled:opacity-40 disabled:hover:bg-primary transition-all shrink-0"
                   title="Send message"
                 >
                   <Send className="h-3 w-3" />

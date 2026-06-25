@@ -236,7 +236,7 @@ async def chat_with_bot(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Chatbot query error: {str(e)}"
         )
-
+        
 @router.get("/{ticket_id}/history", response_model=ResponseEnvelope[List[MessageResponse]])
 @limiter.limit("30/minute")
 async def get_chat_history(

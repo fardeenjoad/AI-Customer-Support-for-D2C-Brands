@@ -106,3 +106,11 @@ ON CONFLICT (email) DO NOTHING;
 INSERT INTO agent_brands (agent_id, brand_id)
 VALUES ('b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2', 'f47ac10b-58cc-4372-a567-0e02b2c3d479')
 ON CONFLICT DO NOTHING;
+
+-- Production optimization indexes
+CREATE INDEX IF NOT EXISTS idx_tickets_customer_id ON tickets(customer_id);
+CREATE INDEX IF NOT EXISTS idx_tickets_brand_id ON tickets(brand_id);
+CREATE INDEX IF NOT EXISTS idx_tickets_assigned_to ON tickets(assigned_to);
+CREATE INDEX IF NOT EXISTS idx_messages_ticket_id ON messages(ticket_id);
+CREATE INDEX IF NOT EXISTS idx_feedback_ticket_id ON feedback(ticket_id);
+

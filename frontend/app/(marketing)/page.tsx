@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { Button } from "@/components/ui/button";
@@ -366,6 +367,7 @@ function AnimatedMetric({
 /* ─── MAIN PAGE ─── */
 
 export default function MarketingPage() {
+  const pathname = usePathname();
   const { isAuthenticated, user } = useAuthStore();
   const [authHydrated, setAuthHydrated] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -373,6 +375,18 @@ export default function MarketingPage() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const lastScrollY = useRef(0);
+
+  // Reset navigation overlay when pathname changes or as a safety timeout
+  useEffect(() => {
+    if (isNavigating) {
+      const timeout = setTimeout(() => setIsNavigating(false), 4000);
+      return () => clearTimeout(timeout);
+    }
+  }, [isNavigating]);
+
+  useEffect(() => {
+    setIsNavigating(false);
+  }, [pathname]);
 
   // Scroll animation refs
   const metricsAnim = useScrollAnimation();

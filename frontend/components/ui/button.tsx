@@ -16,13 +16,13 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(
           "relative inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100",
           {
-            "bg-primary text-white hover:bg-primary-hover focus:ring-primary shadow-sm":
+            "bg-primary text-white hover:bg-primary-hover focus:ring-primary":
               variant === "primary",
-            "bg-white text-text-primary border border-border hover:bg-surface-light focus:ring-primary/30 shadow-sm":
+            "bg-white text-text-primary border border-border hover:bg-surface-light focus:ring-primary/30":
               variant === "secondary",
             "bg-danger text-white hover:bg-danger/90 focus:ring-danger":
               variant === "danger",
-            "bg-white border border-primary/35 text-primary hover:bg-primary/5 focus:ring-primary shadow-sm":
+            "bg-white border border-primary/35 text-primary hover:bg-primary/5 focus:ring-primary":
               variant === "outline",
             "bg-transparent text-text-muted hover:text-text-primary hover:bg-surface-light focus:ring-primary/20":
               variant === "ghost",

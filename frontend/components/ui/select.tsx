@@ -12,7 +12,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div className="flex flex-col space-y-1.5 w-full text-left">
         {label && (
-          <label className="text-[10px] text-text-muted font-bold tracking-wider uppercase pl-0.5">
+          <label className="text-[10px] text-text-muted font-medium tracking-[0.02em] uppercase pl-0.5">
             {label}
           </label>
         )}

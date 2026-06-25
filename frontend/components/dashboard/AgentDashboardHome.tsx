@@ -266,7 +266,7 @@ export default function AgentDashboardHome() {
     >
       {/* ── Top Welcome & Shift Status Banner ── */}
       <motion.div
-        className="glass-panel p-6 rounded-2xl border border-border/80 relative overflow-hidden flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0"
+        className="rounded-2xl border border-border bg-white p-6 relative overflow-hidden flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0"
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4 }}
@@ -288,10 +288,10 @@ export default function AgentDashboardHome() {
 
         {/* Shift status selector */}
         <div className="flex flex-col sm:flex-row sm:items-center space-y-2.5 sm:space-y-0 sm:space-x-3 z-10 shrink-0">
-          <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider pl-0.5 select-none">
+          <span className="text-[10px] font-medium text-text-muted uppercase tracking-[0.02em] pl-0.5 select-none">
             Shift Status:
           </span>
-          <div className="flex bg-surface-dark/40 border border-border/50 rounded-xl p-1 shadow-inner">
+          <div className="flex bg-surface-dark/40 border border-border/50 rounded-xl p-1">
             <button
               onClick={() => handleShiftStatusChange("active")}
               className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 ${
@@ -500,7 +500,7 @@ export default function AgentDashboardHome() {
                                     <Button
                                       size="sm"
                                       variant="primary"
-                                      className="h-9 px-4 text-xs font-semibold gap-1.5 hover:shadow-glow"
+                                      className="h-9 px-4 text-xs font-semibold gap-1.5"
                                     >
                                       <span>Resume Chat</span>
                                       <ArrowRight className="h-3.5 w-3.5" />
@@ -572,7 +572,7 @@ export default function AgentDashboardHome() {
                                     disabled={isUpdating}
                                     size="sm"
                                     variant="primary"
-                                    className="h-9 px-4 text-xs font-semibold gap-1.5 hover:shadow-glow"
+                                    className="h-9 px-4 text-xs font-semibold gap-1.5"
                                   >
                                     <span>Claim & Chat</span>
                                     <UserPlus className="h-3.5 w-3.5" />

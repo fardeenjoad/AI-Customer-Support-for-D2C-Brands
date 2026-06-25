@@ -50,7 +50,7 @@ export function Dialog({ isOpen, onClose, title, description, children, classNam
             exit={{ scale: 0.95, opacity: 0, y: 10 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
             className={cn(
-              "relative w-full max-w-lg overflow-hidden rounded-xl border border-border bg-surface p-6 shadow-xl z-10 focus:outline-none",
+              "relative w-full max-w-lg overflow-hidden rounded-xl border border-border bg-surface p-6 shadow-lg z-10 focus:outline-none",
               className
             )}
           >

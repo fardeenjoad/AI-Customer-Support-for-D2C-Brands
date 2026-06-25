@@ -27,7 +27,7 @@ export default function TicketTable({ tickets, onAssign, isLoading }: TicketTabl
   if (!tickets || tickets.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-12 text-center border border-dashed border-border rounded-xl bg-surface/10">
-        <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-surface border border-border/80 text-text-muted mb-4 shadow-sm">
+        <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-surface border border-border/80 text-text-muted mb-4">
           <Inbox className="h-6 w-6" />
         </div>
         <h4 className="text-sm font-semibold text-text-primary mb-1 font-heading">
@@ -113,7 +113,7 @@ export default function TicketTable({ tickets, onAssign, isLoading }: TicketTabl
                     Agent: {ticket.assigned_agent_id.slice(0, 8)}
                   </span>
                 ) : (
-                  <span className="text-warning text-[10px] bg-warning/5 border border-warning/15 px-2 py-1 rounded-md animate-pulse">
+                  <span className="text-warning text-[10px] bg-warning/5 border border-warning/15 px-2 py-1 rounded-md">
                     Unassigned
                   </span>
                 )}

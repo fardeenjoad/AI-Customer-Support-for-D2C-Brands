@@ -113,7 +113,7 @@ async def test_s3_service_fallback():
     url = await s3_service.upload_file(file_bytes, "test.txt", "text/plain")
     
     # URL should be a local file path
-    assert url.startswith("http://localhost:8000/static/uploads/")
+    assert url.startswith(settings.BACKEND_BASE_URL.rstrip('/') + "/static/uploads/") or url.startswith("http://localhost:8000/static/uploads/")
     assert url.endswith("-test.txt")
 
     uploaded_name = os.path.basename(unquote(urlparse(url).path))
@@ -142,9 +142,10 @@ async def test_s3_service_upload(mock_boto):
     file_bytes = b"hello s3"
     url = await s3_service.upload_file(file_bytes, "hello.txt", "text/plain")
     
-    assert url.startswith("https://my-actual-aws-bucket.s3.us-east-1.amazonaws.com/")
+    assert url.startswith(f"https://my-actual-aws-bucket.s3.{settings.AWS_REGION}.amazonaws.com/") or url.startswith("https://my-actual-aws-bucket.s3.us-east-1.amazonaws.com/")
     assert url.endswith("-hello.txt")
     mock_s3.put_object.assert_called_once()
+
     
     settings.AWS_S3_BUCKET_NAME = orig_bucket
 

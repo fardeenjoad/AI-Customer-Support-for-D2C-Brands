@@ -110,7 +110,7 @@ export function getSLAInfo(created_at: string, priority: string, status: string)
   const diffMs = limitTime - now;
   
   if (diffMs <= 0) {
-    return { text: "Overdue", color: "text-red-700 bg-red-50 border-red-200 font-semibold animate-pulse border", isOverdue: true };
+    return { text: "Overdue", color: "text-red-700 bg-red-50 border-red-200 font-semibold border", isOverdue: true };
   }
   
   const diffHrs = Math.floor(diffMs / (3600 * 1000));
@@ -126,7 +126,7 @@ export function getSLAInfo(created_at: string, priority: string, status: string)
   let color = "text-slate-600 bg-slate-50 border-slate-200 border";
   if (diffMs < 2 * 60 * 60 * 1000) {
     // Less than 2 hours left
-    color = "text-amber-700 bg-amber-50 border-amber-200 font-semibold animate-pulse border";
+    color = "text-amber-700 bg-amber-50 border-amber-200 font-semibold border";
   }
   
   return { text, color, isOverdue: false };

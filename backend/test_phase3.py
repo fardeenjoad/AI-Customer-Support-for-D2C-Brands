@@ -121,8 +121,40 @@ def setup_overrides():
     app.dependency_overrides[MessageRepository] = lambda: MockMessageRepository()
     app.dependency_overrides[BrandRepository] = lambda: MockBrandRepository()
     app.dependency_overrides[chat_get_email_service] = lambda: MockEmailService()
+    
+    from app.services.ai_service import AIService
+    from app.services.sentiment_service import SentimentService
+    
+    class MockAIService:
+        async def detect_intent(self, message: str) -> str:
+            # Simple check for refund/complaint keyword in test cases
+            lower_msg = message.lower()
+            if "refund" in lower_msg:
+                return "refund"
+            if "hate" in lower_msg or "terrible" in lower_msg:
+                return "complaint"
+            return "general"
+            
+        async def should_escalate(self, message: str, history: list) -> bool:
+            lower_msg = message.lower()
+            return "refund" in lower_msg or "hate" in lower_msg or "terrible" in lower_msg
+            
+        async def generate_reply(self, customer_message: str, brand_context: dict, message_history: list = None) -> str:
+            return "Mock AI reply"
+            
+    class MockSentimentService:
+        async def analyze_sentiment(self, message: str) -> str:
+            lower_msg = message.lower()
+            if "hate" in lower_msg or "terrible" in lower_msg:
+                return "negative"
+            return "neutral"
+            
+    app.dependency_overrides[AIService] = lambda: MockAIService()
+    app.dependency_overrides[SentimentService] = lambda: MockSentimentService()
+    
     yield
     app.dependency_overrides.clear()
+
 
 @pytest.fixture
 def anyio_backend():

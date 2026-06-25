@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import TicketTable from "@/components/tickets/TicketTable";
 import { TicketFilters } from "@/components/tickets/TicketFilters";
-import { formatRelativeTime, getPriorityColor, getStatusColor, truncateText } from "@/lib/utils";
+import { cn, formatRelativeTime, getPriorityColor, getStatusColor, truncateText } from "@/lib/utils";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 10 },
@@ -62,10 +62,10 @@ function QueueMetric({
     <Card className="p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-wide text-text-muted">
+          <p className="text-[11px] font-medium uppercase tracking-[0.02em] text-text-muted">
             {title}
           </p>
-          <p className="mt-2 text-3xl font-bold tracking-tight text-text-primary">
+          <p className="mt-2 text-3xl font-semibold tracking-tight tabular-nums text-text-primary">
             {value}
           </p>
           <p className="mt-1 text-xs text-text-muted">{detail}</p>
@@ -84,52 +84,58 @@ function AISummaryCard({ tickets }: { tickets: Ticket[] }) {
   const featuredTicket = urgentTicket || negativeTicket || tickets[0];
 
   return (
-    <Card className="border-primary/20 bg-primary/[0.03] p-5">
-      <div className="mb-4 flex items-center justify-between gap-3">
+    <Card className="border-primary/20 bg-primary/[0.03] p-6 flex flex-col h-full min-h-[280px]">
+      <div className="mb-4 flex items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
             <Sparkles className="h-4 w-4" />
           </div>
-          <div>
-            <h3 className="text-sm font-bold text-text-primary">AI queue readout</h3>
+          <div className="text-left">
+            <h3 className="text-sm font-semibold tracking-tight text-text-primary">AI queue readout</h3>
             <p className="text-xs text-text-muted">Draft focus for the next agent action.</p>
           </div>
         </div>
-        <Badge className="border-primary/20 bg-white text-primary">Copilot</Badge>
+        <Badge className="border-primary/20 bg-white text-primary rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase">Copilot</Badge>
       </div>
 
-      {featuredTicket ? (
-        <div className="border-l-4 border-primary bg-white px-4 py-3">
-          <p className="text-sm font-semibold text-text-primary">
-            {truncateText(featuredTicket.subject, 72)}
-          </p>
-          <p className="mt-2 text-xs leading-5 text-text-muted">
-            Prioritize this thread because it is{" "}
-            <span className="font-semibold text-text-primary">
-              {featuredTicket.priority === "urgent" ? "escalated" : featuredTicket.priority}
-            </span>{" "}
-            with{" "}
-            <span className="font-semibold text-text-primary">
-              {featuredTicket.sentiment}
-            </span>{" "}
-            sentiment. Review context before sending the suggested response.
-          </p>
-          <Link
-            href={`/tickets/${featuredTicket.id}`}
-            className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary-hover"
-          >
-            Open thread
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </div>
-      ) : (
-        <div className="border-l-4 border-primary bg-white px-4 py-3">
-          <p className="text-sm font-semibold text-text-primary">No active queue pressure</p>
-          <p className="mt-1 text-xs text-text-muted">
-            New tickets will appear here with AI triage context.
-          </p>
-        </div>
-      )}
+      <div className="flex-1 flex flex-col justify-center">
+        {featuredTicket ? (
+          <div className="border-l-4 border-primary bg-white px-4 py-3.5 rounded-r-lg flex-1 flex flex-col justify-between">
+            <div>
+              <p className="text-sm font-semibold tracking-tight text-text-primary text-left">
+                {truncateText(featuredTicket.subject, 72)}
+              </p>
+              <p className="mt-2 text-xs leading-relaxed text-text-muted text-left">
+                Prioritize this thread because it is{" "}
+                <span className="font-semibold text-text-primary">
+                  {featuredTicket.priority === "urgent" ? "escalated" : featuredTicket.priority}
+                </span>{" "}
+                with{" "}
+                <span className="font-semibold text-text-primary text-capitalize">
+                  {featuredTicket.sentiment}
+                </span>{" "}
+                sentiment. Review context before sending the suggested response.
+              </p>
+            </div>
+            <div className="text-left mt-3">
+              <Link
+                href={`/tickets/${featuredTicket.id}`}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary-hover"
+              >
+                Open thread
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="border-l-4 border-primary bg-white px-4 py-4 rounded-r-lg flex-1 flex flex-col justify-center text-center">
+            <p className="text-sm font-semibold text-text-primary text-left">No active queue pressure</p>
+            <p className="mt-1 text-xs text-text-muted text-left">
+              New tickets will appear here with AI triage context.
+            </p>
+          </div>
+        )}
+      </div>
     </Card>
   );
 }
@@ -137,44 +143,113 @@ function AISummaryCard({ tickets }: { tickets: Ticket[] }) {
 function RecentEscalations({ tickets }: { tickets: Ticket[] }) {
   const escalations = tickets
     .filter((ticket) => ticket.priority === "urgent" || ticket.sentiment === "negative")
-    .slice(0, 4);
+    .slice(0, 3);
 
   return (
-    <Card className="p-5">
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h3 className="text-sm font-bold text-text-primary">Escalation watch</h3>
+    <Card className="p-6 flex flex-col h-full min-h-[280px]">
+      <div className="mb-4 flex items-center justify-between shrink-0">
+        <div className="text-left">
+          <h3 className="text-sm font-semibold tracking-tight text-text-primary">Escalation watch</h3>
           <p className="text-xs text-text-muted">Urgent or negative-sentiment conversations.</p>
         </div>
-        <AlertTriangle className="h-4 w-4 text-red-600" />
+        <AlertTriangle className="h-4 w-4 text-red-600 animate-pulse" />
       </div>
 
-      <div className="space-y-3">
-        {escalations.length === 0 && (
-          <p className="rounded-lg border border-dashed border-border bg-slate-50 px-3 py-6 text-center text-xs text-text-muted">
-            No escalations in the current result set.
-          </p>
+      <div className="flex-1 flex flex-col justify-center space-y-3">
+        {escalations.length === 0 ? (
+          <div className="flex-1 flex items-center justify-center rounded-lg border border-dashed border-border bg-slate-50 px-3 py-6">
+            <p className="text-center text-xs text-text-muted">
+              No escalations in the current result set.
+            </p>
+          </div>
+        ) : (
+          escalations.map((ticket) => (
+            <Link
+              key={ticket.id}
+              href={`/tickets/${ticket.id}`}
+              className="block rounded-lg border border-border px-3.5 py-2.5 transition-colors hover:border-primary/30 hover:bg-slate-50 text-left"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <p className="min-w-0 flex-1 truncate text-xs font-semibold tracking-tight text-text-primary">
+                  {ticket.subject}
+                </p>
+                <Badge className={cn("shrink-0 text-[9px] px-2 py-0.5 rounded-full select-none uppercase font-bold", getPriorityColor(ticket.priority))}>
+                  {ticket.priority === "urgent" ? "escalated" : ticket.priority}
+                </Badge>
+              </div>
+              <div className="mt-1.5 flex items-center justify-between text-[10px] text-text-muted">
+                <span>#{ticket.id.slice(0, 8)}</span>
+                <span>{formatRelativeTime(ticket.created_at)}</span>
+              </div>
+            </Link>
+          ))
         )}
+      </div>
+    </Card>
+  );
+}
 
-        {escalations.map((ticket) => (
-          <Link
-            key={ticket.id}
-            href={`/tickets/${ticket.id}`}
-            className="block rounded-lg border border-border px-3 py-3 transition-colors hover:border-primary/30 hover:bg-slate-50"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <p className="min-w-0 flex-1 truncate text-sm font-semibold text-text-primary">
-                {ticket.subject}
-              </p>
-              <Badge className={getPriorityColor(ticket.priority)}>
-                {ticket.priority === "urgent" ? "escalated" : ticket.priority}
-              </Badge>
+/* ── Loading skeletons for predictable layout geometry ── */
+function QueueMetricSkeleton() {
+  return (
+    <Card className="p-5 animate-pulse">
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-3 flex-1">
+          <div className="h-3 w-16 bg-slate-200 rounded" />
+          <div className="h-8 w-12 bg-slate-200 rounded" />
+          <div className="h-3 w-32 bg-slate-200 rounded" />
+        </div>
+        <div className="h-10 w-10 bg-slate-200 rounded-lg" />
+      </div>
+    </Card>
+  );
+}
+
+function AISummaryCardSkeleton() {
+  return (
+    <Card className="border-primary/20 bg-primary/[0.03] p-6 min-h-[280px] animate-pulse flex flex-col justify-between">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 bg-slate-200 rounded-lg" />
+          <div className="space-y-2">
+            <div className="h-4 w-32 bg-slate-200 rounded" />
+            <div className="h-3 w-48 bg-slate-200 rounded" />
+          </div>
+        </div>
+        <div className="h-5 w-16 bg-slate-200 rounded-full" />
+      </div>
+      <div className="border-l-4 border-slate-200 bg-white px-4 py-4 rounded-r-lg flex-1 mt-4 space-y-3">
+        <div className="h-4 w-3/4 bg-slate-200 rounded" />
+        <div className="h-3 w-full bg-slate-200 rounded" />
+        <div className="h-3 w-5/6 bg-slate-200 rounded" />
+        <div className="h-4 w-20 bg-slate-200 rounded mt-2" />
+      </div>
+    </Card>
+  );
+}
+
+function RecentEscalationsSkeleton() {
+  return (
+    <Card className="p-6 min-h-[280px] animate-pulse flex flex-col justify-between">
+      <div className="flex items-center justify-between mb-4">
+        <div className="space-y-2">
+          <div className="h-4 w-28 bg-slate-200 rounded" />
+          <div className="h-3 w-40 bg-slate-200 rounded" />
+        </div>
+        <div className="h-5 w-5 bg-slate-200 rounded" />
+      </div>
+      <div className="space-y-3 flex-1">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="border border-slate-200 rounded-lg p-3 space-y-2">
+            <div className="flex justify-between">
+              <div className="h-4 w-2/3 bg-slate-200 rounded" />
+              <div className="h-4 w-12 bg-slate-200 rounded-full" />
             </div>
-            <div className="mt-2 flex items-center justify-between text-[11px] text-text-muted">
-              <span>#{ticket.id.slice(0, 8)}</span>
-              <span>{formatRelativeTime(ticket.created_at)}</span>
+            <div className="flex justify-between">
+              <div className="h-3 w-16 bg-slate-200 rounded" />
+              <div className="h-3 w-16 bg-slate-200 rounded" />
             </div>
-          </Link>
+          </div>
         ))}
       </div>
     </Card>
@@ -190,6 +265,8 @@ export default function DashboardHome() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
+  const [minLoadingComplete, setMinLoadingComplete] = useState(false);
+
   const { useGetAnalytics } = useAnalytics();
   const { data: analyticsRes } = useGetAnalytics(brand);
   const stats = analyticsRes?.data;
@@ -202,6 +279,17 @@ export default function DashboardHome() {
     priority_filter: priority,
     brand_filter: brand,
   });
+
+  /* ── Minimum Display Timer for Skeletons to prevent flickers ── */
+  useEffect(() => {
+    setMinLoadingComplete(false);
+    const timer = setTimeout(() => {
+      setMinLoadingComplete(true);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [isLoading]);
+
+  const showSkeleton = isLoading || !minLoadingComplete;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -266,7 +354,7 @@ export default function DashboardHome() {
 
   return (
     <motion.div
-      className="space-y-6 pb-6 text-left"
+      className="space-y-8 pb-6 text-left"
       variants={stagger}
       initial="hidden"
       animate="visible"
@@ -281,7 +369,7 @@ export default function DashboardHome() {
               <Search className="h-4 w-4" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-text-primary">
+              <h1 className="text-3xl font-extrabold tracking-tight text-text-primary">
                 Support queue
               </h1>
               <p className="text-xs text-text-muted">
@@ -311,40 +399,62 @@ export default function DashboardHome() {
         </div>
       </motion.div>
 
+      {/* ── Metric Cards with Shimmer Loading Skeletons ── */}
       <motion.div variants={fadeUp} className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <QueueMetric
-          title="Open"
-          value={metricLabel(stats?.tickets_by_status?.open ?? counts.open)}
-          detail="Waiting for first action"
-          icon={MessageSquare}
-          tone="amber"
-        />
-        <QueueMetric
-          title="Pending"
-          value={counts.pending}
-          detail="In human follow-up"
-          icon={Clock3}
-          tone="indigo"
-        />
-        <QueueMetric
-          title="Resolved"
-          value={metricLabel(stats?.tickets_by_status?.resolved ?? counts.resolved)}
-          detail="Closed this view"
-          icon={CheckCircle2}
-          tone="emerald"
-        />
-        <QueueMetric
-          title="Escalated"
-          value={counts.escalated}
-          detail={`Average resolution ${avgResponseTime}`}
-          icon={AlertTriangle}
-          tone="red"
-        />
+        {showSkeleton ? (
+          <>
+            <QueueMetricSkeleton />
+            <QueueMetricSkeleton />
+            <QueueMetricSkeleton />
+            <QueueMetricSkeleton />
+          </>
+        ) : (
+          <>
+            <QueueMetric
+              title="Open"
+              value={metricLabel(stats?.tickets_by_status?.open ?? counts.open)}
+              detail="Waiting for first action"
+              icon={MessageSquare}
+              tone="amber"
+            />
+            <QueueMetric
+              title="Pending"
+              value={counts.pending}
+              detail="In human follow-up"
+              icon={Clock3}
+              tone="indigo"
+            />
+            <QueueMetric
+              title="Resolved"
+              value={metricLabel(stats?.tickets_by_status?.resolved ?? counts.resolved)}
+              detail="Closed this view"
+              icon={CheckCircle2}
+              tone="emerald"
+            />
+            <QueueMetric
+              title="Escalated"
+              value={counts.escalated}
+              detail={`Average resolution ${avgResponseTime}`}
+              icon={AlertTriangle}
+              tone="red"
+            />
+          </>
+        )}
       </motion.div>
 
+      {/* ── AI Insights and Escalations with Skeletons ── */}
       <motion.div variants={fadeUp} className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_360px]">
-        <AISummaryCard tickets={filteredTickets} />
-        <RecentEscalations tickets={filteredTickets} />
+        {showSkeleton ? (
+          <>
+            <AISummaryCardSkeleton />
+            <RecentEscalationsSkeleton />
+          </>
+        ) : (
+          <>
+            <AISummaryCard tickets={filteredTickets} />
+            <RecentEscalations tickets={filteredTickets} />
+          </>
+        )}
       </motion.div>
 
       <motion.div variants={fadeUp}>
@@ -377,7 +487,7 @@ export default function DashboardHome() {
       <motion.div variants={fadeUp}>
         <TicketTable
           tickets={filteredTickets}
-          isLoading={isLoading}
+          isLoading={showSkeleton}
           selectedIds={selectedIds}
           onSelectionChange={setSelectedIds}
           onBulkDelete={handleBulkDelete}
@@ -402,7 +512,7 @@ export default function DashboardHome() {
               setPage((value) => Math.max(value - 1, 1));
               setSelectedIds(new Set());
             }}
-            disabled={page === 1 || isLoading}
+            disabled={page === 1 || showSkeleton}
             className="h-8"
           >
             Previous
@@ -415,7 +525,7 @@ export default function DashboardHome() {
               setPage((value) => value + 1);
               setSelectedIds(new Set());
             }}
-            disabled={tickets.length < 12 || isLoading}
+            disabled={tickets.length < 12 || showSkeleton}
             className="h-8"
           >
             Next

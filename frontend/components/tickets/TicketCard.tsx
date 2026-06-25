@@ -17,7 +17,7 @@ export function TicketCard({ ticket, isActive = false, onClick }: TicketCardProp
       onClick={onClick}
       className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer select-none text-left relative overflow-hidden group ${
         isActive
-          ? "bg-primary/5 border-primary shadow-glow shadow-primary/5"
+          ? "bg-primary/5 border-primary"
           : "bg-surface/40 border-border/80 hover:bg-surface/60 hover:border-border"
       }`}
     >

@@ -184,7 +184,7 @@ class CaptureEmailService(EmailService):
             "subject": subject,
             "body": html_body
         })
-        await super()._send_resend_email(to_email, subject, html_body)
+
 
 # Inject dependency overrides
 @pytest.fixture(autouse=True)
