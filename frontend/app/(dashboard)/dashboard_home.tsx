@@ -84,7 +84,7 @@ function AISummaryCard({ tickets }: { tickets: Ticket[] }) {
   const featuredTicket = urgentTicket || negativeTicket || tickets[0];
 
   return (
-    <Card className="border-primary/20 bg-primary/[0.03] p-6 flex flex-col h-full min-h-[280px]">
+    <Card className="border-primary/20 bg-primary/[0.03] p-6 flex flex-col h-full min-h-[160px]">
       <div className="mb-4 flex items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
@@ -146,7 +146,7 @@ function RecentEscalations({ tickets }: { tickets: Ticket[] }) {
     .slice(0, 3);
 
   return (
-    <Card className="p-6 flex flex-col h-full min-h-[280px]">
+    <Card className="p-6 flex flex-col h-full min-h-[160px]">
       <div className="mb-4 flex items-center justify-between shrink-0">
         <div className="text-left">
           <h3 className="text-sm font-semibold tracking-tight text-text-primary">Escalation watch</h3>
@@ -207,7 +207,7 @@ function QueueMetricSkeleton() {
 
 function AISummaryCardSkeleton() {
   return (
-    <Card className="border-primary/20 bg-primary/[0.03] p-6 min-h-[280px] animate-pulse flex flex-col justify-between">
+    <Card className="border-primary/20 bg-primary/[0.03] p-6 min-h-[160px] animate-pulse flex flex-col justify-between">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 bg-slate-200 rounded-lg" />
@@ -230,7 +230,7 @@ function AISummaryCardSkeleton() {
 
 function RecentEscalationsSkeleton() {
   return (
-    <Card className="p-6 min-h-[280px] animate-pulse flex flex-col justify-between">
+    <Card className="p-6 min-h-[160px] animate-pulse flex flex-col justify-between">
       <div className="flex items-center justify-between mb-4">
         <div className="space-y-2">
           <div className="h-4 w-28 bg-slate-200 rounded" />

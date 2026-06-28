@@ -136,7 +136,7 @@ function ConversationMessage({ message }: { message: Message }) {
   const Icon = meta.icon;
 
   return (
-    <div className={cn("flex gap-3", isAgent && "justify-end", isInternal && "justify-center w-full px-2")}>
+    <div className={cn("flex items-start gap-4", isAgent && "justify-end", isInternal && "justify-center w-full px-2")}>
       {!isAgent && !isInternal && (
         <div
           className={cn(
@@ -164,17 +164,17 @@ function ConversationMessage({ message }: { message: Message }) {
 
         <div
           className={cn(
-            "rounded-xl border px-3 py-1.5 text-xs text-text-primary",
-            isAI && "border-primary/20 border-l-4 bg-primary/[0.03]",
-            isAgent && "border-primary/20 bg-primary text-white",
-            message.sender === "customer" && "border-border bg-white",
-            isInternal && "bg-amber-50/70 border-amber-200 text-amber-950 border-l-4 border-l-amber-500 rounded-lg shadow-none"
+            "rounded-xl border text-xs text-text-primary shadow-none",
+            isAI && "border-2 border-dashed border-purple-300 bg-purple-50 text-purple-950 px-4 py-3",
+            isAgent && "border-primary/20 bg-primary text-white px-4 py-3",
+            message.sender === "customer" && "border-gray-200 bg-gray-100 text-gray-900 px-4 py-3",
+            isInternal && "bg-amber-50/70 border-amber-200 text-amber-950 border-l-4 border-l-amber-500 rounded-lg shadow-none px-3 py-1.5"
           )}
         >
           {isAI && (
-            <div className="mb-2 flex items-center gap-1 text-[9px] font-medium uppercase tracking-[0.02em] text-primary">
-              <Sparkles className="h-3 w-3 text-primary animate-pulse" />
-              <span>AI Copilot Draft</span>
+            <div className="mb-2 inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-700 border border-purple-200">
+              <Sparkles className="h-3 w-3 text-purple-700 animate-pulse" />
+              <span>AI Suggested Draft</span>
             </div>
           )}
           {isInternal && (
@@ -353,7 +353,7 @@ export default function TicketDetailPage() {
   }, []);
 
   const slaInfo = useMemo(() => {
-    if (!ticket) return { text: "No SLA", color: "text-text-muted bg-slate-50", progress: 100 };
+    if (!ticket) return { text: "No SLA", color: "text-text-muted bg-slate-50 border-slate-200", progress: 100 };
     if (ticket.status === "resolved") return { text: "Resolved", color: "text-emerald-700 bg-emerald-50/60 border-emerald-200 border", progress: 100 };
     
     let hoursLimit = 48;
@@ -369,7 +369,7 @@ export default function TicketDetailPage() {
     const progress = Math.max(0, Math.min(100, (diffMs / totalSlaMs) * 100));
 
     if (diffMs <= 0) {
-      return { text: "SLA Overdue", color: "text-red-700 bg-red-50 border-red-200 border animate-pulse", progress: 0 };
+      return { text: "SLA Overdue", color: "text-white bg-red-600 border-red-600 font-semibold animate-pulse", progress: 0 };
     }
     
     const diffHrs = Math.floor(diffMs / (3600 * 1000));
@@ -622,44 +622,46 @@ export default function TicketDetailPage() {
           <h1 className="text-sm font-semibold tracking-[-0.01em] text-text-primary truncate max-w-[180px] sm:max-w-xs mr-1">
             {ticket.subject || "Untitled support request"}
           </h1>
-          <span className="shrink-0 text-[9px] font-medium font-mono px-1.5 py-0.5 rounded-full border border-border bg-slate-50 text-text-muted mr-1.5">
+          <span className="shrink-0 inline-flex items-center justify-center h-6 px-2.5 rounded-md border border-border bg-slate-50 text-[10px] font-medium font-mono text-text-muted mr-1.5 shadow-none">
             #{ticket.id.slice(0, 8)}
           </span>
           
           {/* AI Escalated badge */}
           {(ticket.priority === "urgent" || priorityScore >= 90) && (
-            <Badge className="bg-purple-50 text-purple-700 border border-purple-200 text-[9px] px-1.5 py-0 font-semibold flex items-center gap-0.5 animate-pulse">
-              <Sparkles className="h-2.5 w-2.5" />
-              AI Escalated
+            <Badge className="inline-flex items-center gap-1 h-6 px-2.5 rounded-md border border-purple-200 bg-purple-50 text-[10px] font-semibold text-purple-700 shadow-none mr-1.5">
+              <Sparkles className="h-3 w-3 text-purple-700" />
+              <span>AI Escalated</span>
             </Badge>
           )}
 
           {/* SLA countdown badge */}
           {ticket.status !== "resolved" ? (
-            <span className={cn("relative overflow-hidden inline-flex items-center gap-1 px-2.5 pt-1 pb-1.5 rounded-full text-[10px] font-semibold border", slaInfo.color)}>
-              <Clock className="h-3 w-3" />
+            <span className={cn("relative overflow-hidden inline-flex items-center gap-1 h-6 px-2.5 rounded-md text-[10px] font-semibold border shadow-none mr-1.5", slaInfo.color)}>
+              <Clock className="h-3.5 w-3.5 shrink-0" />
               <span>{slaInfo.text.replace("SLA: ", "")}</span>
               {/* SLA Countdown Progress line inside the badge */}
-              <div className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-slate-200/50">
-                <div
-                  className={cn(
-                    "h-full transition-all duration-500",
-                    slaInfo.progress < 25 ? "bg-red-500" : slaInfo.progress < 50 ? "bg-amber-500" : "bg-primary"
-                  )}
-                  style={{ width: `${slaInfo.progress}%` }}
-                />
-              </div>
+              {slaInfo.progress > 0 && (
+                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-200/50">
+                  <div
+                    className={cn(
+                      "h-full transition-all duration-500",
+                      slaInfo.progress < 25 ? "bg-red-500" : slaInfo.progress < 50 ? "bg-amber-500" : "bg-primary"
+                    )}
+                    style={{ width: `${slaInfo.progress}%` }}
+                  />
+                </div>
+              )}
             </span>
           ) : (
-            <span className={cn("inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold border", slaInfo.color)}>
-              <Clock className="h-3 w-3" />
+            <span className={cn("inline-flex items-center gap-1 h-6 px-2.5 rounded-md text-[10px] font-semibold border shadow-none mr-1.5", slaInfo.color)}>
+              <Clock className="h-3.5 w-3.5 shrink-0" />
               <span>{slaInfo.text.replace("SLA: ", "")}</span>
             </span>
           )}
 
           {/* CSAT Display (only when resolved) */}
           {ticket.status === "resolved" && (
-            <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 border text-[9px] px-1.5 py-0 font-semibold">
+            <Badge className="inline-flex items-center h-6 px-2.5 rounded-md border border-emerald-200 bg-emerald-50 text-[10px] font-semibold text-emerald-700 shadow-none mr-1.5">
               CSAT: 5.0
             </Badge>
           )}
@@ -686,7 +688,7 @@ export default function TicketDetailPage() {
       {/* 2. Content columns */}
       <motion.div
         variants={fadeUp}
-        className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_360px] flex-1 min-h-0 overflow-hidden"
+        className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_340px] flex-1 min-h-0 overflow-hidden"
       >
         {/* LEFT COLUMN: CONVERSATION PANEL */}
         <Card className="flex flex-col h-full min-h-0 p-0 overflow-hidden border border-border bg-white">
@@ -700,7 +702,7 @@ export default function TicketDetailPage() {
           </div>
 
           {/* Messages scroll content */}
-          <div ref={scrollContainerRef} className="flex-1 min-h-0 space-y-2 overflow-y-auto bg-slate-50/50 px-4 py-3">
+          <div ref={scrollContainerRef} className="flex-1 min-h-0 space-y-4 overflow-y-auto bg-slate-50/50 px-4 py-3">
             {messages.length === 0 && (
               <div className="flex h-full min-h-[220px] flex-col items-center justify-center text-center">
                 <MessageSquare className="mb-3 h-8 w-8 text-text-muted/60" />
@@ -907,7 +909,7 @@ export default function TicketDetailPage() {
         </Card>
 
         {/* RIGHT COLUMN: SIDEBAR */}
-        <aside className="flex flex-col h-full min-h-0 bg-white border border-border rounded-xl overflow-hidden select-none">
+        <aside className="flex flex-col h-full min-h-0 bg-white border border-border rounded-xl overflow-hidden select-none w-full xl:w-[340px] xl:min-w-[340px] shrink-0">
           {/* Right sidebar tab selector */}
           <div className="flex border-b border-border bg-slate-50 shrink-0 select-none">
             <button
@@ -948,10 +950,10 @@ export default function TicketDetailPage() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
                   transition={{ duration: 0.15 }}
-                  className="space-y-4 text-left"
+                  className="space-y-6 text-left"
                 >
                   {/* AI Summary Section */}
-                  <div className="space-y-2 border-b border-border/60 pb-3">
+                  <div className="space-y-3 border-b border-border/60 pb-4">
                     <h3 className="text-xs font-medium uppercase tracking-[0.02em] text-text-primary flex items-center gap-1.5">
                       <FileText className="h-3.5 w-3.5 text-primary" />
                       AI Summary
@@ -969,7 +971,7 @@ export default function TicketDetailPage() {
                   </div>
 
                   {/* Intent & Confidence Section */}
-                  <div className="space-y-2 border-b border-border/60 pb-3">
+                  <div className="space-y-3 border-b border-border/60 pb-4">
                     <h3 className="text-xs font-medium uppercase tracking-[0.02em] text-text-primary flex items-center gap-1.5">
                       <Tag className="h-3.5 w-3.5 text-primary" />
                       Intent Detection
@@ -977,7 +979,9 @@ export default function TicketDetailPage() {
                     <div className="flex flex-col gap-2">
                       <div className="flex items-center justify-between">
                         <span className="text-[11px] font-medium text-text-muted uppercase">Detected</span>
-                        <span className="text-xs font-semibold text-primary">{computedIntent.label}</span>
+                        <span className="text-xs font-semibold text-primary">
+                          {computedIntent.label} <span className="text-gray-500 font-semibold ml-1">({computedIntent.conf}% confidence)</span>
+                        </span>
                       </div>
                       <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                         <div className="h-full bg-primary" style={{ width: `${computedIntent.conf}%` }} />
@@ -997,7 +1001,7 @@ export default function TicketDetailPage() {
                   </div>
 
                   {/* Sentiment Analysis Gauge */}
-                  <div className="space-y-2 border-b border-border/60 pb-3">
+                  <div className="space-y-3 border-b border-border/60 pb-4">
                     <h3 className="text-xs font-medium uppercase tracking-[0.02em] text-text-primary flex items-center gap-1.5">
                       <Heart className="h-3.5 w-3.5 text-primary" />
                       Sentiment analysis
@@ -1031,7 +1035,7 @@ export default function TicketDetailPage() {
                   </div>
 
                   {/* Suggested Action Buttons */}
-                  <div className="space-y-2 border-b border-border/60 pb-3">
+                  <div className="space-y-3 border-b border-border/60 pb-4">
                     <h3 className="text-xs font-medium uppercase tracking-[0.02em] text-text-primary flex items-center gap-1.5">
                       <Zap className="h-3.5 w-3.5 text-primary" />
                       Suggested Actions
@@ -1077,7 +1081,7 @@ export default function TicketDetailPage() {
                   </div>
 
                   {/* Knowledge Base Matches */}
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <h3 className="text-xs font-medium uppercase tracking-[0.02em] text-text-primary flex items-center gap-1.5">
                       <Award className="h-3.5 w-3.5 text-primary" />
                       KB Matches & Templates
@@ -1113,7 +1117,7 @@ export default function TicketDetailPage() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 10 }}
                   transition={{ duration: 0.15 }}
-                  className="space-y-4 text-left"
+                  className="space-y-6 text-left"
                 >
                   {/* Customer Profile Header */}
                   {customerInfo && (
@@ -1166,7 +1170,7 @@ export default function TicketDetailPage() {
                       </div>
 
                       {/* Order History */}
-                      <div className="space-y-2 pt-2">
+                      <div className="space-y-3 pt-2">
                         <h3 className="text-xs font-medium uppercase tracking-[0.02em] text-text-primary flex items-center gap-1.5">
                           <History className="h-3.5 w-3.5 text-primary" />
                           Recent Orders
@@ -1197,18 +1201,18 @@ export default function TicketDetailPage() {
           </div>
 
           {/* Static controls row (Routing assignments) */}
-          <div className="border-t border-border bg-slate-50 p-2.5 space-y-1.5 shrink-0 text-left select-none">
-            <h3 className="text-[10px] font-medium uppercase tracking-[0.02em] text-text-muted">
+          <div className="border-t border-border bg-slate-50 p-3.5 space-y-2.5 shrink-0 text-left select-none">
+            <h3 className="text-[10.5px] font-semibold uppercase tracking-[0.03em] text-text-muted">
               Routing & Assignment
             </h3>
             
-            <div className="space-y-1 text-xs">
+            <div className="space-y-2 text-xs">
               {/* Status Row */}
-              <div className="flex items-center justify-between py-0.5 border-b border-border/40 last:border-0">
-                <span className="text-[10px] font-medium text-text-muted uppercase tracking-[0.02em] w-20">
+              <div className="flex items-center justify-between py-1 border-b border-border/40 last:border-0 gap-4">
+                <span className="text-[10.5px] font-semibold text-text-muted uppercase tracking-[0.02em] shrink-0">
                   Status
                 </span>
-                <div className="relative flex-1 max-w-[150px]">
+                <div className="relative flex-1 flex justify-end">
                   <select
                     value={ticket.status}
                     disabled={isUpdating}
@@ -1228,11 +1232,11 @@ export default function TicketDetailPage() {
               </div>
 
               {/* Priority Row */}
-              <div className="flex items-center justify-between py-0.5 border-b border-border/40 last:border-0">
-                <span className="text-[10px] font-medium text-text-muted uppercase tracking-[0.02em] w-20">
+              <div className="flex items-center justify-between py-1 border-b border-border/40 last:border-0 gap-4">
+                <span className="text-[10.5px] font-semibold text-text-muted uppercase tracking-[0.02em] shrink-0">
                   Priority
                 </span>
-                <div className="relative flex-1 max-w-[150px]">
+                <div className="relative flex-1 flex justify-end">
                   <select
                     value={ticket.priority}
                     disabled={isUpdating}
@@ -1253,11 +1257,11 @@ export default function TicketDetailPage() {
               </div>
 
               {/* Assignee Row */}
-              <div className="flex items-center justify-between py-0.5 border-b border-border/40 last:border-0">
-                <span className="text-[10px] font-medium text-text-muted uppercase tracking-[0.02em] w-20">
+              <div className="flex items-center justify-between py-1 border-b border-border/40 last:border-0 gap-4">
+                <span className="text-[10.5px] font-semibold text-text-muted uppercase tracking-[0.02em] shrink-0">
                   Assignee
                 </span>
-                <div className="relative flex-1 max-w-[150px]">
+                <div className="relative flex-1 flex justify-end">
                   <select
                     value={ticket.assigned_agent_id || ""}
                     disabled={isAssigning}
