@@ -213,3 +213,59 @@ class TicketRepository:
         )
         return len(response.data) > 0 if response.data else False
 
+    async def get_customer_profile(self, customer_id: str) -> Optional[dict]:
+        """
+        Retrieves real customer details, total ticket counts, and CSAT average.
+        Handles UUID formatting exceptions gracefully.
+        """
+        from app.repositories.user_repo import UserRepository
+        user_repo = UserRepository()
+        try:
+            user = await user_repo.get_user_by_id(customer_id)
+        except Exception:
+            # Handle invalid UUIDs or query errors
+            return None
+            
+        if not user:
+            return None
+
+        total_tickets = 0
+        avg_rating = None
+
+        try:
+            # Count all tickets for this customer (excluding deleted)
+            tickets_res = await execute_async(
+                lambda: self.db.table("tickets")
+                .select("id")
+                .eq("customer_id", customer_id)
+                .eq("is_deleted", False)
+                .execute()
+            )
+            if tickets_res.data:
+                total_tickets = len(tickets_res.data)
+                
+                # Calculate average CSAT rating from feedback table
+                ticket_ids = [t["id"] for t in tickets_res.data]
+                feedback_res = await execute_async(
+                    lambda: self.db.table("feedback")
+                    .select("rating")
+                    .in_("ticket_id", ticket_ids)
+                    .execute()
+                )
+                if feedback_res.data:
+                    ratings = [f["rating"] for f in feedback_res.data if f.get("rating") is not None]
+                    if ratings:
+                        avg_rating = sum(ratings) / len(ratings)
+        except Exception:
+            # Fallback in case of database errors
+            pass
+
+        return {
+            "id": user.get("id"),
+            "name": user.get("full_name"),
+            "email": user.get("email"),
+            "created_at": user.get("created_at"),
+            "total_tickets": total_tickets,
+            "csat": avg_rating
+        }
+

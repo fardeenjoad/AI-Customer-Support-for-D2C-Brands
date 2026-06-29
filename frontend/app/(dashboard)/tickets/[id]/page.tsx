@@ -395,31 +395,49 @@ export default function TicketDetailPage() {
     return getAIPriorityScore(ticket.id, ticket.priority, ticket.sentiment);
   }, [ticket]);
 
-  // Dynamic customer simulation values based on customer ID
-  const customerInfo = useMemo(() => {
-    if (!ticket) return null;
-    const id = ticket.customer_id;
-    let hash = 0;
-    for (let i = 0; i < id.length; i++) {
-      hash += id.charCodeAt(i);
-    }
-    const names = ["Alex Rivera", "Jordan Croft", "Taylor Vance", "Morgan Finch", "Sam Ellis", "Jamie Vance", "Casey Morgan"];
-    const name = names[hash % names.length];
-    const email = `${name.toLowerCase().replace(" ", ".")}@example.com`;
-    const ageMonths = (hash % 18) + 3;
-    const ltv = (hash % 8) * 125 + 95;
-    const totalTickets = (hash % 6) + 1;
-    const rating = ((hash % 10) / 10 + 4.0).toFixed(1);
+  // Real customer profile data
+  const customerProfile = detailRes?.data?.customer_profile;
 
-    const orders = [
-      { id: `ORD-9${hash % 900 + 100}`, date: "2026-05-14", total: `$${(hash % 3 * 45 + 55).toFixed(2)}`, status: "Delivered", items: "Premium Zip-Up Hoodie (Black, L)" },
-      { id: `ORD-8${hash % 900 + 100}`, date: "2026-03-22", total: `$${(hash % 2 * 35 + 35).toFixed(2)}`, status: "Delivered", items: "Classic Crew Socks (White, Pack of 3)" },
-    ];
-    if (hash % 3 === 0) {
-      orders.push({ id: `ORD-7${hash % 900 + 100}`, date: "2026-01-10", total: `$${(hash % 4 * 20 + 25).toFixed(2)}`, status: "Delivered", items: "Organic Slouch Hat (Navy)" });
+  const accountAge = useMemo(() => {
+    if (!customerProfile?.created_at) return null;
+    const signupDate = new Date(customerProfile.created_at);
+    const now = new Date();
+    const diffMonths = (now.getFullYear() - signupDate.getFullYear()) * 12 + (now.getMonth() - signupDate.getMonth());
+    
+    if (diffMonths >= 12) {
+      const yrs = Math.floor(diffMonths / 12);
+      const remainingMonths = diffMonths % 12;
+      if (remainingMonths === 0) {
+        return `${yrs} year${yrs > 1 ? "s" : ""}`;
+      }
+      return `${yrs} yr${yrs > 1 ? "s" : ""}, ${remainingMonths} mo${remainingMonths > 1 ? "s" : ""}`;
     }
-    return { name, email, ageMonths, ltv, totalTickets, rating, orders };
-  }, [ticket]);
+    return diffMonths < 1 ? "< 1 month" : `${diffMonths} month${diffMonths > 1 ? "s" : ""}`;
+  }, [customerProfile]);
+
+  const avatarInitials = useMemo(() => {
+    const name = customerProfile?.name || ticket?.customer_name;
+    const email = customerProfile?.email || ticket?.customer_email || ticket?.customer_id || "";
+    
+    if (name && name.trim()) {
+      const parts = name.trim().split(/\s+/);
+      if (parts.length >= 2) {
+        const firstInitial = parts[0][0];
+        const lastInitial = parts[parts.length - 1][0];
+        return (firstInitial + lastInitial).toUpperCase();
+      }
+      if (parts.length === 1 && parts[0]) {
+        return parts[0].slice(0, 2).toUpperCase();
+      }
+    }
+    
+    if (email && email.includes("@")) {
+      const prefix = email.split("@")[0];
+      return prefix.slice(0, 2).toUpperCase();
+    }
+    
+    return (email || "CU").slice(0, 2).toUpperCase();
+  }, [customerProfile, ticket]);
 
   // Dynamic intent classification
   const computedIntent = useMemo(() => {
@@ -688,7 +706,7 @@ export default function TicketDetailPage() {
       {/* 2. Content columns */}
       <motion.div
         variants={fadeUp}
-        className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_340px] flex-1 min-h-0 overflow-hidden"
+        className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_340px] flex-1 min-h-0 overflow-hidden"
       >
         {/* LEFT COLUMN: CONVERSATION PANEL */}
         <Card className="flex flex-col h-full min-h-0 p-0 overflow-hidden border border-border bg-white">
@@ -909,7 +927,7 @@ export default function TicketDetailPage() {
         </Card>
 
         {/* RIGHT COLUMN: SIDEBAR */}
-        <aside className="flex flex-col h-full min-h-0 bg-white border border-border rounded-xl overflow-hidden select-none w-full xl:w-[340px] min-w-[340px] shrink-0">
+        <aside className="flex flex-col h-full min-h-0 bg-white border border-border rounded-xl overflow-hidden select-none w-full lg:w-[340px] min-w-[340px] shrink-0">
           {/* Right sidebar tab selector */}
           <div className="flex border-b border-border bg-slate-50 shrink-0 select-none">
             <button
@@ -1122,80 +1140,73 @@ export default function TicketDetailPage() {
                   className="space-y-5 text-left"
                 >
                   {/* Customer Profile Header */}
-                  {customerInfo && (
+                  {customerProfile ? (
                     <>
                       <div className="flex items-center gap-3 border-b border-border/60 pb-3">
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/5 text-base font-semibold text-primary shrink-0">
-                          {customerInitial(ticket.customer_id)}
+                          {avatarInitials}
                         </div>
                         <div className="min-w-0">
-                          <h4 className="truncate text-sm font-semibold text-text-primary">{customerInfo.name}</h4>
-                          <span className="truncate text-[10px] text-text-muted block">{customerInfo.email}</span>
+                          <h4 className="truncate text-sm font-semibold text-text-primary">
+                            {customerProfile.name || ticket?.customer_name || customerProfile.email || ticket?.customer_email || "Unnamed Customer"}
+                          </h4>
+                          {(customerProfile.name || ticket?.customer_name) && (
+                            <span className="truncate text-[10px] text-text-muted block">
+                              {customerProfile.email || ticket?.customer_email || "No Email"}
+                            </span>
+                          )}
                           <span className="text-[9px] text-primary font-medium uppercase tracking-[0.02em] block mt-0.5">
-                            CSAT: {customerInfo.rating}/5.0 avg
+                            CSAT: {customerProfile.csat !== null && customerProfile.csat !== undefined ? `${customerProfile.csat.toFixed(1)}/5.0 avg` : "—"}
                           </span>
                         </div>
                       </div>
 
                       {/* Customer metrics grid */}
                       <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div className="bg-slate-50/70 border border-border/60 p-2.5 rounded-xl flex items-center gap-2">
-                          <DollarSign className="h-4 w-4 text-primary shrink-0" />
-                          <div>
-                            <span className="text-[9px] font-medium text-text-muted uppercase tracking-[0.02em] block">LTV</span>
-                            <span className="font-semibold text-text-primary mt-0.5 block">${customerInfo.ltv.toFixed(2)}</span>
+                        {accountAge && (
+                          <div className="bg-slate-50/70 border border-border/60 p-2.5 rounded-xl flex items-center gap-2">
+                            <History className="h-4 w-4 text-primary shrink-0" />
+                            <div>
+                              <span className="text-[9px] font-medium text-text-muted uppercase tracking-[0.02em] block">Age</span>
+                              <span className="font-semibold text-text-primary mt-0.5 block">{accountAge}</span>
+                            </div>
                           </div>
-                        </div>
-                        <div className="bg-slate-50/70 border border-border/60 p-2.5 rounded-xl flex items-center gap-2">
-                          <History className="h-4 w-4 text-primary shrink-0" />
-                          <div>
-                            <span className="text-[9px] font-medium text-text-muted uppercase tracking-[0.02em] block">Age</span>
-                            <span className="font-semibold text-text-primary mt-0.5 block">{customerInfo.ageMonths} months</span>
-                          </div>
-                        </div>
+                        )}
                         <div className="bg-slate-50/70 border border-border/60 p-2.5 rounded-xl flex items-center gap-2">
                           <FileText className="h-4 w-4 text-primary shrink-0" />
                           <div>
                             <span className="text-[9px] font-medium text-text-muted uppercase tracking-[0.02em] block">Total Tickets</span>
-                            <span className="font-semibold text-text-primary mt-0.5 block">{customerInfo.totalTickets} threads</span>
+                            <span className="font-semibold text-text-primary mt-0.5 block">{customerProfile.total_tickets} threads</span>
                           </div>
                         </div>
-                        <div className="bg-slate-50/70 border border-border/60 p-2.5 rounded-xl flex items-center gap-2">
-                          <Briefcase className="h-4 w-4 text-primary shrink-0" />
-                          <div>
-                            <span className="text-[9px] font-medium text-text-muted uppercase tracking-[0.02em] block">Customer ID</span>
-                            <span className="font-mono text-[9px] font-semibold text-text-primary mt-0.5 block truncate max-w-[80px]" title={ticket.customer_id}>
-                              {ticket.customer_id.slice(0, 8)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Order History */}
-                      <div className="space-y-3">
-                        <h3 className="text-xs font-medium uppercase tracking-[0.02em] text-text-primary flex items-center gap-1.5">
-                          <History className="h-3.5 w-3.5 text-primary" />
-                          Recent Orders
-                        </h3>
-                        <div className="space-y-2">
-                          {customerInfo.orders.map((order, index) => (
-                            <div key={order.id} className="bg-slate-50 border border-border/80 p-2.5 rounded-xl text-xs space-y-1">
-                              <div className="flex items-center justify-between">
-                                <span className="font-semibold text-text-primary font-mono">{order.id}</span>
-                                <Badge variant="outline" className="text-[9px] font-semibold px-2 py-0 bg-emerald-50 text-emerald-700 border-emerald-200">
-                                  {order.status}
-                                </Badge>
-                              </div>
-                              <p className="text-[10px] text-text-muted truncate">{order.items}</p>
-                              <div className="flex justify-between items-center text-[10px] text-text-muted pt-1">
-                                <span>{order.date}</span>
-                                <span className="font-semibold text-text-primary">{order.total}</span>
-                              </div>
+                        <div className="bg-slate-50/70 border border-border/60 p-2.5 rounded-xl flex items-center justify-between col-span-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Briefcase className="h-4 w-4 text-primary shrink-0" />
+                            <div className="min-w-0">
+                              <span className="text-[9px] font-medium text-text-muted uppercase tracking-[0.02em] block">Customer ID</span>
+                              <span className="font-mono text-[9px] font-semibold text-text-primary mt-0.5 block truncate" title={ticket.customer_id}>
+                                {ticket.customer_id}
+                              </span>
                             </div>
-                          ))}
+                          </div>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(ticket.customer_id || "");
+                              toast.success("Customer ID copied!");
+                            }}
+                            title="Copy Customer ID"
+                            className="text-text-muted hover:text-primary p-1 hover:bg-slate-200/50 rounded transition-colors shrink-0"
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                          </button>
                         </div>
                       </div>
                     </>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-8 text-text-muted text-xs gap-2">
+                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                      <span>Loading customer profile...</span>
+                    </div>
                   )}
                 </motion.div>
               )}
@@ -1294,7 +1305,7 @@ export default function TicketDetailPage() {
 
 function TicketLoading() {
   return (
-    <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_360px] h-full min-h-[420px]">
+    <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_360px] h-full min-h-[420px]">
       <div className="space-y-4">
         <SkeletonCard className="h-20" />
         <SkeletonChatBubble />

@@ -37,9 +37,19 @@ interface ApiResponse<T> {
   message: string;
 }
 
+export interface CustomerProfile {
+  id: string;
+  name: string | null;
+  email: string;
+  created_at: string;
+  total_tickets: number;
+  csat: number | null;
+}
+
 interface TicketDetailResponse {
   ticket: Ticket;
   messages: Message[];
+  customer_profile?: CustomerProfile | null;
 }
 
 export function useTickets() {

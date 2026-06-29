@@ -655,9 +655,15 @@ async def get_ticket_details(
 
         messages = await message_repo.list_messages_by_ticket(ticket_id)
 
+        customer_profile = None
+        customer_id = ticket.get("customer_id")
+        if customer_id and hasattr(ticket_repo, "get_customer_profile"):
+            customer_profile = await ticket_repo.get_customer_profile(customer_id)
+
         data_payload = {
             "ticket": TicketResponse.model_validate(ticket),
-            "messages": [MessageResponse.model_validate(m) for m in messages]
+            "messages": [MessageResponse.model_validate(m) for m in messages],
+            "customer_profile": customer_profile
         }
 
         return ResponseEnvelope[Dict[str, Any]](

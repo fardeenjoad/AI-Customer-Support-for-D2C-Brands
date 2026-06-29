@@ -140,7 +140,7 @@ class AIService:
             def _call_groq():
                 completion = self.client.chat.completions.create(
                     messages=messages,
-                    model="llama3-70b-8192",
+                    model="llama-3.3-70b-versatile",
                     temperature=0.2
                 )
                 return completion.choices[0].message.content
@@ -185,7 +185,7 @@ class AIService:
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": message}
                     ],
-                    model="llama3-70b-8192",
+                    model="llama-3.3-70b-versatile",
                     temperature=0.0
                 )
                 return completion.choices[0].message.content.strip().lower()
@@ -248,7 +248,7 @@ class AIService:
             def _call_groq():
                 completion = self.client.chat.completions.create(
                     messages=messages,
-                    model="llama3-70b-8192",
+                    model="llama-3.3-70b-versatile",
                     temperature=0.0
                 )
                 return completion.choices[0].message.content.strip().lower()

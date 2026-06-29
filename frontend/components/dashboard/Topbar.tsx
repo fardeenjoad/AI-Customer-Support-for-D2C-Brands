@@ -32,6 +32,18 @@ export default function Topbar() {
   const { user, logout } = useAuthStore();
   const { toggleMobileSidebar, setSearchOpen } = useUiStore();
 
+  const [currentDate, setCurrentDate] = useState<string>("June 10, 2026");
+
+  useEffect(() => {
+    setCurrentDate(
+      new Date().toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      })
+    );
+  }, []);
+
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -92,7 +104,7 @@ export default function Topbar() {
 
         <div className="flex items-center text-[10px] font-bold text-text-muted uppercase tracking-wider space-x-2 bg-surface-light px-3 py-1.5 rounded-lg border border-border max-lg:hidden">
           <Calendar className="h-3.5 w-3.5" />
-          <span>June 10, 2026</span>
+          <span>{currentDate}</span>
         </div>
 
         <div className="relative">
