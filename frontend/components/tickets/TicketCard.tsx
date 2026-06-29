@@ -1,6 +1,6 @@
 import { Ticket } from "@/hooks/useTickets";
 import { Badge } from "@/components/ui/badge";
-import { getPriorityColor, getStatusColor, getSentimentColor, formatRelativeTime } from "@/lib/utils";
+import { getPriorityColor, getStatusColor, getSentimentIcon, getSentimentTextColor, formatRelativeTime } from "@/lib/utils";
 import { Calendar, ShieldAlert } from "lucide-react";
 
 interface TicketCardProps {
@@ -45,8 +45,11 @@ export function TicketCard({ ticket, isActive = false, onClick }: TicketCardProp
       </h4>
 
       <div className="flex items-center justify-between text-[10px] text-text-muted mt-4 border-t border-border/40 pt-2.5">
-        <span className={`px-1.5 py-0.5 rounded ${getSentimentColor(sentiment)} font-medium`}>
-          Sentiment: {sentiment}
+        <span className="flex items-center space-x-1 font-medium select-none">
+          <span className="text-xs">{getSentimentIcon(sentiment)}</span>
+          <span className={getSentimentTextColor(sentiment)}>
+            {sentiment ? sentiment.charAt(0).toUpperCase() + sentiment.slice(1) : ""}
+          </span>
         </span>
         <span className="flex items-center space-x-1">
           <Calendar className="h-3 w-3" />

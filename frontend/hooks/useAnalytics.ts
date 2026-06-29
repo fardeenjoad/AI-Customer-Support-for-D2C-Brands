@@ -26,9 +26,13 @@ export interface AnalyticsData {
   total_week: number;
   total_month: number;
   avg_resolution_time_hours: number | null;
+  avg_response_time_hours: number | null;
+  resolved_week: number;
+  total_escalated: number;
   tickets_by_status: Record<string, number>;
   tickets_by_sentiment: Record<string, number>;
   most_common_intents: Record<string, number>;
+  daily_volumes: { label: string; value: number }[];
 }
 
 interface ApiResponse<T> {

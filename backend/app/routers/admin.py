@@ -52,9 +52,13 @@ class AnalyticsResponse(BaseModel):
     total_week: int
     total_month: int
     avg_resolution_time_hours: Optional[float] = None
+    avg_response_time_hours: Optional[float] = None
+    resolved_week: int
+    total_escalated: int
     tickets_by_status: Dict[str, int]
     tickets_by_sentiment: Dict[str, int]
     most_common_intents: Dict[str, int]
+    daily_volumes: List[Dict[str, Any]]
 
 # Dependency helper for EmailService
 def get_email_service(
@@ -225,7 +229,7 @@ async def assign_ticket(
 async def get_admin_analytics(
     request: Request,
     brand_id: Optional[str] = None,
-    current_user: TokenData = Depends(require_admin),
+    current_user: TokenData = Depends(require_admin_or_agent),
     ticket_repo: TicketRepository = Depends(),
     brand_repo: BrandRepository = Depends()
 ) -> ResponseEnvelope[AnalyticsResponse]:
@@ -233,20 +237,48 @@ async def get_admin_analytics(
     Computes dashboard analytics metrics:
     - total tickets today/week/month
     - average resolution time (hours)
+    - average response time (hours)
     - tickets status counts
     - tickets sentiment splits
     - most common intents (refund, complaint, query, general)
+    - daily ticket volumes
     """
     try:
+        allowed_brand_ids = None
+        if current_user.role == "agent":
+            db = get_db()
+            agent_brands = await execute_async(
+                lambda: db.table("agent_brands")
+                    .select("brand_id")
+                    .eq("agent_id", current_user.user_id)
+                    .execute()
+            )
+            allowed_brand_ids = [row.get("brand_id") for row in agent_brands.data] if agent_brands.data else []
+            
+            if brand_id:
+                if brand_id not in allowed_brand_ids:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="You are not authorized to access analytics for this brand."
+                    )
+
         # Retrieve all active tickets
-        tickets = await ticket_repo.list_tickets(brand_id=brand_id)
+        tickets = await ticket_repo.list_tickets(
+            brand_id=brand_id,
+            allowed_brand_ids=allowed_brand_ids
+        )
 
         now_time = datetime.now(timezone.utc)
-        
+        today_date = now_time.date()
+        start_of_week = today_date - timedelta(days=6)
+        start_of_month = today_date - timedelta(days=29)
+
         total_today = 0
         total_week = 0
         total_month = 0
-        
+        resolved_week = 0
+        total_escalated = 0
+
         resolution_durations = []
         tickets_by_status = {"open": 0, "in_progress": 0, "resolved": 0}
         tickets_by_sentiment = {"positive": 0, "neutral": 0, "negative": 0}
@@ -258,16 +290,24 @@ async def get_admin_analytics(
             if brand_record:
                 brand_name_display = brand_record.get("brand_name", "Unknown")
 
+        # Collect ticket IDs created in the last 7 days to calculate response times
+        ticket_ids_7_days = []
+        tickets_last_7_days = []
+
         for t in tickets:
             created_at = parse_datetime(t.get("created_at"))
-            age = now_time - created_at
+            t_date = created_at.date()
 
             # Calculate intervals
-            if age <= timedelta(days=1):
+            if t_date == today_date:
                 total_today += 1
-            if age <= timedelta(days=7):
+            if start_of_week <= t_date <= today_date:
                 total_week += 1
-            if age <= timedelta(days=30):
+                tickets_last_7_days.append(t)
+                ticket_ids_7_days.append(t.get("id"))
+                if t.get("status") == "resolved":
+                    resolved_week += 1
+            if start_of_month <= t_date <= today_date:
                 total_month += 1
 
             # Count status
@@ -280,10 +320,16 @@ async def get_admin_analytics(
             if sent in tickets_by_sentiment:
                 tickets_by_sentiment[sent] += 1
 
-            # Count intents (heuristics over subject)
-            intent = classify_intent_heuristic(t.get("subject", ""))
+            # Count escalated (priority = urgent)
+            if t.get("priority") == "urgent":
+                total_escalated += 1
+
+            # Count intents (stored field falling back to heuristics)
+            intent = t.get("intent") or classify_intent_heuristic(t.get("subject", ""))
             if intent in most_common_intents:
                 most_common_intents[intent] += 1
+            else:
+                most_common_intents[intent] = most_common_intents.get(intent, 0) + 1
 
             # Resolution time calculation
             if stat == "resolved":
@@ -293,6 +339,56 @@ async def get_admin_analytics(
 
         avg_res_time = sum(resolution_durations) / len(resolution_durations) if resolution_durations else None
 
+        # Calculate average response time for tickets created in the last 7 days
+        response_durations = []
+        if ticket_ids_7_days:
+            db = get_db()
+            builder = db.table("messages")
+            if hasattr(builder, "in_"):
+                msg_res = await execute_async(
+                    lambda: db.table("messages")
+                        .select("ticket_id, sender, timestamp")
+                        .in_("ticket_id", ticket_ids_7_days)
+                        .in_("sender", ["ai", "agent"])
+                        .execute()
+                )
+                msg_data = msg_res.data if msg_res and msg_res.data else []
+            else:
+                msg_data = []
+
+            # Group by ticket_id to find the earliest response
+            earliest_responses = {}
+            for m in msg_data:
+                tid = m.get("ticket_id")
+                ts = parse_datetime(m.get("timestamp"))
+                if tid not in earliest_responses or ts < earliest_responses[tid]:
+                    earliest_responses[tid] = ts
+
+            for t in tickets_last_7_days:
+                tid = t.get("id")
+                if tid in earliest_responses:
+                    t_created = parse_datetime(t.get("created_at"))
+                    dur = (earliest_responses[tid] - t_created).total_seconds() / 3600.0
+                    response_durations.append(max(0.0, dur))
+
+        avg_response_time = sum(response_durations) / len(response_durations) if response_durations else None
+
+        # Group actual ticket counts by day for the last 7 days
+        daily_volumes = []
+        for i in range(6, -1, -1):
+            target_date = today_date - timedelta(days=i)
+            day_label = target_date.strftime("%a")
+            # Count tickets created on target_date
+            count = 0
+            for t in tickets:
+                t_created = parse_datetime(t.get("created_at"))
+                if t_created.date() == target_date:
+                    count += 1
+            daily_volumes.append({"label": day_label, "value": count})
+
+        # Ensure total_week matches sum of daily_volumes exactly
+        total_week = sum(d["value"] for d in daily_volumes)
+
         data_payload = AnalyticsResponse(
             brand_name=brand_name_display,
             total_tickets=len(tickets),
@@ -300,9 +396,13 @@ async def get_admin_analytics(
             total_week=total_week,
             total_month=total_month,
             avg_resolution_time_hours=avg_res_time,
+            avg_response_time_hours=avg_response_time,
+            resolved_week=resolved_week,
+            total_escalated=total_escalated,
             tickets_by_status=tickets_by_status,
             tickets_by_sentiment=tickets_by_sentiment,
-            most_common_intents=most_common_intents
+            most_common_intents=most_common_intents,
+            daily_volumes=daily_volumes
         )
 
         return ResponseEnvelope[AnalyticsResponse](

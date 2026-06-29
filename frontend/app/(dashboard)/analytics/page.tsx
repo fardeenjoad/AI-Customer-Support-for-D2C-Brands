@@ -114,25 +114,21 @@ export default function AnalyticsReportsPage() {
   const resolved = stats?.tickets_by_status?.resolved ?? 0;
   const open = stats?.tickets_by_status?.open ?? 0;
   const pending = stats?.tickets_by_status?.in_progress ?? 0;
-  const resolutionRate = totalTickets > 0 ? percent(resolved, totalTickets) : 76;
+
+  // Calculate resolution rate as (resolved tickets in 7d / total tickets in 7d) * 100
+  const resolutionRate = stats?.total_week && stats.total_week > 0 
+    ? percent(stats.resolved_week, stats.total_week) 
+    : 0;
+
   const responseTime =
-    stats?.avg_resolution_time_hours !== null && stats?.avg_resolution_time_hours !== undefined
-      ? `${Number(stats.avg_resolution_time_hours).toFixed(1)}h`
-      : "2.4h";
+    stats?.avg_response_time_hours !== null && stats?.avg_response_time_hours !== undefined
+      ? `${Number(stats.avg_response_time_hours).toFixed(1)}h`
+      : "0.0h";
 
-  const scaledVolume = useMemo(() => {
-    const target = stats?.total_week || WEEKLY_VOLUME.reduce((sum, item) => sum + item.value, 0);
-    const base = WEEKLY_VOLUME.reduce((sum, item) => sum + item.value, 0);
-    const multiplier = target / base;
-    return WEEKLY_VOLUME.map((item) => ({
-      ...item,
-      value: Math.max(1, Math.round(item.value * multiplier)),
-    }));
-  }, [stats?.total_week]);
-
-  const maxVolume = Math.max(...scaledVolume.map((item) => item.value), 1);
+  const dailyVolumes = stats?.daily_volumes ?? [];
+  const maxVolume = Math.max(...dailyVolumes.map((item) => item.value), 1);
   const statusTotal = Math.max(open + pending + resolved, totalTickets, 1);
-  const intentEntries = Object.entries(stats?.most_common_intents || {}).slice(0, 5);
+  const intentEntries = Object.entries(stats?.most_common_intents || {});
 
   if (isLoading) {
     return (
@@ -167,20 +163,20 @@ export default function AnalyticsReportsPage() {
         <AnalyticsMetric
           title="Response time"
           value={responseTime}
-          detail="Average time to resolution"
+          detail="Average time to first response"
           icon={Clock3}
           trend="up"
         />
         <AnalyticsMetric
           title="Resolution rate"
           value={`${resolutionRate}%`}
-          detail={`${resolved || Math.round(totalTickets * 0.76)} resolved tickets`}
+          detail={`${stats?.resolved_week ?? 0} resolved tickets`}
           icon={CheckCircle2}
           trend={resolutionRate >= 70 ? "up" : "down"}
         />
         <AnalyticsMetric
           title="Volume"
-          value={`${stats?.total_week ?? totalTickets}`}
+          value={`${stats?.total_week ?? 0}`}
           detail={`${stats?.total_today ?? 0} opened today`}
           icon={MessageSquare}
           trend="flat"
@@ -198,18 +194,24 @@ export default function AnalyticsReportsPage() {
           </div>
 
           <div className="flex h-64 items-end gap-3 border-b border-border px-1 pb-3">
-            {scaledVolume.map((item) => (
-              <div key={item.label} className="flex flex-1 flex-col items-center gap-2">
-                <div className="flex h-52 w-full items-end">
-                  <div
-                    className="w-full rounded-t-md bg-primary/80"
-                    style={{ height: `${Math.max(8, (item.value / maxVolume) * 100)}%` }}
-                    title={`${item.value} tickets`}
-                  />
-                </div>
-                <span className="text-[11px] font-medium text-text-muted">{item.label}</span>
+            {dailyVolumes.length === 0 ? (
+              <div className="w-full text-center py-20 text-xs text-text-muted">
+                No volume data available
               </div>
-            ))}
+            ) : (
+              dailyVolumes.map((item) => (
+                <div key={item.label} className="flex flex-1 flex-col items-center gap-2">
+                  <div className="flex h-52 w-full items-end">
+                    <div
+                      className="w-full rounded-t-md bg-primary/80"
+                      style={{ height: `${Math.max(8, (item.value / maxVolume) * 100)}%` }}
+                      title={`${item.value} tickets`}
+                    />
+                  </div>
+                  <span className="text-[11px] font-medium text-text-muted">{item.label}</span>
+                </div>
+              ))
+            )}
           </div>
         </Card>
 
@@ -220,7 +222,7 @@ export default function AnalyticsReportsPage() {
           </div>
           <div className="space-y-4">
             <DistributionRow label="open" value={open} total={statusTotal} className="bg-amber-500" />
-            <DistributionRow label="in_progress" value={pending} total={statusTotal} className="bg-slate-500" />
+            <DistributionRow label="pending" value={pending} total={statusTotal} className="bg-slate-500" />
             <DistributionRow label="resolved" value={resolved} total={statusTotal} className="bg-emerald-600" />
           </div>
         </Card>
@@ -235,25 +237,22 @@ export default function AnalyticsReportsPage() {
           <Badge className="border-primary/20 bg-primary/10 text-primary">AI classified</Badge>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
-          {(intentEntries.length > 0
-            ? intentEntries
-            : [
-                ["tracking", 28],
-                ["refunds", 19],
-                ["product fit", 14],
-                ["subscription", 11],
-                ["exchange", 9],
-              ]
-          ).map(([label, value]) => (
-            <div key={label} className="rounded-lg border border-border bg-slate-50 px-4 py-3">
-              <p className="truncate text-xs font-semibold capitalize text-text-primary">
-                {String(label).replace("_", " ")}
-              </p>
-              <p className="mt-2 text-2xl font-bold text-text-primary">{Number(value)}</p>
-            </div>
-          ))}
-        </div>
+        {intentEntries.length === 0 ? (
+          <div className="text-center py-10 border border-dashed rounded-lg border-border bg-slate-50 text-xs text-text-muted">
+            No intent data available yet
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {intentEntries.map(([label, value]) => (
+              <div key={label} className="rounded-lg border border-border bg-slate-50 px-4 py-3">
+                <p className="truncate text-xs font-semibold capitalize text-text-primary">
+                  {String(label).replace("_", " ")}
+                </p>
+                <p className="mt-2 text-2xl font-bold text-text-primary">{Number(value)}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </Card>
     </motion.div>
   );

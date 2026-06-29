@@ -313,6 +313,20 @@ export default function DashboardHome() {
   }, [debouncedSearch, tickets]);
 
   const counts = useMemo(() => {
+    if (stats) {
+      const open = stats.tickets_by_status?.open ?? 0;
+      const pending = stats.tickets_by_status?.in_progress ?? 0;
+      const resolved = stats.tickets_by_status?.resolved ?? 0;
+      const escalated = stats.total_escalated ?? 0;
+      return {
+        all: open + pending + resolved,
+        open,
+        pending,
+        resolved,
+        escalated,
+      };
+    }
+
     const open = tickets.filter((ticket) => ticket.status === "open").length;
     const pending = tickets.filter((ticket) => ticket.status === "in_progress").length;
     const resolved = tickets.filter((ticket) => ticket.status === "resolved").length;
@@ -325,7 +339,7 @@ export default function DashboardHome() {
       resolved,
       escalated,
     };
-  }, [tickets]);
+  }, [tickets, stats]);
 
   const handleResetFilters = () => {
     setStatus("all");
@@ -419,7 +433,7 @@ export default function DashboardHome() {
             />
             <QueueMetric
               title="Pending"
-              value={counts.pending}
+              value={metricLabel(stats?.tickets_by_status?.in_progress ?? counts.pending)}
               detail="In human follow-up"
               icon={Clock3}
               tone="indigo"
@@ -433,7 +447,7 @@ export default function DashboardHome() {
             />
             <QueueMetric
               title="Escalated"
-              value={counts.escalated}
+              value={metricLabel(stats?.total_escalated ?? counts.escalated)}
               detail={`Average resolution ${avgResponseTime}`}
               icon={AlertTriangle}
               tone="red"

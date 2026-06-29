@@ -108,6 +108,7 @@ class TicketResponse(BaseModel):
     status: str
     priority: str
     sentiment: str
+    intent: Optional[str] = None
     assigned_agent_id: Optional[str] = None
     rating: Optional[int] = None
     feedback_comment: Optional[str] = None
@@ -115,6 +116,9 @@ class TicketResponse(BaseModel):
     last_message_sender: Optional[str] = None
     created_at: datetime
     updated_at: datetime
+    customer_name: Optional[str] = None
+    customer_email: Optional[str] = None
+    brand_name: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 

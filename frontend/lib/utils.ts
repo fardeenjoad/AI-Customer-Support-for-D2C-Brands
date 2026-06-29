@@ -47,14 +47,29 @@ export function getPriorityColor(priority: string) {
   const p = priority?.toLowerCase() || "";
   switch (p) {
     case "urgent":
-      return "bg-red-50 text-red-700 border border-red-200";
+      return "bg-red-600 text-white border-transparent font-semibold shadow-sm";
     case "high":
-      return "bg-orange-50 text-orange-700 border border-orange-200";
+      return "bg-orange-500 text-white border-transparent font-semibold shadow-sm";
     case "medium":
-      return "bg-amber-50 text-amber-700 border border-amber-200";
+      return "bg-amber-500 text-white border-transparent font-semibold shadow-sm";
     case "low":
     default:
-      return "bg-slate-50 text-slate-700 border border-slate-200";
+      return "bg-slate-500 text-white border-transparent font-semibold shadow-sm";
+  }
+}
+
+export function getPrioritySelectClass(priority: string) {
+  const p = priority?.toLowerCase() || "";
+  switch (p) {
+    case "urgent":
+      return "bg-red-50 text-red-700 border-red-200 focus:ring-red-500 focus:border-red-500";
+    case "high":
+      return "bg-orange-50 text-orange-700 border-orange-200 focus:ring-orange-500 focus:border-orange-500";
+    case "medium":
+      return "bg-amber-50 text-amber-700 border-amber-200 focus:ring-amber-500 focus:border-amber-500";
+    case "low":
+    default:
+      return "bg-slate-50 text-slate-700 border-slate-200 focus:ring-slate-500 focus:border-slate-500";
   }
 }
 
@@ -71,7 +86,7 @@ export function getStatusColor(status: string) {
       return "bg-slate-100 text-slate-700 border border-slate-200";
     case "open":
     default:
-      return "bg-amber-50 text-amber-700 border border-amber-200";
+      return "bg-blue-50 text-blue-700 border border-blue-200";
   }
 }
 
@@ -85,6 +100,32 @@ export function getSentimentColor(sentiment: string) {
     case "neutral":
     default:
       return "bg-slate-50 text-slate-700 border border-slate-200";
+  }
+}
+
+export function getSentimentIcon(sentiment: string) {
+  const s = sentiment?.toLowerCase() || "";
+  switch (s) {
+    case "positive":
+      return "🙂";
+    case "negative":
+      return "😟";
+    case "neutral":
+    default:
+      return "😐";
+  }
+}
+
+export function getSentimentTextColor(sentiment: string) {
+  const s = sentiment?.toLowerCase() || "";
+  switch (s) {
+    case "positive":
+      return "text-emerald-600 dark:text-emerald-400";
+    case "negative":
+      return "text-red-600 dark:text-red-400";
+    case "neutral":
+    default:
+      return "text-slate-500 dark:text-slate-400";
   }
 }
 

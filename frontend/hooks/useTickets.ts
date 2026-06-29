@@ -12,10 +12,14 @@ export interface Ticket {
   status: "open" | "in_progress" | "resolved";
   priority: "low" | "medium" | "high" | "urgent";
   sentiment: "positive" | "neutral" | "negative";
+  intent?: "complaint" | "query" | "refund" | "general" | null;
   assigned_agent_id?: string | null;
   created_at: string;
   updated_at: string;
   is_deleted: boolean;
+  customer_name?: string | null;
+  customer_email?: string | null;
+  brand_name?: string | null;
 }
 
 export interface Message {

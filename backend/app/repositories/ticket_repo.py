@@ -18,6 +18,16 @@ class TicketRepository:
         if not ticket:
             return ticket
         
+        # Extract nested join data if present
+        customer = ticket.pop("customer", None)
+        if isinstance(customer, dict):
+            ticket["customer_name"] = customer.get("full_name")
+            ticket["customer_email"] = customer.get("email")
+        
+        brand = ticket.pop("brand", None)
+        if isinstance(brand, dict):
+            ticket["brand_name"] = brand.get("brand_name")
+        
         # Translate assigned_to column back to API schema assigned_agent_id
         if "assigned_to" in ticket:
             ticket["assigned_agent_id"] = ticket.pop("assigned_to")
@@ -66,7 +76,7 @@ class TicketRepository:
                         "comment": feedback_comment
                     }).execute()
                 )
-            return await self._attach_feedback(ticket)
+            return await self.get_ticket_by_id(ticket["id"])
         return None
 
     async def get_ticket_by_id(self, ticket_id: str) -> Optional[dict]:
@@ -74,7 +84,7 @@ class TicketRepository:
         Fetches an active ticket record by primary key ID.
         """
         response = await execute_async(
-            lambda: self.db.table("tickets").select("*").eq("id", ticket_id).eq("is_deleted", False).execute()
+            lambda: self.db.table("tickets").select("*, customer:users!customer_id(full_name, email), brand:brands(brand_name)").eq("id", ticket_id).eq("is_deleted", False).execute()
         )
         if response.data:
             return await self._attach_feedback(response.data[0])
@@ -93,7 +103,7 @@ class TicketRepository:
         Supports brand/customer scopes.
         """
         def _query():
-            builder = self.db.table("tickets").select("*").eq("is_deleted", False)
+            builder = self.db.table("tickets").select("*, customer:users!customer_id(full_name, email), brand:brands(brand_name)").eq("is_deleted", False)
             if brand_id:
                 builder = builder.eq("brand_id", brand_id)
             if customer_id:
@@ -123,6 +133,16 @@ class TicketRepository:
 
             final_results = []
             for t in response.data:
+                # Extract nested join data if present
+                customer = t.pop("customer", None)
+                if isinstance(customer, dict):
+                    t["customer_name"] = customer.get("full_name")
+                    t["customer_email"] = customer.get("email")
+                
+                brand = t.pop("brand", None)
+                if isinstance(brand, dict):
+                    t["brand_name"] = brand.get("brand_name")
+
                 # Translate assigned_to column back to API schema assigned_agent_id
                 if "assigned_to" in t:
                     t["assigned_agent_id"] = t.pop("assigned_to")
@@ -180,7 +200,7 @@ class TicketRepository:
                             "comment": feedback_comment
                         }).execute()
                     )
-            return await self._attach_feedback(ticket)
+            return await self.get_ticket_by_id(ticket_id)
         return None
 
     async def soft_delete_ticket(self, ticket_id: str) -> bool:

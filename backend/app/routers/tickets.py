@@ -275,6 +275,7 @@ async def portal_create_ticket(
                     await ticket_repo.update_ticket(ticket_id, {
                         "priority": new_priority,
                         "sentiment": sentiment,
+                        "intent": intent,
                         "updated_at": datetime.now(timezone.utc).isoformat()
                     })
                 else:
@@ -294,6 +295,7 @@ async def portal_create_ticket(
                         })
                     await ticket_repo.update_ticket(ticket_id, {
                         "sentiment": sentiment,
+                        "intent": intent,
                         "updated_at": datetime.now(timezone.utc).isoformat()
                     })
         except Exception:
@@ -389,6 +391,7 @@ async def portal_add_reply(
                     await ticket_repo.update_ticket(ticket_id, {
                         "priority": new_priority,
                         "sentiment": sentiment,
+                        "intent": intent,
                         "status": "open",
                         "updated_at": datetime.now(timezone.utc).isoformat()
                     })
@@ -409,6 +412,7 @@ async def portal_add_reply(
                         })
                     await ticket_repo.update_ticket(ticket_id, {
                         "sentiment": sentiment,
+                        "intent": intent,
                         "updated_at": datetime.now(timezone.utc).isoformat()
                     })
         except Exception:
@@ -1060,6 +1064,7 @@ async def portal_upload_ticket_attachment(
                         await ticket_repo.update_ticket(ticket_id, {
                             "priority": new_priority,
                             "sentiment": sentiment,
+                            "intent": intent,
                             "status": "open",
                             "updated_at": datetime.now(timezone.utc).isoformat()
                         })
@@ -1078,6 +1083,7 @@ async def portal_upload_ticket_attachment(
                             })
                             await ticket_repo.update_ticket(ticket_id, {
                                 "sentiment": sentiment,
+                                "intent": intent,
                                 "updated_at": datetime.now(timezone.utc).isoformat()
                             })
             except Exception:

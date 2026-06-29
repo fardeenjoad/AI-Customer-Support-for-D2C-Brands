@@ -3,8 +3,16 @@ import { Ticket } from "@/hooks/useTickets";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getPriorityColor, getStatusColor, getSentimentColor, formatDate } from "@/lib/utils";
-import { User, ShieldAlert, Calendar } from "lucide-react";
+import { 
+  getPriorityColor, 
+  getStatusColor, 
+  getSentimentColor, 
+  formatDate, 
+  getPrioritySelectClass, 
+  getSentimentIcon, 
+  getSentimentTextColor 
+} from "@/lib/utils";
+import { User, ShieldAlert, Calendar, Copy } from "lucide-react";
 import { toast } from "sonner";
 
 interface TicketDetailProps {
@@ -52,13 +60,25 @@ export function TicketDetail({ ticket, onUpdateTicket, isUpdating = false }: Tic
 
   return (
     <div className="glass-card rounded-xl p-5 border border-border bg-surface/40 flex flex-col space-y-6">
-      <div className="border-b border-border/60 pb-4 text-left">
-        <h3 className="text-sm font-semibold text-text-primary uppercase tracking-wider font-heading mb-1">
-          Ticket Details
-        </h3>
-        <span className="text-[10px] text-text-muted font-mono block">
-          UUID: {id}
-        </span>
+      <div className="border-b border-border/60 pb-4 text-left flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-semibold text-text-primary uppercase tracking-wider font-heading mb-1">
+            Ticket Details
+          </h3>
+          <span className="text-[10px] text-text-muted font-mono block">
+            UUID: {id.slice(0, 8)}...
+          </span>
+        </div>
+        <button
+          onClick={() => {
+            navigator.clipboard.writeText(id);
+            toast.success("Ticket ID copied to clipboard!");
+          }}
+          title="Copy Ticket ID"
+          className="text-text-muted hover:text-primary p-1 hover:bg-surface/50 rounded transition-colors"
+        >
+          <Copy className="h-3.5 w-3.5" />
+        </button>
       </div>
 
       <div className="space-y-4">
@@ -90,19 +110,16 @@ export function TicketDetail({ ticket, onUpdateTicket, isUpdating = false }: Tic
             Priority
           </span>
           <div className="flex items-center space-x-2">
-            <Badge className={getPriorityColor(priority)}>
-              {priority}
-            </Badge>
             <select
               value={priority}
               disabled={isUpdating}
               onChange={(e) => handlePriorityChange(e.target.value)}
-              className="bg-surface border border-border/80 rounded-md px-2.5 py-1 text-xs text-text-primary cursor-pointer focus:outline-none focus:border-primary transition-colors"
+              className={`border rounded-md px-2.5 py-1.5 text-xs font-semibold cursor-pointer focus:outline-none focus:ring-1 transition-colors ${getPrioritySelectClass(priority)}`}
             >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="urgent">Urgent</option>
+              <option value="low" className="bg-white text-slate-700">Low</option>
+              <option value="medium" className="bg-white text-amber-700">Medium</option>
+              <option value="high" className="bg-white text-orange-700">High</option>
+              <option value="urgent" className="bg-white text-red-700">Urgent</option>
             </select>
           </div>
         </div>
@@ -112,9 +129,10 @@ export function TicketDetail({ ticket, onUpdateTicket, isUpdating = false }: Tic
           <span className="text-[10px] text-text-muted font-bold tracking-wider uppercase">
             AI Sentiment
           </span>
-          <div className="flex items-center space-x-2 mt-1">
-            <span className={`px-2 py-0.5 rounded text-xs border font-semibold ${getSentimentColor(sentiment)}`}>
-              {sentiment}
+          <div className="flex items-center space-x-1.5 mt-1 text-xs font-semibold select-none">
+            <span className="text-sm">{getSentimentIcon(sentiment)}</span>
+            <span className={getSentimentTextColor(sentiment)}>
+              {sentiment ? sentiment.charAt(0).toUpperCase() + sentiment.slice(1) : ""}
             </span>
           </div>
         </div>
@@ -122,21 +140,63 @@ export function TicketDetail({ ticket, onUpdateTicket, isUpdating = false }: Tic
         {/* Scoped Brand */}
         <div className="flex flex-col space-y-1 text-left">
           <span className="text-[10px] text-text-muted font-bold tracking-wider uppercase">
-            Brand ID
+            Brand
           </span>
-          <span className="text-xs text-text-primary font-mono font-semibold bg-surface border border-border/80 px-2 py-1.5 rounded-md mt-1 w-full block truncate">
-            {brand_id}
-          </span>
+          <div className="flex items-center justify-between bg-surface border border-border/80 px-2.5 py-2 rounded-md mt-1 w-full">
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs text-text-primary font-semibold truncate">
+                {ticket.brand_name || "EcoStyle"}
+              </span>
+              <span className="text-[10px] text-text-muted font-mono mt-0.5">
+                ID: {brand_id?.slice(0, 8)}
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(brand_id || "");
+                toast.success("Brand ID copied to clipboard!");
+              }}
+              title="Copy Brand ID"
+              className="text-text-muted hover:text-primary p-1 hover:bg-surface/50 rounded transition-colors shrink-0"
+            >
+              <Copy className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
 
         {/* Customer ID */}
         <div className="flex flex-col space-y-1 text-left">
           <span className="text-[10px] text-text-muted font-bold tracking-wider uppercase">
-            Customer ID
+            Customer
           </span>
-          <span className="text-xs text-text-primary font-mono font-semibold bg-surface border border-border/80 px-2 py-1.5 rounded-md mt-1 w-full block truncate">
-            {customer_id}
-          </span>
+          <div className="flex items-center justify-between bg-surface border border-border/80 px-2.5 py-2 rounded-md mt-1 w-full">
+            <div className="flex flex-col min-w-0">
+              {ticket.customer_name ? (
+                <>
+                  <span className="text-xs text-text-primary font-semibold truncate">
+                    {ticket.customer_name}
+                  </span>
+                  <span className="text-[10px] text-text-muted font-mono mt-0.5">
+                    ID: {customer_id?.slice(0, 8)}
+                  </span>
+                </>
+              ) : (
+                <span className="text-xs text-text-primary font-semibold truncate">
+                  Customer #{customer_id?.slice(0, 8)}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(customer_id || "");
+                toast.success("Customer ID copied to clipboard!");
+              }}
+              title="Copy Customer ID"
+              className="text-text-muted hover:text-primary p-1 hover:bg-surface/50 rounded transition-colors shrink-0"
+            >
+              <Copy className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
 
         {/* Opened At */}
@@ -172,17 +232,16 @@ export function TicketDetail({ ticket, onUpdateTicket, isUpdating = false }: Tic
             </div>
           ) : (
             <div className="flex flex-col space-y-2 mt-1">
-              <div className="flex items-center justify-between bg-warning/5 border border-warning/20 px-3 py-2 rounded-lg w-full text-warning text-xs">
-                <div className="flex items-center space-x-2">
-                  <ShieldAlert className="h-4 w-4 animate-pulse" />
-                  <span>Unassigned</span>
+              <div className="flex items-center justify-between w-full">
+                <div className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 text-xs font-medium">
+                  Unassigned
                 </div>
                 {!isAssignFormOpen && (
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     onClick={() => setIsAssignFormOpen(true)}
-                    className="h-6 px-1.5 text-[10px] text-warning hover:text-text-primary hover:bg-warning/10"
+                    className="h-8 text-[11px] px-3 border-primary/35 text-primary hover:bg-primary/5"
                   >
                     Assign
                   </Button>
