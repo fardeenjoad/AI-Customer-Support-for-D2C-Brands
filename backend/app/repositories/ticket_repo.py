@@ -36,6 +36,7 @@ class TicketRepository:
             
         ticket_id = ticket.get("id")
         
+        
         # Retrieve rating and comments from physical feedback table
         feedback_res = await execute_async(
             lambda: self.db.table("feedback").select("rating", "comment").eq("ticket_id", ticket_id).execute()
