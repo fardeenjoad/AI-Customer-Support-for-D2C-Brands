@@ -34,6 +34,14 @@ jobs:
             cat /etc/nginx/nginx.conf || true
             echo "=== NGINX SITES ==="
             sudo cat /etc/nginx/sites-enabled/* /etc/nginx/conf.d/* || true
+            echo "=== PORT LISTENING STATUS ==="
+            sudo ss -tulpn || true
+            echo "=== UFW STATUS ==="
+            sudo ufw status verbose || true
+            echo "=== NGINX ERROR LOGS ==="
+            sudo tail -n 50 /var/log/nginx/error.log || true
+            echo "=== NGINX ACCESS LOGS ==="
+            sudo tail -n 50 /var/log/nginx/access.log || true
             echo "=== LOCAL CURL TO PORT 8000 ==="
             sleep 3
             curl -v http://localhost:8000/health || true
