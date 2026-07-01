@@ -25,3 +25,11 @@ jobs:
             git pull origin main
             sudo systemctl restart resolveiq
             sudo systemctl status resolveiq
+            echo "=== SYSTEMCTL STATUS NGINX ==="
+            sudo systemctl status nginx || true
+            echo "=== NGINX CONFIG TEST ==="
+            sudo nginx -t || true
+            echo "=== LOCAL CURL TO PORT 8000 ==="
+            curl -v http://localhost:8000/health || true
+            echo "=== JOURNALCTL RESOLVEIQ ==="
+            sudo journalctl -u resolveiq -n 50 --no-pager || true
