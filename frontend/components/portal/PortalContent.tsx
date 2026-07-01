@@ -129,6 +129,14 @@ export default function CustomerPortalContent() {
   const [replyText, setReplyText] = useState("");
   const [portalFile, setPortalFile] = useState<File | null>(null);
 
+  // Mobile tab state for Portal chat vs details pane
+  const [activePortalTab, setActivePortalTab] = useState<"chat" | "details">("chat");
+
+  // Reset tab to chat when ticket selection changes
+  useEffect(() => {
+    setActivePortalTab("chat");
+  }, [activeTicketId]);
+
   // Refs
   const messageEndRef = useRef<HTMLDivElement>(null);
   const portalFileInputRef = useRef<HTMLInputElement>(null);
@@ -658,7 +666,8 @@ export default function CustomerPortalContent() {
               <div
                 className={cn(
                   "w-full lg:w-[360px] border-b lg:border-b-0 lg:border-r flex flex-col shrink-0",
-                  isDarkMode ? "border-slate-800 bg-[#12141c]" : "border-border bg-background/50"
+                  isDarkMode ? "border-slate-800 bg-[#12141c]" : "border-border bg-background/50",
+                  activeTicketId !== null && "max-lg:hidden"
                 )}
               >
                 {/* Email Display Banner */}
@@ -793,54 +802,100 @@ export default function CustomerPortalContent() {
               </div>
 
               {/* RIGHT VIEWPORT: TICKET CHAT DETAIL */}
-              <div className="flex-1 flex flex-col justify-between lg:overflow-hidden overflow-visible bg-background/5 relative">
+              <div className={cn(
+                "flex-1 flex flex-col justify-between lg:overflow-hidden overflow-visible bg-background/5 relative",
+                activeTicketId === null && "max-lg:hidden"
+              )}>
                 {activeTicketId ? (
-                  <div className="flex-1 flex flex-col md:flex-row lg:h-full lg:overflow-hidden h-auto overflow-visible">
-                    {/* Chat Logs Window */}
+                  <div className="flex-grow flex flex-col flex-1 min-w-0 lg:h-full lg:overflow-hidden h-auto overflow-visible">
+                    {/* Sub-header details - Rendered outside the tabs to stay visible */}
                     <div
                       className={cn(
-                        "flex-1 flex flex-col justify-between lg:h-full h-auto border-r",
-                        isDarkMode ? "border-slate-800/70" : "border-border"
+                        "p-4 border-b select-none shrink-0 flex items-center justify-between",
+                        isDarkMode ? "border-slate-800 bg-[#12141c]/50" : "border-border bg-surface"
                       )}
                     >
-                        {/* Sub-header details */}
-                        <div
-                          className={cn(
-                            "p-4 border-b select-none shrink-0 flex items-center justify-between",
-                            isDarkMode ? "border-slate-800 bg-[#12141c]/50" : "border-border bg-surface"
-                          )}
+                      <div className="flex items-center space-x-3 min-w-0">
+                        {/* Back button (Mobile/Tablet only) */}
+                        <button
+                          type="button"
+                          onClick={() => setActiveTicketId(null)}
+                          className="lg:hidden p-1.5 rounded-lg border border-border bg-white text-text-muted hover:text-text-primary transition-colors shrink-0"
+                          title="Back to tickets list"
                         >
-                          <div className="text-left">
-                            <h3 className="text-sm font-bold tracking-tight">
-                              {activeTicket?.subject}
-                            </h3>
-                            <span
-                              className={cn(
-                                "text-[10px] font-mono mt-0.5 block",
-                                isDarkMode ? "text-text-muted" : "text-text-muted"
-                              )}
-                            >
-                              Ticket ID: {activeTicket?.id}
-                            </span>
-                          </div>
-
-                          {/* Manual Refresh Button */}
-                          <button
-                            onClick={() => refetchDetails()}
-                            disabled={isFetchingDetails}
-                            title="Refresh messages"
+                          <ArrowLeft className="h-4 w-4" />
+                        </button>
+                        <div className="text-left min-w-0">
+                          <h3 className="text-sm font-bold tracking-tight truncate max-w-[150px] sm:max-w-sm">
+                            {activeTicket?.subject}
+                          </h3>
+                          <span
                             className={cn(
-                              "p-2 rounded-lg border transition-all duration-200 flex items-center justify-center",
-                              isDarkMode
-                                ? "bg-slate-800/60 border-slate-700 text-slate-400 hover:text-white hover:bg-slate-700"
-                                : "bg-surface border-border text-text-muted hover:text-text-primary hover:bg-background"
+                              "text-[10px] font-mono mt-0.5 block",
+                              isDarkMode ? "text-text-muted" : "text-text-muted"
                             )}
                           >
-                            <RefreshCw
-                              className={cn("h-3.5 w-3.5", isFetchingDetails && "animate-spin")}
-                            />
-                          </button>
+                            Ticket ID: {activeTicket?.id}
+                          </span>
                         </div>
+                      </div>
+
+                      {/* Mobile tab toggler */}
+                      <div className="flex border border-border rounded-lg overflow-hidden select-none bg-white lg:hidden shrink-0 ml-2">
+                        <button
+                          type="button"
+                          onClick={() => setActivePortalTab("chat")}
+                          className={cn(
+                            "px-2.5 py-1 text-[10px] font-bold transition-all",
+                            activePortalTab === "chat"
+                              ? "bg-primary text-white"
+                              : "text-text-muted hover:text-text-primary"
+                          )}
+                        >
+                          Chat
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActivePortalTab("details")}
+                          className={cn(
+                            "px-2.5 py-1 text-[10px] font-bold transition-all",
+                            activePortalTab === "details"
+                              ? "bg-primary text-white"
+                              : "text-text-muted hover:text-text-primary"
+                          )}
+                        >
+                          Details
+                        </button>
+                      </div>
+
+                      {/* Manual Refresh Button */}
+                      <button
+                        type="button"
+                        onClick={() => refetchDetails()}
+                        disabled={isFetchingDetails}
+                        title="Refresh messages"
+                        className={cn(
+                          "p-2 rounded-lg border transition-all duration-200 flex items-center justify-center max-lg:hidden",
+                          isDarkMode
+                            ? "bg-slate-800/60 border-slate-700 text-slate-400 hover:text-white hover:bg-slate-700"
+                            : "bg-surface border-border text-text-muted hover:text-text-primary hover:bg-background"
+                        )}
+                      >
+                        <RefreshCw
+                          className={cn("h-3.5 w-3.5", isFetchingDetails && "animate-spin")}
+                        />
+                      </button>
+                    </div>
+
+                    <div className="flex-1 flex flex-col md:flex-row lg:h-full lg:overflow-hidden h-auto overflow-visible">
+                      {/* Chat Logs Window */}
+                      <div
+                        className={cn(
+                          "flex-grow flex flex-col justify-between lg:h-full h-auto border-r",
+                          isDarkMode ? "border-slate-800/70" : "border-border",
+                          activePortalTab !== "chat" && "max-lg:hidden"
+                        )}
+                      >
 
                         {/* Chat Messages */}
                         <div
@@ -1083,8 +1138,9 @@ export default function CustomerPortalContent() {
                     {/* RIGHT SIDEBAR: TICKET METRICS & FEEDBACK */}
                     <div
                       className={cn(
-                        "w-full md:w-[280px] shrink-0 flex flex-col lg:h-full h-auto",
-                        isDarkMode ? "bg-[#12141c]/40" : "bg-background/20"
+                        "w-full lg:w-[280px] shrink-0 flex flex-col lg:h-full h-auto border-l border-border",
+                        isDarkMode ? "bg-[#12141c]/40" : "bg-background/20",
+                        activePortalTab !== "details" && "max-lg:hidden"
                       )}
                     >
                       {/* Sidebar Header */}
@@ -1454,6 +1510,7 @@ export default function CustomerPortalContent() {
                         )}
                       </div>
                     </div>
+                  </div>
                   </div>
                 ) : (
                   /* Empty state on Lookup load */

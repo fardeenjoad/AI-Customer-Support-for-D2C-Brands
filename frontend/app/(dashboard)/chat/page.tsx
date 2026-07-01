@@ -7,10 +7,17 @@ import { ChatBubble } from "@/components/chat/ChatBubble";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { TicketDetail } from "@/components/tickets/TicketDetail";
 import { SkeletonCard, SkeletonChatBubble } from "@/components/common/LoadingSkeleton";
-import { Inbox, MessageSquarePlus } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Inbox, MessageSquarePlus, ArrowLeft } from "lucide-react";
 
 export default function LiveChatPage() {
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+  const [activeMobileTab, setActiveMobileTab] = useState<"chat" | "details">("chat");
+  
+  // Reset tab to chat when ticket selection changes
+  useEffect(() => {
+    setActiveMobileTab("chat");
+  }, [selectedTicketId]);
   
   const { useListTickets, useTicketDetails, updateTicket, isUpdating, uploadAttachment, sendAgentReply } = useTickets();
   
@@ -74,7 +81,10 @@ export default function LiveChatPage() {
   return (
     <div className="flex h-[calc(100vh-120px)] border border-border/80 rounded-xl overflow-hidden bg-surface/5 text-left animate-fadeIn">
       {/* Panel 1 */}
-      <div className="w-80 border-r border-border/80 bg-surface/20 flex flex-col shrink-0">
+      <div className={cn(
+        "w-80 border-r border-border/80 bg-surface/20 flex flex-col shrink-0",
+        selectedTicketId !== null && "max-md:hidden"
+      )}>
         <div className="p-4 border-b border-border/80 bg-surface/10 select-none">
           <h3 className="text-sm font-semibold text-text-primary font-heading">
             Live Support Chats
@@ -109,53 +119,101 @@ export default function LiveChatPage() {
         </div>
       </div>
 
-      {/* Panel 2 & 3 */}
+      {/* Panel 2 & 3 wrapper */}
       {selectedTicketId ? (
-        <div className="flex flex-1 min-w-0 bg-background/10">
-          <div className="flex-1 flex flex-col justify-between h-full bg-surface/5 border-r border-border/80">
-            <div className="p-4 border-b border-border/80 flex items-center justify-between bg-surface/15 select-none shrink-0">
-              <div className="flex flex-col">
-                <span className="text-xs font-bold text-text-primary font-heading truncate max-w-sm">
-                  {selectedTicket?.subject || "Active Chat"}
-                </span>
-                <span className="text-[9px] text-text-muted font-mono mt-0.5">
-                  ID: {selectedTicketId}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-6 space-y-2 bg-background/20">
-              {isLoadingDetails ? (
-                <div className="space-y-4">
-                  <SkeletonChatBubble />
-                  <SkeletonChatBubble />
-                </div>
-              ) : (
-                messages.map((msg) => (
-                  <ChatBubble key={msg.id} message={msg} />
-                ))
-              )}
-            </div>
-
-            <div className="p-4 border-t border-border/85 bg-surface/50 backdrop-blur-sm shrink-0">
-              <ChatInput
-                onSendMessage={handleSendMessage}
-                onUploadFile={handleUploadFile}
-                placeholder="Reply to live conversation..."
-              />
+        <div className="flex-grow flex flex-col flex-1 min-w-0 bg-background/10 h-full overflow-hidden">
+          {/* Mobile subheader with back button and tab selector */}
+          <div className="p-4 border-b border-border/80 flex items-center justify-between bg-surface/15 select-none shrink-0 md:hidden">
+            <button
+              onClick={() => setSelectedTicketId(null)}
+              className="p-1.5 rounded-lg border border-border bg-white text-text-muted hover:text-text-primary hover:border-primary/40 transition-all shrink-0 flex items-center gap-1.5 text-xs font-semibold"
+              title="Back to conversation list"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back</span>
+            </button>
+            <div className="flex border border-border rounded-lg overflow-hidden select-none bg-white">
+              <button
+                type="button"
+                onClick={() => setActiveMobileTab("chat")}
+                className={cn(
+                  "px-3 py-1.5 text-[11px] font-bold transition-all",
+                  activeMobileTab === "chat"
+                    ? "bg-primary text-white"
+                    : "text-text-muted hover:text-text-primary"
+                )}
+              >
+                Chat
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveMobileTab("details")}
+                className={cn(
+                  "px-3 py-1.5 text-[11px] font-bold transition-all",
+                  activeMobileTab === "details"
+                    ? "bg-primary text-white"
+                    : "text-text-muted hover:text-text-primary"
+                )}
+              >
+                Details
+              </button>
             </div>
           </div>
 
-          <div className="w-80 overflow-y-auto p-5 shrink-0 bg-surface/10 select-none">
-            {selectedTicket ? (
-              <TicketDetail
-                ticket={selectedTicket}
-                onUpdateTicket={handleUpdateTicket}
-                isUpdating={isUpdating}
-              />
-            ) : (
-              <SkeletonCard />
-            )}
+          <div className="flex-1 flex flex-row min-w-0 h-full overflow-hidden">
+            {/* Panel 2: Chat logs and input */}
+            <div className={cn(
+              "flex-1 flex flex-col justify-between h-full bg-surface/5 border-r border-border/80",
+              activeMobileTab !== "chat" && "max-md:hidden"
+            )}>
+              <div className="p-4 border-b border-border/80 flex items-center justify-between bg-surface/15 select-none shrink-0 max-md:hidden">
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-text-primary font-heading truncate max-w-sm">
+                    {selectedTicket?.subject || "Active Chat"}
+                  </span>
+                  <span className="text-[9px] text-text-muted font-mono mt-0.5">
+                    ID: {selectedTicketId}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6 space-y-2 bg-background/20">
+                {isLoadingDetails ? (
+                  <div className="space-y-4">
+                    <SkeletonChatBubble />
+                    <SkeletonChatBubble />
+                  </div>
+                ) : (
+                  messages.map((msg) => (
+                    <ChatBubble key={msg.id} message={msg} />
+                  ))
+                )}
+              </div>
+
+              <div className="p-4 border-t border-border/85 bg-surface/50 backdrop-blur-sm shrink-0">
+                <ChatInput
+                  onSendMessage={handleSendMessage}
+                  onUploadFile={handleUploadFile}
+                  placeholder="Reply to live conversation..."
+                />
+              </div>
+            </div>
+
+            {/* Panel 3: Ticket details sidebar */}
+            <div className={cn(
+              "w-80 overflow-y-auto p-5 shrink-0 bg-surface/10 select-none max-md:w-full max-md:border-0",
+              activeMobileTab !== "details" && "max-md:hidden"
+            )}>
+              {selectedTicket ? (
+                <TicketDetail
+                  ticket={selectedTicket}
+                  onUpdateTicket={handleUpdateTicket}
+                  isUpdating={isUpdating}
+                />
+              ) : (
+                <SkeletonCard />
+              )}
+            </div>
           </div>
         </div>
       ) : (

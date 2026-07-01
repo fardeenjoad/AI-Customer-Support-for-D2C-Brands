@@ -340,6 +340,8 @@ export default function TicketDetailPage() {
 
   // Tab State for right panel
   const [activeRightTab, setActiveRightTab] = useState<"copilot" | "customer">("copilot");
+  // Mobile tab state for conversation vs details pane
+  const [activeMobileTab, setActiveMobileTab] = useState<"conversation" | "details">("conversation");
   // Composer Tab: Public Reply vs Internal Note
   const [composerTab, setComposerTab] = useState<"public" | "internal">("public");
   // AI draft generating state (simulation)
@@ -703,13 +705,44 @@ export default function TicketDetailPage() {
         </div>
       </motion.div>
 
+      {/* Mobile tabs bar */}
+      <div className="flex border-b border-border bg-white lg:hidden shrink-0 rounded-lg overflow-hidden select-none">
+        <button
+          type="button"
+          onClick={() => setActiveMobileTab("conversation")}
+          className={cn(
+            "flex-1 py-2.5 text-xs font-semibold border-b-2 text-center transition-all",
+            activeMobileTab === "conversation"
+              ? "border-primary text-primary bg-slate-50/50"
+              : "border-transparent text-text-muted hover:text-text-primary"
+          )}
+        >
+          Conversation
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveMobileTab("details")}
+          className={cn(
+            "flex-1 py-2.5 text-xs font-semibold border-b-2 text-center transition-all",
+            activeMobileTab === "details"
+              ? "border-primary text-primary bg-slate-50/50"
+              : "border-transparent text-text-muted hover:text-text-primary"
+          )}
+        >
+          Ticket Details
+        </button>
+      </div>
+
       {/* 2. Content columns */}
       <motion.div
         variants={fadeUp}
         className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_340px] flex-1 min-h-0 overflow-hidden"
       >
         {/* LEFT COLUMN: CONVERSATION PANEL */}
-        <Card className="flex flex-col h-full min-h-0 p-0 overflow-hidden border border-border bg-white">
+        <Card className={cn(
+          "flex flex-col h-full min-h-0 p-0 overflow-hidden border border-border bg-white",
+          activeMobileTab !== "conversation" && "max-lg:hidden"
+        )}>
           <div className="flex items-center justify-between border-b border-border px-3 py-1.5 select-none shrink-0">
             <div>
               <h2 className="text-xs font-medium uppercase tracking-[0.02em] text-text-primary">Conversation ({messages.length})</h2>
@@ -927,7 +960,10 @@ export default function TicketDetailPage() {
         </Card>
 
         {/* RIGHT COLUMN: SIDEBAR */}
-        <aside className="flex flex-col h-full min-h-0 bg-white border border-border rounded-xl overflow-hidden select-none w-full lg:w-[340px] min-w-[340px] shrink-0">
+        <aside className={cn(
+          "flex flex-col h-full min-h-0 bg-white border border-border rounded-xl overflow-hidden select-none w-full lg:w-[340px] lg:min-w-[340px] shrink-0",
+          activeMobileTab !== "details" && "max-lg:hidden"
+        )}>
           {/* Right sidebar tab selector */}
           <div className="flex border-b border-border bg-slate-50 shrink-0 select-none">
             <button
