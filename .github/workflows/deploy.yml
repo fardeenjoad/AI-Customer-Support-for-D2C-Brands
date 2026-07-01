@@ -25,24 +25,3 @@ jobs:
             git pull origin main
             sudo systemctl restart resolveiq
             sudo systemctl status resolveiq
-            
-            echo "=== AUTOMATED NGINX & SSL RECOVERY & MIGRATION ==="
-            # 1. Revert SSL cert paths to old IP to make Nginx config valid
-            sudo sed -i 's/live\/51-21-240-124/live\/16-170-205-254/g' /etc/nginx/sites-available/default || true
-            
-            # 2. Restart Nginx to apply valid config
-            sudo systemctl restart nginx
-            
-            # 3. Ensure server_name is updated to the new IP (but leaving certificate paths on old IP for now)
-            sudo sed -i 's/server_name 16-170-205-254.sslip.io/server_name 51-21-240-124.sslip.io/g' /etc/nginx/sites-available/default || true
-            sudo sed -i 's/$host = 16-170-205-254.sslip.io/$host = 51-21-240-124.sslip.io/g' /etc/nginx/sites-available/default || true
-            
-            # 4. Restart Nginx again
-            sudo systemctl restart nginx
-            
-            # 5. Run Certbot for new domain (which will automatically fetch the new cert and update Nginx paths)
-            echo "Running Certbot for new domain 51-21-240-124.sslip.io..."
-            sudo certbot --nginx -d 51-21-240-124.sslip.io --non-interactive --agree-tos --email aakib5460@gmail.com --redirect
-            
-            # 6. Reload Nginx
-            sudo systemctl reload nginx
