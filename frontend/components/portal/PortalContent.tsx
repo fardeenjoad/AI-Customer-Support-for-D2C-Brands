@@ -1046,7 +1046,7 @@ export default function CustomerPortalContent() {
                                   placeholder="Add a reply to this ticket..."
                                   value={replyText}
                                   onChange={(e) => setReplyText(e.target.value)}
-                                  className="flex-grow h-10 px-3 text-xs focus:outline-none border-0 bg-transparent text-gray-900 dark:text-white"
+                                  className="flex-grow h-10 px-3 text-xs focus:outline-none border-0 bg-transparent text-gray-900 dark:text-white rounded-xl"
                                 />
                                 <Button
                                   type="submit"
@@ -1143,7 +1143,7 @@ export default function CustomerPortalContent() {
                                     <div className="justify-self-start">
                                       <Badge
                                         className={cn(
-                                          "text-[10px] font-bold px-2 py-0.5 rounded-full capitalize border shadow-sm",
+                                          "rounded-full px-2 py-0.5 text-xs font-medium border capitalize shadow-sm",
                                           getStatusColor(activeTicket.status)
                                         )}
                                       >
@@ -1154,7 +1154,7 @@ export default function CustomerPortalContent() {
                                 )}
 
                                 {/* Priority */}
-                                {activeTicket.priority && (
+                                {activeTicket.priority && activeTicket.priority.trim() !== "" && (
                                   <>
                                     <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                                       Priority
@@ -1162,7 +1162,7 @@ export default function CustomerPortalContent() {
                                     <div className="justify-self-start">
                                       <Badge
                                         className={cn(
-                                          "text-[10px] font-bold px-2 py-0.5 rounded-full capitalize border shadow-sm",
+                                          "rounded-full px-2 py-0.5 text-xs font-medium border capitalize shadow-sm",
                                           getPriorityColor(activeTicket.priority)
                                         )}
                                       >
@@ -1181,7 +1181,7 @@ export default function CustomerPortalContent() {
                                     <div className="justify-self-start">
                                       <Badge
                                         className={cn(
-                                          "text-[10px] font-bold px-2 py-0.5 rounded-full capitalize border shadow-sm",
+                                          "rounded-full px-2 py-0.5 text-xs font-medium border capitalize shadow-sm",
                                           getSentimentColor(activeTicket.sentiment)
                                         )}
                                       >
@@ -1197,7 +1197,7 @@ export default function CustomerPortalContent() {
                                     <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                                       Opened Date
                                     </span>
-                                    <span className="text-sm font-medium text-gray-900 justify-self-start">
+                                    <span className="text-sm font-medium text-gray-900 justify-self-start whitespace-nowrap">
                                       {new Date(activeTicket.created_at).toLocaleDateString("en-US", {
                                         weekday: "short",
                                         year: "numeric",
