@@ -25,3 +25,5 @@ jobs:
             git pull origin main
             sudo systemctl restart resolveiq
             sudo systemctl status resolveiq
+            echo "=== FIND NGINX CONFIG FILE ==="
+            grep -rn "16-170-205-254" /etc/nginx/sites-enabled/ || true
