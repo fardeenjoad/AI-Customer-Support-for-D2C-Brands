@@ -81,134 +81,127 @@ export function TicketDetail({ ticket, onUpdateTicket, isUpdating = false }: Tic
         </button>
       </div>
 
-      <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-y-4 text-left items-center">
         {/* Status */}
-        <div className="flex flex-col space-y-1.5 text-left">
-          <span className="text-[10px] text-text-muted font-bold tracking-wider uppercase">
-            Status
-          </span>
-          <div className="flex items-center space-x-2">
-            <Badge className={getStatusColor(status)}>
-              {status?.replace("_", " ")}
-            </Badge>
-            <select
-              value={status}
-              disabled={isUpdating}
-              onChange={(e) => handleStatusChange(e.target.value)}
-              className="bg-surface border border-border/80 rounded-md px-2.5 py-1 text-xs text-text-primary cursor-pointer focus:outline-none focus:border-primary transition-colors"
-            >
-              <option value="open">Open</option>
-              <option value="in_progress">In Progress</option>
-              <option value="resolved">Resolved</option>
-            </select>
-          </div>
-        </div>
+        {status && (
+          <>
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+              Status
+            </span>
+            <div className="flex items-center space-x-1.5 justify-self-start">
+              <Badge className={getStatusColor(status)}>
+                {status?.replace("_", " ")}
+              </Badge>
+              <select
+                value={status}
+                disabled={isUpdating}
+                onChange={(e) => handleStatusChange(e.target.value)}
+                className="bg-surface border border-border/80 rounded-md px-1.5 py-0.5 text-[10px] text-text-primary cursor-pointer focus:outline-none focus:border-primary transition-colors"
+              >
+                <option value="open">Open</option>
+                <option value="in_progress">In Progress</option>
+                <option value="resolved">Resolved</option>
+              </select>
+            </div>
+          </>
+        )}
 
         {/* Priority */}
-        <div className="flex flex-col space-y-1.5 text-left">
-          <span className="text-[10px] text-text-muted font-bold tracking-wider uppercase">
-            Priority
-          </span>
-          <div className="flex items-center space-x-2">
-            <select
-              value={priority}
-              disabled={isUpdating}
-              onChange={(e) => handlePriorityChange(e.target.value)}
-              className={`border rounded-md px-2.5 py-1.5 text-xs font-semibold cursor-pointer focus:outline-none focus:ring-1 transition-colors ${getPrioritySelectClass(priority)}`}
-            >
-              <option value="low" className="bg-white text-slate-700">Low</option>
-              <option value="medium" className="bg-white text-amber-700">Medium</option>
-              <option value="high" className="bg-white text-orange-700">High</option>
-              <option value="urgent" className="bg-white text-red-700">Urgent</option>
-            </select>
-          </div>
-        </div>
+        {priority && (
+          <>
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+              Priority
+            </span>
+            <div className="justify-self-start">
+              <select
+                value={priority}
+                disabled={isUpdating}
+                onChange={(e) => handlePriorityChange(e.target.value)}
+                className={`border rounded-md px-2 py-0.5 text-xs font-semibold cursor-pointer focus:outline-none focus:ring-1 transition-colors ${getPrioritySelectClass(priority)}`}
+              >
+                <option value="low" className="bg-white text-slate-700">Low</option>
+                <option value="medium" className="bg-white text-amber-700">Medium</option>
+                <option value="high" className="bg-white text-orange-700">High</option>
+                <option value="urgent" className="bg-white text-red-700">Urgent</option>
+              </select>
+            </div>
+          </>
+        )}
 
         {/* Sentiment */}
-        <div className="flex flex-col space-y-1 text-left">
-          <span className="text-[10px] text-text-muted font-bold tracking-wider uppercase">
-            AI Sentiment
-          </span>
-          <div className="flex items-center space-x-1.5 mt-1 text-xs font-semibold select-none">
-            <span className="text-sm">{getSentimentIcon(sentiment)}</span>
-            <span className={getSentimentTextColor(sentiment)}>
-              {sentiment ? sentiment.charAt(0).toUpperCase() + sentiment.slice(1) : ""}
+        {sentiment && (
+          <>
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+              AI Sentiment
             </span>
-          </div>
-        </div>
+            <div className="flex items-center space-x-1.5 text-sm font-semibold select-none justify-self-start">
+              <span>{getSentimentIcon(sentiment)}</span>
+              <span className={getSentimentTextColor(sentiment)}>
+                {sentiment ? sentiment.charAt(0).toUpperCase() + sentiment.slice(1) : ""}
+              </span>
+            </div>
+          </>
+        )}
 
         {/* Scoped Brand */}
-        <div className="flex flex-col space-y-1 text-left">
-          <span className="text-[10px] text-text-muted font-bold tracking-wider uppercase">
-            Brand
-          </span>
-          <div className="flex items-center justify-between bg-surface border border-border/80 px-2.5 py-2 rounded-md mt-1 w-full">
-            <div className="flex flex-col min-w-0">
-              <span className="text-xs text-text-primary font-semibold truncate">
+        {brand_id && (
+          <>
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+              Brand
+            </span>
+            <div className="flex items-center space-x-1.5 justify-self-start text-sm font-medium text-gray-900 min-w-0 max-w-full">
+              <span className="truncate max-w-[120px]">
                 {ticket.brand_name || "EcoStyle"}
               </span>
-              <span className="text-[10px] text-text-muted font-mono mt-0.5">
-                ID: {brand_id?.slice(0, 8)}
-              </span>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(brand_id || "");
+                  toast.success("Brand ID copied to clipboard!");
+                }}
+                title="Copy Brand ID"
+                className="text-text-muted hover:text-primary p-0.5 hover:bg-surface/50 rounded transition-colors"
+              >
+                <Copy className="h-3.5 w-3.5" />
+              </button>
             </div>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(brand_id || "");
-                toast.success("Brand ID copied to clipboard!");
-              }}
-              title="Copy Brand ID"
-              className="text-text-muted hover:text-primary p-1 hover:bg-surface/50 rounded transition-colors shrink-0"
-            >
-              <Copy className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </div>
+          </>
+        )}
 
-        {/* Customer ID */}
-        <div className="flex flex-col space-y-1 text-left">
-          <span className="text-[10px] text-text-muted font-bold tracking-wider uppercase">
-            Customer
-          </span>
-          <div className="flex items-center justify-between bg-surface border border-border/80 px-2.5 py-2 rounded-md mt-1 w-full">
-            <div className="flex flex-col min-w-0">
-              {ticket.customer_name ? (
-                <>
-                  <span className="text-xs text-text-primary font-semibold truncate">
-                    {ticket.customer_name}
-                  </span>
-                  <span className="text-[10px] text-text-muted font-mono mt-0.5">
-                    ID: {customer_id?.slice(0, 8)}
-                  </span>
-                </>
-              ) : (
-                <span className="text-xs text-text-primary font-semibold truncate">
-                  Customer #{customer_id?.slice(0, 8)}
-                </span>
-              )}
+        {/* Customer */}
+        {customer_id && (
+          <>
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+              Customer
+            </span>
+            <div className="flex items-center space-x-1.5 justify-self-start text-sm font-medium text-gray-900 min-w-0 max-w-full">
+              <span className="truncate max-w-[120px]">
+                {ticket.customer_name || `Customer #${customer_id?.slice(0, 8)}`}
+              </span>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(customer_id || "");
+                  toast.success("Customer ID copied to clipboard!");
+                }}
+                title="Copy Customer ID"
+                className="text-text-muted hover:text-primary p-0.5 hover:bg-surface/50 rounded transition-colors"
+              >
+                <Copy className="h-3.5 w-3.5" />
+              </button>
             </div>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(customer_id || "");
-                toast.success("Customer ID copied to clipboard!");
-              }}
-              title="Copy Customer ID"
-              className="text-text-muted hover:text-primary p-1 hover:bg-surface/50 rounded transition-colors shrink-0"
-            >
-              <Copy className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </div>
+          </>
+        )}
 
         {/* Opened At */}
-        <div className="flex flex-col space-y-1 text-left">
-          <span className="text-[10px] text-text-muted font-bold tracking-wider uppercase">
-            Opened At
-          </span>
-          <div className="flex items-center space-x-1.5 text-xs text-text-muted mt-1">
-            <Calendar className="h-3.5 w-3.5" />
-            <span>{formatDate(created_at)}</span>
-          </div>
-        </div>
+        {created_at && (
+          <>
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+              Opened At
+            </span>
+            <div className="flex items-center space-x-1 text-sm font-medium text-gray-900 justify-self-start">
+              <span>{formatDate(created_at)}</span>
+            </div>
+          </>
+        )}
 
         {/* Assigned Agent */}
         <div className="flex flex-col space-y-1.5 text-left border-t border-border/40 pt-4">

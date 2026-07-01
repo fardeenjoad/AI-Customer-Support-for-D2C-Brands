@@ -80,13 +80,13 @@ export function getStatusColor(status: string) {
     case "urgent":
       return "bg-red-50 text-red-700 border border-red-200";
     case "resolved":
-      return "bg-emerald-50 text-emerald-700 border border-emerald-200";
+      return "bg-gray-100 text-gray-600 border border-gray-200";
     case "pending":
     case "in_progress":
-      return "bg-slate-100 text-slate-700 border border-slate-200";
+      return "bg-yellow-50 text-yellow-700 border border-yellow-200";
     case "open":
     default:
-      return "bg-blue-50 text-blue-700 border border-blue-200";
+      return "bg-green-50 text-green-700 border border-green-200";
   }
 }
 

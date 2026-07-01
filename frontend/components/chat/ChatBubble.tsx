@@ -39,27 +39,20 @@ export function ChatBubble({ message }: ChatBubbleProps) {
       </div>
 
       {/* Bubble Message Panel */}
-      <div className="flex flex-col max-w-[70%] space-y-1">
-        {/* Name and time metadata */}
-        <div
-          className={cn("flex items-center space-x-2 text-[10px] text-text-muted", {
-            "justify-end": isAgent,
-            "justify-start": !isAgent,
-          })}
-        >
-          <span className="font-semibold uppercase tracking-wider">
-            {isCustomer ? "Customer" : isAI ? "ResolveIQ Bot" : "Support Agent"}
-          </span>
-          <span>•</span>
-          <span>{formatRelativeTime(timeToFormat || "")}</span>
+      <div className={cn("flex flex-col max-w-[70%] space-y-1", {
+        "items-end": isAgent,
+        "items-start": !isAgent,
+      })}>
+        {/* Name metadata */}
+        <div className="flex items-center space-x-1.5 text-[10px] font-semibold uppercase tracking-wider text-text-muted select-none">
+          <span>{isCustomer ? "Customer" : isAI ? "ResolveIQ Bot" : "Support Agent"}</span>
         </div>
 
         {/* Message bubble */}
         <div
-          className={cn("px-4 py-2.5 rounded-2xl border text-sm leading-relaxed shadow-sm break-words whitespace-pre-wrap", {
-            "bg-surface border-border text-text-primary rounded-tl-none": isCustomer,
-            "bg-accent/10 border-accent/30 text-text-primary rounded-tl-none text-glow-cyan": isAI,
-            "bg-primary/10 border-primary/30 text-text-primary rounded-tr-none text-glow": isAgent,
+          className={cn("px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm break-words whitespace-pre-wrap min-h-[40px] flex flex-col justify-center", {
+            "bg-gray-100 text-gray-800 rounded-tl-sm": !isAgent,
+            "bg-indigo-600 text-white rounded-tr-sm": isAgent,
           })}
         >
           {(() => {
@@ -109,6 +102,9 @@ export function ChatBubble({ message }: ChatBubbleProps) {
             return content;
           })()}
         </div>
+        <span className="text-xs text-gray-400 mt-1 block select-none">
+          {formatRelativeTime(timeToFormat || "")}
+        </span>
       </div>
     </div>
   );

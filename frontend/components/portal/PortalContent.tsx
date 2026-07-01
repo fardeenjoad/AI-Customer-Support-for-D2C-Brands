@@ -734,32 +734,17 @@ export default function CustomerPortalContent() {
                           whileHover={{ scale: 1.01 }}
                           whileTap={{ scale: 0.99 }}
                           className={cn(
-                            "p-3.5 rounded-xl border text-left cursor-pointer transition-all duration-200 select-none shadow-sm relative overflow-hidden",
+                            "p-3.5 rounded-xl border text-left cursor-pointer transition-all duration-150 select-none shadow-sm relative overflow-hidden",
                             isActive
-                              ? isDarkMode
-                                ? "bg-primary/15 border-primary/30 text-white"
-                                : "bg-primary/10 border-primary/20 text-text-primary"
-                              : isDarkMode
-                              ? "bg-[#181a25] border-slate-800/60 hover:bg-[#1f2231] text-slate-300 hover:text-white"
-                              : "bg-surface border-border hover:bg-background text-text-muted hover:text-text-primary"
+                              ? "bg-indigo-50 border-indigo-200 border-l-2 border-l-indigo-500 text-indigo-900"
+                              : "bg-surface border-border hover:bg-gray-50 text-text-muted hover:text-text-primary"
                           )}
                         >
-                          {/* Left Accent Bar on Active */}
-                            {isActive && (
-                              <span className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r" />
-                            )}
-
                           <div className="flex items-center justify-between mb-1.5">
                             <span
                               className={cn(
                                 "text-[9px] font-mono",
-                                isActive
-                                      ? isDarkMode
-                                        ? "text-accent"
-                                        : "text-primary font-bold"
-                                      : isDarkMode
-                                      ? "text-slate-500"
-                                      : "text-text-muted"
+                                isActive ? "text-indigo-600 font-bold" : "text-text-muted"
                               )}
                             >
                               #{t.id.slice(0, 8)}
@@ -779,20 +764,14 @@ export default function CustomerPortalContent() {
                           </h4>
 
                           {t.last_message_preview && (
-                            <p
-                              className={cn(
-                                "text-[11px] truncate mt-1.5 opacity-80 font-normal leading-relaxed",
-                                isDarkMode ? "text-text-muted" : "text-text-muted"
-                              )}
-                            >
+                            <p className="text-[11px] truncate mt-1.5 opacity-80 font-normal leading-relaxed text-text-muted">
                               {t.last_message_preview}
                             </p>
                           )}
 
                           <div
                             className={cn(
-                              "flex items-center justify-between mt-2 pt-2 border-t text-[9px] font-medium uppercase tracking-wider",
-                              isDarkMode ? "border-slate-800/40" : "border-border/50"
+                              "flex items-center justify-between mt-2 pt-2 border-t text-[9px] font-medium uppercase tracking-wider border-border/50"
                             )}
                           >
                             <span className="flex items-center space-x-1">
@@ -885,7 +864,7 @@ export default function CustomerPortalContent() {
                                     key={msg.id}
                                     initial={{ opacity: 0, y: 8, scale: 0.98 }}
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                                    className={cn("flex w-full items-end space-x-2.5", {
+                                    className={cn("flex w-full items-start space-x-2.5 my-4", {
                                       "justify-end": isCustomer,
                                       "justify-start": !isCustomer,
                                     })}
@@ -894,29 +873,27 @@ export default function CustomerPortalContent() {
                                     {!isCustomer && (
                                       <div
                                         className={cn(
-                                          "w-7 h-7 rounded-full flex items-center justify-center shrink-0 shadow-sm border",
-                                          isDarkMode
-                                            ? "bg-slate-800 border-slate-700 text-accent"
-                                            : "bg-primary/10 border-primary/10 text-primary"
+                                          "w-7 h-7 rounded-full flex items-center justify-center shrink-0 shadow-sm border bg-gray-100 border-gray-200 text-indigo-600"
                                         )}
                                       >
                                         <Sparkles className="h-3.5 w-3.5" />
                                       </div>
                                     )}
 
-                                    <div className="flex flex-col space-y-0.5">
+                                    <div className={cn("flex flex-col max-w-[70%] space-y-1", {
+                                      "items-end": isCustomer,
+                                      "items-start": !isCustomer,
+                                    })}>
                                       <div
                                         className={cn(
-                                          "max-w-md px-4 py-2.5 text-[13px] leading-relaxed break-words whitespace-pre-wrap shadow-sm rounded-2xl",
+                                          "px-4 py-3 text-sm leading-relaxed break-words whitespace-pre-wrap shadow-sm rounded-2xl min-h-[40px] flex flex-col justify-center",
                                           isCustomer
-                                            ? "bg-primary text-white rounded-bl-sm"
-                                            : isDarkMode
-                                            ? "bg-[#181a25] border border-slate-800/80 text-slate-200 rounded-br-sm"
-                                            : "bg-surface border border-border text-text-primary rounded-br-sm"
+                                            ? "bg-indigo-600 text-white rounded-2xl rounded-tr-sm"
+                                            : "bg-gray-100 text-gray-800 rounded-2xl rounded-tl-sm"
                                         )}
                                       >
                                         {isAI && (
-                                          <span className="flex items-center space-x-1 text-[9px] font-bold uppercase tracking-wider text-primary mb-1">
+                                          <span className="flex items-center space-x-1 text-[9px] font-bold uppercase tracking-wider text-indigo-600 mb-1 select-none">
                                             <Sparkles className="h-2.5 w-2.5" />
                                             <span>AI Support Assistant</span>
                                           </span>
@@ -971,12 +948,7 @@ export default function CustomerPortalContent() {
                                           return msg.content;
                                         })()}
                                       </div>
-                                      <span
-                                        className={cn(
-                                          "text-[9px] block text-right pr-1 select-none",
-                                          isDarkMode ? "text-text-muted" : "text-text-muted"
-                                        )}
-                                      >
+                                      <span className="text-xs text-gray-400 mt-1 block select-none">
                                         {formatRelativeTime(msg.timestamp)}
                                       </span>
                                     </div>
@@ -989,29 +961,23 @@ export default function CustomerPortalContent() {
                                     initial={{ opacity: 0, y: 8 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -4 }}
-                                    className="flex w-full items-end space-x-2.5 my-3 justify-start"
+                                    className="flex w-full items-start space-x-2.5 my-3 justify-start"
                                   >
                                     <div
                                       className={cn(
-                                        "w-7 h-7 rounded-full flex items-center justify-center shrink-0 shadow-sm border",
-                                        isDarkMode
-                                          ? "bg-slate-800 border-slate-700 text-accent"
-                                          : "bg-primary/10 border-primary/10 text-primary"
+                                        "w-7 h-7 rounded-full flex items-center justify-center shrink-0 shadow-sm border bg-gray-100 border-gray-200 text-indigo-600"
                                       )}
                                     >
                                       <Sparkles className="h-3.5 w-3.5" />
                                     </div>
-                                    <div className="flex flex-col space-y-0.5">
+                                    <div className="flex flex-col items-start max-w-[70%] space-y-1">
                                       <div
                                         className={cn(
-                                          "max-w-md px-4 py-3 text-[13px] leading-relaxed break-words whitespace-pre-wrap shadow-sm rounded-2xl flex items-center space-x-2",
-                                          isDarkMode
-                                            ? "bg-[#181a25] border border-slate-800/80 text-slate-200 rounded-br-sm"
-                                            : "bg-surface border border-border text-text-primary rounded-br-sm"
+                                          "px-4 py-3 text-sm leading-relaxed break-words whitespace-pre-wrap shadow-sm rounded-2xl min-h-[40px] flex items-center space-x-2 bg-gray-100 text-gray-800 rounded-tl-sm"
                                         )}
                                       >
-                                        <Loader2 className="h-3.5 w-3.5 animate-spin text-primary shrink-0" />
-                                        <span className="font-medium">AI is formulating reply...</span>
+                                        <Loader2 className="h-3.5 w-3.5 animate-spin text-indigo-600 shrink-0" />
+                                        <span className="font-medium text-xs">AI is formulating reply...</span>
                                       </div>
                                     </div>
                                   </motion.div>
@@ -1064,7 +1030,7 @@ export default function CustomerPortalContent() {
                                 type="button"
                                 onClick={() => portalFileInputRef.current?.click()}
                                 disabled={uploadAttachmentMutation.isPending}
-                                className="p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-background/50 transition-colors"
+                                className="p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-background/50 transition-colors shrink-0"
                                 title="Attach file"
                               >
                                 {uploadAttachmentMutation.isPending ? (
@@ -1074,33 +1040,29 @@ export default function CustomerPortalContent() {
                                 )}
                               </button>
 
-                              <input
-                                type="text"
-                                placeholder="Add a reply to this ticket..."
-                                value={replyText}
-                                onChange={(e) => setReplyText(e.target.value)}
-                                className={cn(
-                                  "flex-grow h-10 rounded-xl border px-3 text-xs transition-all focus:outline-none focus:ring-2 focus:ring-primary/20",
-                                  isDarkMode
-                                    ? "bg-[#1d1f2d] border-slate-800 text-white focus:border-primary"
-                                    : "bg-background border-border text-text-primary focus:border-primary"
-                                )}
-                              />
-                              <Button
-                                type="submit"
-                                variant="primary"
-                                disabled={(!replyText.trim() && !portalFile) || sendReplyMutation.isPending || uploadAttachmentMutation.isPending}
-                                className="h-10 px-4 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs flex items-center space-x-1 shadow-md shadow-primary/10"
-                              >
-                                {sendReplyMutation.isPending || uploadAttachmentMutation.isPending ? (
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                ) : (
-                                  <>
-                                    <Send className="h-3.5 w-3.5" />
-                                    <span className="hidden sm:inline">Send</span>
-                                  </>
-                                )}
-                              </Button>
+                              <div className="flex-grow flex items-center border border-gray-200 rounded-xl bg-white dark:bg-[#1d1f2d] p-1.5 focus-within:ring-1 focus-within:ring-indigo-500 overflow-hidden">
+                                <input
+                                  type="text"
+                                  placeholder="Add a reply to this ticket..."
+                                  value={replyText}
+                                  onChange={(e) => setReplyText(e.target.value)}
+                                  className="flex-grow h-10 px-3 text-xs focus:outline-none border-0 bg-transparent text-gray-900 dark:text-white"
+                                />
+                                <Button
+                                  type="submit"
+                                  disabled={(!replyText.trim() && !portalFile) || sendReplyMutation.isPending || uploadAttachmentMutation.isPending}
+                                  className="h-10 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs flex items-center space-x-1.5 transition-colors duration-150 border-0 shrink-0 shadow-sm"
+                                >
+                                  {sendReplyMutation.isPending || uploadAttachmentMutation.isPending ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  ) : (
+                                    <>
+                                      <Send className="h-3.5 w-3.5" />
+                                      <span className="hidden sm:inline">Send</span>
+                                    </>
+                                  )}
+                                </Button>
+                              </div>
                             </form>
                           </div>
                         ) : (
@@ -1159,72 +1121,83 @@ export default function CustomerPortalContent() {
                                 </h4>
                               </div>
 
-                              <div className="space-y-3.5">
+                              <div className="grid grid-cols-2 gap-y-4 text-left items-center">
                                 {/* Ticket ID */}
-                                <div className="flex items-center justify-between">
-                                  <span className="text-[10px] font-bold text-text-muted dark:text-text-muted uppercase tracking-wider">
-                                    Ticket ID
-                                  </span>
-                                  <span className="text-xs font-mono font-medium text-text-primary dark:text-slate-300">
-                                    #{activeTicket.id.slice(0, 8)}
-                                  </span>
-                                </div>
+                                {activeTicket.id && (
+                                  <>
+                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                      Ticket ID
+                                    </span>
+                                    <span className="text-sm font-medium text-gray-900 font-mono justify-self-start">
+                                      #{activeTicket.id.slice(0, 8)}
+                                    </span>
+                                  </>
+                                )}
 
                                 {/* Status */}
-                                <div className="flex items-center justify-between">
-                                  <span className="text-[10px] font-bold text-text-muted dark:text-text-muted uppercase tracking-wider">
-                                    Status
-                                  </span>
-                                  <Badge
-                                    className={cn(
-                                      "text-[10px] font-bold px-2 py-0.5 rounded-full capitalize border shadow-sm",
-                                      getStatusColor(activeTicket.status)
-                                    )}
-                                  >
-                                    {activeTicket.status.replace("_", " ")}
-                                  </Badge>
-                                </div>
+                                {activeTicket.status && (
+                                  <>
+                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                      Status
+                                    </span>
+                                    <div className="justify-self-start">
+                                      <Badge
+                                        className={cn(
+                                          "text-[10px] font-bold px-2 py-0.5 rounded-full capitalize border shadow-sm",
+                                          getStatusColor(activeTicket.status)
+                                        )}
+                                      >
+                                        {activeTicket.status.replace("_", " ")}
+                                      </Badge>
+                                    </div>
+                                  </>
+                                )}
 
                                 {/* Priority */}
-                                <div className="flex items-center justify-between">
-                                  <span className="text-[10px] font-bold text-text-muted dark:text-text-muted uppercase tracking-wider">
-                                    Priority
-                                  </span>
-                                  <Badge
-                                    className={cn(
-                                      "text-[10px] font-bold px-2 py-0.5 rounded-full capitalize border shadow-sm",
-                                      getPriorityColor(activeTicket.priority)
-                                    )}
-                                  >
-                                    {activeTicket.priority || "medium"}
-                                  </Badge>
-                                </div>
+                                {activeTicket.priority && (
+                                  <>
+                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                      Priority
+                                    </span>
+                                    <div className="justify-self-start">
+                                      <Badge
+                                        className={cn(
+                                          "text-[10px] font-bold px-2 py-0.5 rounded-full capitalize border shadow-sm",
+                                          getPriorityColor(activeTicket.priority)
+                                        )}
+                                      >
+                                        {activeTicket.priority}
+                                      </Badge>
+                                    </div>
+                                  </>
+                                )}
 
                                 {/* Sentiment */}
                                 {activeTicket.sentiment && (
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-[10px] font-bold text-text-muted dark:text-text-muted uppercase tracking-wider">
+                                  <>
+                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                                       Sentiment
                                     </span>
-                                    <Badge
-                                      className={cn(
-                                        "text-[10px] font-bold px-2 py-0.5 rounded-full capitalize border shadow-sm",
-                                        getSentimentColor(activeTicket.sentiment)
-                                      )}
-                                    >
-                                      {activeTicket.sentiment === "positive" ? "😊 positive" : activeTicket.sentiment === "negative" ? "😟 negative" : "😐 neutral"}
-                                    </Badge>
-                                  </div>
+                                    <div className="justify-self-start">
+                                      <Badge
+                                        className={cn(
+                                          "text-[10px] font-bold px-2 py-0.5 rounded-full capitalize border shadow-sm",
+                                          getSentimentColor(activeTicket.sentiment)
+                                        )}
+                                      >
+                                        {activeTicket.sentiment === "positive" ? "😊 positive" : activeTicket.sentiment === "negative" ? "😟 negative" : "😐 neutral"}
+                                      </Badge>
+                                    </div>
+                                  </>
                                 )}
 
                                 {/* Opened Date */}
-                                <div className="flex flex-col space-y-1.5 pt-2.5 border-t border-border/50 dark:border-slate-800/40">
-                                  <span className="text-[10px] font-bold text-text-muted dark:text-text-muted uppercase tracking-wider">
-                                    Opened Date
-                                  </span>
-                                  <div className="text-xs font-semibold text-text-primary dark:text-slate-300 flex items-center space-x-2 bg-background dark:bg-slate-800/40 rounded-xl p-2.5 border border-border/50 dark:border-slate-800/30">
-                                    <Calendar className="h-4 w-4 text-primary dark:text-accent opacity-90" />
-                                    <span>
+                                {activeTicket.created_at && (
+                                  <>
+                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                      Opened Date
+                                    </span>
+                                    <span className="text-sm font-medium text-gray-900 justify-self-start">
                                       {new Date(activeTicket.created_at).toLocaleDateString("en-US", {
                                         weekday: "short",
                                         year: "numeric",
@@ -1232,8 +1205,8 @@ export default function CustomerPortalContent() {
                                         day: "numeric",
                                       })}
                                     </span>
-                                  </div>
-                                </div>
+                                  </>
+                                )}
                               </div>
                             </div>
 

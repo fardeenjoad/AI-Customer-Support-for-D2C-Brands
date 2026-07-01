@@ -15,15 +15,12 @@ export function TicketCard({ ticket, isActive = false, onClick }: TicketCardProp
   return (
     <div
       onClick={onClick}
-      className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer select-none text-left relative overflow-hidden group ${
+      className={`p-4 rounded-xl border transition-all duration-150 cursor-pointer select-none text-left relative overflow-hidden group ${
         isActive
-          ? "bg-primary/5 border-primary"
-          : "bg-surface/40 border-border/80 hover:bg-surface/60 hover:border-border"
+          ? "bg-indigo-50 border-indigo-200 border-l-2 border-indigo-500 text-indigo-900"
+          : "bg-surface/40 border-border/80 hover:bg-gray-50 text-text-muted hover:text-text-primary"
       }`}
     >
-      {!isActive && (
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-      )}
 
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-2">
@@ -40,7 +37,7 @@ export function TicketCard({ ticket, isActive = false, onClick }: TicketCardProp
         )}
       </div>
 
-      <h4 className="text-sm font-semibold text-text-primary font-heading line-clamp-1 group-hover:text-primary transition-colors mb-2">
+      <h4 className="text-sm font-semibold text-text-primary font-heading truncate group-hover:text-indigo-600 transition-colors mb-2">
         {subject || "No Subject"}
       </h4>
 

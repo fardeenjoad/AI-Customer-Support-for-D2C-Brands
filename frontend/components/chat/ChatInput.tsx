@@ -113,31 +113,31 @@ export function ChatInput({
           </>
         )}
 
-        <textarea
-          ref={textareaRef}
-          value={content}
-          onChange={(e) => {
-            setContent(e.target.value);
-            e.target.style.height = "auto";
-            e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
-          }}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-          rows={1}
-          className="flex-1 bg-transparent border-0 resize-none text-sm text-text-primary placeholder-text-muted focus:outline-none focus:ring-0 max-h-[120px] py-2 outline-none"
-        />
+        <div className="flex-grow flex items-center border border-gray-200 rounded-xl bg-white dark:bg-[#1d1f2d] p-1.5 focus-within:ring-1 focus-within:ring-indigo-500 overflow-hidden">
+          <textarea
+            ref={textareaRef}
+            value={content}
+            onChange={(e) => {
+              setContent(e.target.value);
+              e.target.style.height = "auto";
+              e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+            }}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            rows={1}
+            className="flex-1 bg-transparent border-0 resize-none text-sm text-text-primary placeholder-text-muted focus:outline-none focus:ring-0 max-h-[120px] py-2.5 px-3 outline-none"
+          />
 
-        <Button
-          type="submit"
-          variant="primary"
-          size="sm"
-          disabled={(!content.trim() && !file) || isSending || isUploading}
-          isLoading={isSending}
-          className="h-9 px-4 flex items-center space-x-1.5 shrink-0"
-        >
-          <span>Send</span>
-          <Send className="h-3.5 w-3.5" />
-        </Button>
+          <Button
+            type="submit"
+            disabled={(!content.trim() && !file) || isSending || isUploading}
+            isLoading={isSending}
+            className="h-10 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs flex items-center space-x-1.5 transition-colors duration-150 border-0 shrink-0 shadow-sm"
+          >
+            <span>Send</span>
+            <Send className="h-3.5 w-3.5" />
+          </Button>
+        </div>
       </div>
     </form>
   );
