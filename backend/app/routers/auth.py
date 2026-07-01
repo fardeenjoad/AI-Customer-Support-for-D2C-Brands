@@ -193,14 +193,14 @@ async def privy_login(
                 # If no email in claims, fetch from Privy API using the user ID
                 if not email and privy_user_id and app_id and app_secret:
                     try:
-                        # Privy API: GET /api/v1/users/{did}
+                        # Privy API: GET /v1/users/{did}
                         auth_string = base64.b64encode(f"{app_id}:{app_secret}".encode()).decode()
                         headers = {
                             "Authorization": f"Basic {auth_string}",
                             "privy-app-id": app_id,
                         }
                         
-                        user_api_url = f"https://auth.privy.io/api/v1/users/{privy_user_id}"
+                        user_api_url = f"https://api.privy.io/v1/users/{privy_user_id}"
                         
                         async with httpx.AsyncClient(timeout=10.0) as client:
                             resp = await client.get(user_api_url, headers=headers)
