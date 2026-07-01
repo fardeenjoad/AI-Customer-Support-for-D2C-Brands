@@ -749,14 +749,14 @@ export default function CustomerPortalContent() {
                             >
                               #{t.id.slice(0, 8)}
                             </span>
-                            <Badge
+                            <span
                               className={cn(
-                                "text-[9px] font-bold px-2 py-0.5 rounded-full capitalize",
+                                "text-[9px] font-bold px-2 py-0.5 rounded-full capitalize border inline-flex items-center shadow-sm",
                                 getStatusColor(t.status)
                               )}
                             >
                               {t.status.replace("_", " ")}
-                            </Badge>
+                            </span>
                           </div>
 
                           <h4 className="text-xs font-bold truncate pr-2 tracking-tight">
@@ -941,7 +941,7 @@ export default function CustomerPortalContent() {
                                                     <span className="truncate max-w-[180px]">{filename}</span>
                                                   </a>
                                                 )}
-                                                {caption && <div className="text-xs pt-0.5 leading-relaxed">{caption}</div>}
+                                                {caption && <div className="text-sm pt-0.5 leading-relaxed">{caption}</div>}
                                               </div>
                                             );
                                           }
@@ -1141,14 +1141,14 @@ export default function CustomerPortalContent() {
                                       Status
                                     </span>
                                     <div className="justify-self-start">
-                                      <Badge
+                                      <span
                                         className={cn(
-                                          "rounded-full px-2 py-0.5 text-xs font-medium border capitalize shadow-sm",
+                                          "rounded-full px-2 py-0.5 text-xs font-medium border capitalize inline-flex items-center shadow-sm",
                                           getStatusColor(activeTicket.status)
                                         )}
                                       >
                                         {activeTicket.status.replace("_", " ")}
-                                      </Badge>
+                                      </span>
                                     </div>
                                   </>
                                 )}
@@ -1160,14 +1160,14 @@ export default function CustomerPortalContent() {
                                       Priority
                                     </span>
                                     <div className="justify-self-start">
-                                      <Badge
+                                      <span
                                         className={cn(
-                                          "rounded-full px-2 py-0.5 text-xs font-medium border capitalize shadow-sm",
+                                          "rounded-full px-2 py-0.5 text-xs font-medium border capitalize inline-flex items-center shadow-sm",
                                           getPriorityColor(activeTicket.priority)
                                         )}
                                       >
                                         {activeTicket.priority}
-                                      </Badge>
+                                      </span>
                                     </div>
                                   </>
                                 )}
@@ -1179,14 +1179,14 @@ export default function CustomerPortalContent() {
                                       Sentiment
                                     </span>
                                     <div className="justify-self-start">
-                                      <Badge
+                                      <span
                                         className={cn(
-                                          "rounded-full px-2 py-0.5 text-xs font-medium border capitalize shadow-sm",
+                                          "rounded-full px-2 py-0.5 text-xs font-medium border capitalize inline-flex items-center shadow-sm",
                                           getSentimentColor(activeTicket.sentiment)
                                         )}
                                       >
                                         {activeTicket.sentiment === "positive" ? "😊 positive" : activeTicket.sentiment === "negative" ? "😟 negative" : "😐 neutral"}
-                                      </Badge>
+                                      </span>
                                     </div>
                                   </>
                                 )}
