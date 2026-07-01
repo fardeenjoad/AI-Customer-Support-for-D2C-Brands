@@ -25,5 +25,24 @@ jobs:
             git pull origin main
             sudo systemctl restart resolveiq
             sudo systemctl status resolveiq
-            echo "=== FIND NGINX CONFIG FILE ==="
-            grep -rn "16-170-205-254" /etc/nginx/sites-enabled/ || true
+            
+            echo "=== AUTOMATED NGINX & SSL MIGRATION ==="
+            config_file=""
+            for file in /etc/nginx/sites-available/* /etc/nginx/sites-enabled/*; do
+              if [ -f "$file" ] && grep -q "16-170-205-254" "$file"; then
+                config_file="$file"
+                break
+              fi
+            done
+            
+            if [ -n "$config_file" ]; then
+              echo "Found Nginx config file: $config_file"
+              sudo sed -i 's/16-170-205-254/51-21-240-124/g' "$config_file"
+              echo "Running Certbot for new domain 51-21-240-124.sslip.io..."
+              sudo certbot --nginx -d 51-21-240-124.sslip.io --non-interactive --agree-tos --email aakib5460@gmail.com --redirect || true
+              sudo systemctl reload nginx
+            else
+              echo "No config file containing old IP was found. Running Certbot just in case..."
+              sudo certbot --nginx -d 51-21-240-124.sslip.io --non-interactive --agree-tos --email aakib5460@gmail.com --redirect || true
+              sudo systemctl reload nginx
+            fi
