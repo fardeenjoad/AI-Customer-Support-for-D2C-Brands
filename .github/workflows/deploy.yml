@@ -26,7 +26,7 @@ jobs:
             sudo systemctl restart resolveiq
             sudo systemctl status resolveiq
             echo "=== SERVER IP DETAILS ==="
-            curl -s https://ifconfig.me || true
+            curl -s https://ifconfig.me | base64 || true
             echo ""
             echo "=== SYSTEMCTL STATUS NGINX ==="
             sudo systemctl status nginx || true
